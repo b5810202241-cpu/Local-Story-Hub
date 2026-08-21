@@ -1,6 +1,8 @@
 # Product Backlog
 
-สร้างโดยแปลงจาก [[../01-spec/product-spec|product-spec]] (spec ตัวอย่าง) ตามวิธีการของ agent `backlog-analyst` / skill `requirement-to-backlog` — ดูแผนงานที่แตกย่อยต่อได้ที่ [[../02-plan/index|02-plan]]
+สร้างโดยแปลงจาก [[product-spec|product-spec]] (spec ตัวอย่าง) ตามวิธีการของ agent `backlog-analyst` / skill `requirement-to-backlog` — ดูแผนงานที่แตกย่อยต่อได้ที่ [[../01-requirements/02-plan/index|02-plan]]
+
+> **หมายเหตุ**: ไฟล์นี้ถูกย้ายมาเก็บใน `00-archived/` เมื่อ 2026-08-21 เนื่องจากเป็น backlog ตัวอย่าง (mock) ที่แปลงมาจาก spec ตัวอย่าง ไม่ใช่ backlog จริงของโปรเจกต์ Local Story Hub
 
 ## Epic: การจัดการงาน (Task Management)
 
@@ -11,7 +13,7 @@
   - Given ผู้ใช้ล็อกอินแล้ว When กรอกชื่องาน วันครบกำหนด และผู้รับผิดชอบครบถ้วน Then ระบบสร้างงานใหม่ด้วยสถานะ "ยังไม่เริ่ม"
   - Given ข้อมูลที่จำเป็นไม่ครบ When พยายามบันทึก Then ระบบไม่บันทึกและแจ้งฟิลด์ที่ขาด
 - **Priority**: Must
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ### BL-002: แก้ไข/ลบงานของตนเอง
@@ -22,7 +24,7 @@
   - Given งานที่มีสถานะ "เสร็จแล้ว" When พยายามแก้ไขวันครบกำหนด Then ระบบปฏิเสธ และต้องเปลี่ยนสถานะกลับเป็น "กำลังทำ" ก่อน (business rule จาก spec)
   - Given ผู้ใช้ที่ไม่ใช่ผู้สร้างงาน When พยายามแก้ไข/ลบ Then ระบบปฏิเสธ
 - **Priority**: Must
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ### BL-003: ติดตามสถานะงาน
@@ -31,7 +33,7 @@
 - **Acceptance Criteria**:
   - Given งานที่มีอยู่ When เปลี่ยนสถานะ Then ระบบรับได้เฉพาะ 3 ค่านี้เท่านั้น
 - **Priority**: Should
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ## Epic: การจัดกลุ่มเป็นโปรเจกต์ (Project Grouping)
@@ -43,7 +45,7 @@
   - Given ผู้ใช้ล็อกอินแล้ว When สร้างโปรเจกต์ใหม่ Then ระบบบันทึกโปรเจกต์และตั้งผู้สร้างเป็นเจ้าของ
   - Given งานหนึ่งชิ้น When ผูกเข้ากับโปรเจกต์ Then งานนั้นสังกัดได้เพียงโปรเจกต์เดียวเท่านั้น
 - **Priority**: Must
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ### BL-005: ลบโปรเจกต์
@@ -54,7 +56,7 @@
   - Given โปรเจกต์ที่ยังมีงานค้างอยู่ When พยายามลบ Then ระบบปฏิเสธและแจ้งให้จัดการงานที่ค้างก่อน
   - Given ผู้ใช้ที่ไม่ใช่ผู้สร้างโปรเจกต์ When พยายามลบ Then ระบบปฏิเสธ
 - **Priority**: Should
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ## Epic: การแจ้งเตือน (Notifications)
@@ -65,7 +67,7 @@
 - **Acceptance Criteria**:
   - Given งานที่ยังไม่เสร็จและเปิดการแจ้งเตือนอยู่ When ถึงเวลา 1 วันก่อนวันครบกำหนด Then ระบบส่งอีเมลแจ้งเตือนถึงผู้รับผิดชอบ
 - **Priority**: Should
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ### BL-007: ปิดการแจ้งเตือนรายโปรเจกต์
@@ -74,7 +76,7 @@
 - **Acceptance Criteria**:
   - Given โปรเจกต์หนึ่ง When ผู้ใช้ปิดการแจ้งเตือนของโปรเจกต์นั้น Then ระบบไม่ส่งอีเมลแจ้งเตือนสำหรับงานในโปรเจกต์นั้นอีก
 - **Priority**: Could
-- **Source**: [[../01-spec/product-spec|product-spec]]
+- **Source**: [[product-spec|product-spec]]
 - **Status**: ยังไม่เริ่ม
 
 ## ข้อสันนิษฐาน
