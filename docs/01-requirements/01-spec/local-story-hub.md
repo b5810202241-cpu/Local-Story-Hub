@@ -6,6 +6,8 @@
 
 ชื่อโครงการ: **Local Story Hub** — "AI-powered Community Storytelling & Learning Platform"
 
+> ดู Product Backlog ที่แตกจากสเปคนี้ได้ที่ [[../03-task/product-backlog|03-task/product-backlog]]
+
 ## ต้นฉบับ (Verbatim จากไฟล์ที่แนบ)
 
 > **Local Story Hub**
