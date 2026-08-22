@@ -8,9 +8,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 โปรเจกต์จริงคือ **Local Story Hub** (AI-powered Community Storytelling & Learning Platform) สเปคจริงชุดแรกอยู่ที่ `docs/01-requirements/01-spec/local-story-hub.md` สรุปจากไฟล์ requirement ที่ผู้ใช้แนบมาเท่านั้น (ดู Open Questions ในไฟล์นั้นสำหรับรายละเอียดที่ยังไม่ตัดสินใจ เช่น แพลตฟอร์ม website/application, สิทธิ์การเข้าถึงของแต่ละชุมชน, non-functional requirements) ยังไม่มี Product Backlog จริงสำหรับสเปคนี้ — spec/backlog ตัวอย่าง (mock, เรื่อง Task Management) ที่ใช้สาธิตการทำงานของ agent/skill ถูกย้ายไปเก็บที่ `docs/00-archived/` แล้ว (ดู `docs/05-log/index.md`)
 
-## Requirement → Product Backlog workflow
+## Requirement intake → Spec → Product Backlog workflow
 
-นี่คือ workflow หลักที่โปรเจกต์นี้ตั้งไว้ มีสองเครื่องมือที่ทำงานแบบเดียวกัน ครอบคลุม pipeline เดียวกันทั้งหมด:
+เมื่อผู้ใช้ให้ **requirement ดิบ** มา (ข้อความไม่มีโครงสร้าง, ไฟล์แนบ, บทสนทนา) ที่ยังไม่มี
+เอกสาร spec รองรับ ใช้คู่นี้เป็นจุดเริ่มต้น — ทำ Phase 1 (บันทึกเป็น spec) ต่อด้วย Phase 2
+(แตกเป็น backlog) ให้ทันทีในคำขอเดียว:
+
+- **Agent** [.claude/agents/requirement-intake-analyst.md](.claude/agents/requirement-intake-analyst.md)
+- **Skill** [.claude/skills/requirement-intake/SKILL.md](.claude/skills/requirement-intake/SKILL.md)
+
+ทั้งสองไฟล์นี้ทำ Phase 1 (สรุป requirement ดิบเป็นไฟล์ spec ที่ `docs/01-requirements/01-spec/{YYYYMMDD}-{RUNNING_NO}-{topic}.md`) เอง แต่สำหรับ Phase 2 (spec → backlog) จะ **อ้างอิงไปยัง workflow ของ `backlog-analyst`/`requirement-to-backlog` ด้านล่างแทนการเขียนขั้นตอนซ้ำ** เพื่อไม่ให้เกิด drift หลายจุด — ถ้าจะแก้ template เอกสาร spec หรือธรรมเนียมตั้งชื่อไฟล์ ให้แก้ทั้งสองไฟล์นี้พร้อมกัน ส่วนการแก้วิธีแตก backlog ให้ไปแก้คู่ agent/skill ถัดไป
+
+ตัวอย่างคำขอที่ควร trigger คู่นี้: "นี่คือ requirement ของฟีเจอร์ใหม่ ช่วยเขียนเป็นเอกสารให้หน่อย", "รับ requirement นี้ไปสรุปเป็น backlog ให้หน่อย", "เพิ่ม requirement ใหม่แล้วแตกเป็น story"
+
+## Spec → Product Backlog workflow
+
+ถ้า spec มีอยู่แล้วและผู้ใช้ต้องการแค่วิเคราะห์เป็น backlog (ไม่มี requirement ดิบใหม่) ใช้คู่นี้
+ตรง ๆ — เป็น Phase 2 ที่คู่ intake ด้านบนก็อ้างอิงมาเช่นกัน ครอบคลุม pipeline เดียวกันทั้งหมด:
 
 - **Agent** [.claude/agents/backlog-analyst.md](.claude/agents/backlog-analyst.md) — เหมาะกับกรณีมี spec จำนวนมาก หรือต้องการแยกบริบทการทำงานออกจากบทสนทนาปัจจุบัน
 - **Skill** [.claude/skills/requirement-to-backlog/SKILL.md](.claude/skills/requirement-to-backlog/SKILL.md) — ทำ workflow เดียวกันแบบ inline โดยไม่ต้องเปิด subagent
