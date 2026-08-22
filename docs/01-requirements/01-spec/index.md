@@ -12,4 +12,5 @@
 ## เอกสารในหมวดนี้
 
 - [[local-story-hub|Local Story Hub — Product Spec]] — สเปคของโปรเจกต์ Local Story Hub สรุปจากไฟล์ requirement ที่ผู้ใช้แนบมา
+- [[20260822-01-it-log-pdpa-consent|IT Log Retention (90 วัน) และ PDPA Consent]] — ครอบคลุมผู้ใช้งานทุกกลุ่ม ไม่ใช่กลุ่มเป้าหมายกลุ่มใดกลุ่มหนึ่ง
 
