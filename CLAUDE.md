@@ -65,6 +65,23 @@ backlog (MISSING/PARTIAL/IN SYNC) เพิ่ม `BL-XXX` ที่ขาดโ
 รายการที่มาจาก spec ที่ยังมี Open Questions ค้างว่าเป็น provisional และบันทึกทุกการแก้ไขลง
 `docs/05-log/index.md` ตัวอย่างคำขอ: "เช็คหน่อยว่า backlog ตรงกับ requirement ล่าสุดไหม", "sync backlog ให้หน่อย"
 
+## Open Questions tracking
+
+แทนที่จะเพิ่ม tooling สำหรับ phase ถัดไป (`02-design`) ทั้งที่ Open Questions ของ spec ที่มีอยู่
+ยังไม่ปิดแม้แต่ไฟล์เดียว โปรเจกต์นี้เลือกเพิ่มเครื่องมือรวบรวม Open Questions ที่ค้างทั้งหมดไว้
+จุดเดียวก่อน เพื่อให้พาไปคุยกับผู้มีส่วนได้ส่วนเสีย (อาจารย์ที่ปรึกษา/ตัวแทนชุมชน) ได้ง่าย:
+
+- **Agent** [.claude/agents/open-questions-tracker.md](.claude/agents/open-questions-tracker.md)
+- **Skill** [.claude/skills/open-questions-tracker/SKILL.md](.claude/skills/open-questions-tracker/SKILL.md)
+
+ทั้งสองไฟล์นี้ก็ตั้งใจอธิบาย process ซ้ำกันเหมือนคู่อื่น ๆ — **แก้ทั้งสองไฟล์พร้อมกันเสมอ**
+เครื่องมือนี้**อ่านอย่างเดียว ไม่ตอบหรือเดาคำตอบ Open Question เอง** — ดึง Open Questions จาก
+ทุกไฟล์ spec, จับคู่กับ backlog item ที่ provisional เพราะคำถามนั้น, เดาว่าควรถามผู้มีส่วนได้
+ส่วนเสียฝ่ายไหน แล้ว **regenerate** (ไม่ใช่ append) ไฟล์สรุปที่
+`docs/01-requirements/03-task/open-questions.md` ทุกครั้งที่รัน — ไฟล์นี้เป็น snapshot สถานะ
+ปัจจุบัน ต่างจาก `05-log` ที่เก็บประวัติแบบ append เท่านั้น ตัวอย่างคำขอ: "สรุป Open Question
+ที่ค้างอยู่ทั้งหมดให้หน่อย", "มีคำถามอะไรที่ต้องเอาไปถามอาจารย์/ชุมชนบ้าง"
+
 ## โครงสร้างเอกสารและลำดับการไหลของงาน (docs pipeline)
 
 เอกสารทั้งหมดอยู่ใต้ `docs/` และแต่ละโฟลเดอร์มี `index.md` อธิบายจุดประสงค์ของตัวเอง ลำดับการไหลของงานคือ:
