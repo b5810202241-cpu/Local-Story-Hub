@@ -82,6 +82,38 @@ backlog (MISSING/PARTIAL/IN SYNC) เพิ่ม `BL-XXX` ที่ขาดโ
 ปัจจุบัน ต่างจาก `05-log` ที่เก็บประวัติแบบ append เท่านั้น ตัวอย่างคำขอ: "สรุป Open Question
 ที่ค้างอยู่ทั้งหมดให้หน่อย", "มีคำถามอะไรที่ต้องเอาไปถามอาจารย์/ชุมชนบ้าง"
 
+## Feature List (จาก backlog)
+
+จัดกลุ่ม backlog ให้เป็นภาพรวมระดับ Feature ที่อ่านง่ายกว่า backlog item ดิบ — อยู่ในฝั่ง
+`01-requirements` ล้วน ไม่แตะ `02-design` จึงไม่ผูกกับ gate ของ Open Questions เรียกใช้ได้
+ทันทีโดยไม่ต้องรอปิดคำถาม:
+
+- **Agent** [.claude/agents/feature-list-builder.md](.claude/agents/feature-list-builder.md)
+- **Skill** [.claude/skills/feature-list/SKILL.md](.claude/skills/feature-list/SKILL.md)
+
+ทั้งสองไฟล์นี้ก็อธิบาย process ซ้ำกัน — **แก้ทั้งสองไฟล์พร้อมกันเสมอ** จัดกลุ่ม 1 Epic = 1
+Feature เป็นค่าเริ่มต้น, จัด MoSCoW ระดับ Feature จาก Priority ของ backlog item ข้างใน, แล้ว
+**regenerate** (ไม่ใช่ append) `docs/01-requirements/03-task/feature-list.md` ทุกครั้งที่รัน
+— รูปแบบผลลัพธ์: ตารางสรุป (Feature / MoSCoW / backlog อ้างอิง) ด้านบน ตามด้วยคำอธิบายแต่ละ
+Feature ด้านล่าง
+
+## User Journey (จาก requirement) — ผ่าน gate ของ Open Questions
+
+เครื่องมือแรกของโปรเจกต์ที่เขียนเข้า `02-design/01-prototypes/` จริง จึงเป็นจุดที่บังคับใช้กฎ
+gate "Open Question ที่กระทบ scope ใหญ่ต้องปิดก่อนเข้า `02-design`" (ดูหัวข้อ "เงื่อนไขและ
+ข้อกำหนดในการทำงาน" ด้านล่าง) โดยตรง:
+
+- **Agent** [.claude/agents/user-journey-designer.md](.claude/agents/user-journey-designer.md)
+- **Skill** [.claude/skills/user-journey/SKILL.md](.claude/skills/user-journey/SKILL.md)
+
+ทั้งสองไฟล์นี้ก็อธิบาย process ซ้ำกัน — **แก้ทั้งสองไฟล์พร้อมกันเสมอ** ก่อนวาด journey ต้องเช็ค
+`docs/01-requirements/03-task/open-questions.md` เสมอ — ถ้ามี Open Question กระทบ journey ที่
+จะวาด **ต้องถามผู้ใช้ก่อนทุกครั้ง** ว่าจะร่างต่อแบบ DRAFT (ทำเครื่องหมายจุดที่ไม่แน่นอนไว้ชัดเจน)
+หรือรอคำตอบก่อน — ห้ามเลือกแทนผู้ใช้หรือข้ามการเช็คนี้ไม่ว่ากรณีใด ผลลัพธ์เป็น Mermaid diagram
+พร้อมคำอธิบายทีละ step ใต้กราฟที่ map กลับไปยัง `FR-x.x` ของสเปคต้นทางทุกข้อ บันทึกที่
+`docs/02-design/01-prototypes/{persona-slug}-journey.md` พร้อม wikilink กลับไปยัง spec ต้นทาง
+(bidirectional ตามกฎเดิม)
+
 ## โครงสร้างเอกสารและลำดับการไหลของงาน (docs pipeline)
 
 เอกสารทั้งหมดอยู่ใต้ `docs/` และแต่ละโฟลเดอร์มี `index.md` อธิบายจุดประสงค์ของตัวเอง ลำดับการไหลของงานคือ:
@@ -111,7 +143,7 @@ backlog (MISSING/PARTIAL/IN SYNC) เพิ่ม `BL-XXX` ที่ขาดโ
 - **05-log** — changelog, decision log, เหตุการณ์สำคัญ
 - **00-archived** — เอกสารเวอร์ชันเก่า/ที่ถูกยกเลิก
 
-`docs/` เป็น Obsidian vault (`docs/.obsidian/`) ตั้ง link format เป็น wikilink แบบ relative path (`newLinkFormat: relative`, `useMarkdownLinks: false` ใน `docs/.obsidian/app.json`) เพื่อให้ลิงก์ที่สร้างผ่าน Obsidian UI ตรงกับธรรมเนียมเดิม ไฟล์ `docs/.obsidian/workspace*.json` และ `cache` ถูก gitignore ไว้เพราะเป็น local/user-specific state
+**ทั้ง repo นี้คือ Obsidian vault เดียว** — root ของ vault คือโฟลเดอร์บนสุดของ repo (ที่มี `CLAUDE.md`) **ไม่ใช่ `docs/`** ไฟล์ config `.obsidian/app.json` อยู่ที่ root ตั้ง link format เป็น wikilink แบบ relative path (`newLinkFormat: relative`, `useMarkdownLinks: false`) เพื่อให้ลิงก์ที่สร้างผ่าน Obsidian UI ตรงกับธรรมเนียมเดิม — **เวลาเปิดวอลต์ใน Obsidian ต้องเปิดที่โฟลเดอร์ root ของ repo เสมอ ห้ามเปิดที่ `docs/` เป็นวอลต์แยก** ไม่เช่นนั้นจะหาไฟล์ในนี้ไม่เจอเพราะ Obsidian จะไม่เห็น `.obsidian/app.json` และอาจสร้างวอลต์ใหม่ที่ว่างเปล่าซ้อนขึ้นมาแทน ไฟล์ `.obsidian/workspace*.json` และ `cache` ที่ root ถูก gitignore ไว้เพราะเป็น local/user-specific state
 
 ## กฎสำคัญเมื่อแก้ไขเอกสาร
 

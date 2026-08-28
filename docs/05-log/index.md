@@ -25,3 +25,9 @@
 - เพิ่ม [[../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|01-spec/20260822-01-it-log-pdpa-consent]] จาก requirement ดิบที่ผู้ใช้ให้มา — ครอบคลุมผู้ใช้งานทุกกลุ่ม (ชุมชน, นักท่องเที่ยว, นิสิต/อาจารย์) ไม่ใช่กลุ่มใดกลุ่มหนึ่ง (ยืนยันกับผู้ใช้แล้วหลังจากที่คำว่า "ผู้ซื้อ" ในคำขอเดิมเป็นคำที่ใช้ผิด)
 - แตกเป็น backlog เพิ่ม 4 รายการ (BL-014 ถึง BL-017) ใน Epic ใหม่ "การปฏิบัติตามกฎหมาย IT และ PDPA" ที่ [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ทุกรายการยัง provisional เพราะสเปคมี Open Questions ค้างอยู่ (รูปแบบ consent, ประเภท log ที่ต้องเก็บ, ผู้เป็น Data Controller ฯลฯ)
 
+### 2026-08-22 — แก้ไขความเข้าใจผิดเรื่อง Obsidian vault root
+
+- พบว่า `CLAUDE.md` และ agent/skill ทุกไฟล์ (6 คู่) ระบุผิดมาตลอดว่า `docs/` คือ Obsidian vault root และไฟล์ config อยู่ที่ `docs/.obsidian/app.json` — ที่จริง **vault root คือโฟลเดอร์บนสุดของ repo** และ `.obsidian/app.json` อยู่ที่ root ไม่ใช่ใน `docs/`
+- สาเหตุที่พบ: ผู้ใช้เปิดไฟล์ในโปรเจกต์ไม่เจอ เมื่อตรวจสอบจึงพบว่าน่าจะมาจากการเปิด Obsidian ผิดตำแหน่ง (ชี้ไปที่ `docs/` แทน root) ตามคำแนะนำที่ผิดในเอกสาร
+- แก้ไขข้อความในทุกไฟล์ที่อ้างอิงผิด (`CLAUDE.md` และ `.claude/agents`, `.claude/skills` ทั้งหมด) ให้ระบุ vault root ที่ถูกต้อง พร้อมเพิ่มคำเตือนชัดเจนว่าต้องเปิด Obsidian ที่ root ของ repo เท่านั้น
+

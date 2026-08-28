@@ -13,7 +13,7 @@ description: >
 ทักษะนี้รวบรวม Open Questions จากทุกไฟล์ spec ของโปรเจกต์ Local Story Hub มาไว้ที่จุดเดียว
 เพื่อให้พาไปคุยกับผู้มีส่วนได้ส่วนเสียได้ง่าย ไม่ตกหล่น — **ไม่มีหน้าที่ตอบหรือเดาคำตอบเอง**
 
-`docs/` เป็น Obsidian vault (`newLinkFormat: relative`, `useMarkdownLinks: false`) — ทุก
+repo นี้ทั้งหมดเป็น Obsidian vault เดียว (root คือโฟลเดอร์บนสุดของ repo ไม่ใช่ `docs/` — ดู `.obsidian/app.json` ที่ root: `newLinkFormat: relative`, `useMarkdownLinks: false`) — ทุก
 ลิงก์ต้องเป็น wikilink แบบ relative path เท่านั้น
 
 ## เมื่อไรควรมอบงานต่อให้ agent `open-questions-tracker`

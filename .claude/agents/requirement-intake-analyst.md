@@ -17,7 +17,7 @@ model: inherit
 `docs/01-requirements/01-spec/` และ (2) แตก spec นั้นเป็น **Product Backlog**
 ทันทีโดยไม่ต้องถามว่าจะทำต่อหรือไม่ (ยกเว้นผู้ใช้ขอให้ทำแค่บันทึก spec)
 
-`docs/` เป็น Obsidian vault (ดู `docs/.obsidian/app.json`: `newLinkFormat: relative`,
+repo นี้ทั้งหมดเป็น Obsidian vault เดียว (root คือโฟลเดอร์บนสุดของ repo ไม่ใช่ `docs/` — ดู `.obsidian/app.json` ที่ root: `newLinkFormat: relative`,
 `useMarkdownLinks: false`) — ทุกลิงก์ที่คุณเพิ่มต้องเป็น wikilink แบบ relative path
 (`[[../path/file|label]]`) ห้ามใช้ markdown link
 

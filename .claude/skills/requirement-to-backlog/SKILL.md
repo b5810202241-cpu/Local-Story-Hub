@@ -7,7 +7,7 @@ description: วิเคราะห์เอกสาร requirement/spec ใ�
 
 ทักษะนี้ใช้แปลงเอกสาร requirement/spec ให้เป็น Product Backlog ที่พร้อมใช้วางแผนงาน ตามลำดับ pipeline ของโปรเจกต์ (`01-requirements: 01-spec → 02-plan → 03-task`) ที่ระบุไว้ใน `CLAUDE.md`
 
-`docs/` เป็น Obsidian vault (ดู `docs/.obsidian/app.json`: `newLinkFormat: relative`, `useMarkdownLinks: false`) — ทุกลิงก์ระหว่างเอกสารที่คุณสร้าง/แก้ไขต้องเป็น **wikilink แบบ relative path** รูปแบบ `[[../path/file|label]]` เท่านั้น ห้ามใช้ markdown link (`[label](path)`) เด็ดขาด ไม่เช่นนั้น Graph view และ backlink ของ Obsidian จะไม่เห็นความเชื่อมโยง
+repo นี้ทั้งหมดเป็น Obsidian vault เดียว (root คือโฟลเดอร์บนสุดของ repo ไม่ใช่ `docs/` — ดู `.obsidian/app.json` ที่ root: `newLinkFormat: relative`, `useMarkdownLinks: false`) — ทุกลิงก์ระหว่างเอกสารที่คุณสร้าง/แก้ไขต้องเป็น **wikilink แบบ relative path** รูปแบบ `[[../path/file|label]]` เท่านั้น ห้ามใช้ markdown link (`[label](path)`) เด็ดขาด ไม่เช่นนั้น Graph view และ backlink ของ Obsidian จะไม่เห็นความเชื่อมโยง
 
 ## เมื่อไรควรมอบงานต่อให้ agent `backlog-analyst`
 
