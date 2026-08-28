@@ -31,3 +31,11 @@
 - สาเหตุที่พบ: ผู้ใช้เปิดไฟล์ในโปรเจกต์ไม่เจอ เมื่อตรวจสอบจึงพบว่าน่าจะมาจากการเปิด Obsidian ผิดตำแหน่ง (ชี้ไปที่ `docs/` แทน root) ตามคำแนะนำที่ผิดในเอกสาร
 - แก้ไขข้อความในทุกไฟล์ที่อ้างอิงผิด (`CLAUDE.md` และ `.claude/agents`, `.claude/skills` ทั้งหมด) ให้ระบุ vault root ที่ถูกต้อง พร้อมเพิ่มคำเตือนชัดเจนว่าต้องเปิด Obsidian ที่ root ของ repo เท่านั้น
 
+### 2026-08-22 — เพิ่ม feature-list.md และ User Journey แบบ DRAFT ทั้ง 3 persona
+
+- สร้าง [[../01-requirements/03-task/feature-list|03-task/feature-list]] จาก backlog ปัจจุบัน (7 Feature, MoSCoW: Must 6 / Could 1)
+- ก่อนวาด User Journey เช็ค [[../01-requirements/03-task/open-questions|open-questions]] ตามกฎ gate แล้วพบว่าทั้ง 3 journey มี Open Question กระทบอยู่ — ผู้ใช้ยืนยันให้ร่างทุก journey เป็น **DRAFT** ต่อไปโดยทำเครื่องหมายจุดที่ไม่แน่นอนไว้ชัดเจน แทนการรอปิดคำถามก่อน
+- สร้าง 3 journey ใน [[../../02-design/01-prototypes/index|02-design/01-prototypes]]: [[../../02-design/01-prototypes/tourist-journey|tourist-journey]], [[../../02-design/01-prototypes/community-content-journey|community-content-journey]], [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]
+- `student-content-journey` มี Open Question เชิงโครงสร้างจริง (ต้องผ่านอนุมัติจากชุมชน/อาจารย์ก่อนเผยแพร่หรือไม่) จึงวาด diagram แสดงทั้งสองเส้นทางที่เป็นไปได้แทนการเดาว่าจะเป็นเส้นทางไหน
+- เพิ่ม wikilink ย้อนกลับจาก `local-story-hub.md` และ `20260822-01-it-log-pdpa-consent.md` ไปยัง journey ที่เกี่ยวข้องแล้ว ตามกฎ bidirectional link
+
