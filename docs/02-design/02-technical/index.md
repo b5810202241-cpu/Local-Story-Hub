@@ -8,3 +8,9 @@
 - เทคโนโลยีและไลบรารีที่เลือกใช้ พร้อมเหตุผล
 
 เอกสารในโฟลเดอร์นี้คือพิมพ์เขียวที่ทีมพัฒนาใช้อ้างอิงตอนลงมือเขียนโค้ด และเป็นฐานในการวางแผนทดสอบใน [[../../03-testing/01-test-plan/index|01-test-plan]]
+
+## เอกสารในหมวดนี้
+
+> ทุกไฟล์ในหมวดนี้เป็น **conceptual** — ยังไม่ผูกมัดกับ technical stack เฉพาะเจาะจง
+
+- [[architecture|architecture]] — High-Level Architecture: component หลักและ data flow ตาม User Journey

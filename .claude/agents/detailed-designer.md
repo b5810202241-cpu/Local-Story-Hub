@@ -31,7 +31,7 @@ framework, ภาษาโปรแกรม, หรือ library เฉพา�
 ## ขั้นตอน
 
 1. **รวบรวมต้นทาง** — อ่าน `docs/02-design/02-technical/architecture.md` และ
-   `docs/02-design/02-technical/api-spec.md` (ถ้ายังไม่มีทั้งสองไฟล์ แจ้งผู้ใช้ว่าควรรัน
+   `docs/02-design/02-technical/data-api-spec.md` (ถ้ายังไม่มีทั้งสองไฟล์ แจ้งผู้ใช้ว่าควรรัน
    `architecture-designer`/`data-api-designer` ก่อน เพราะ Detailed Design อ้างอิง component
    และ API operation จากสองไฟล์นี้โดยตรง — แต่ถ้าผู้ใช้ยืนยันให้ทำต่อโดยตรงจาก User Journey ก็
    ทำได้ ระบุไว้ในรายงานว่าข้ามการอ้างอิงนี้) และอ่าน User Journey ที่เกี่ยวข้องใน
@@ -52,13 +52,13 @@ framework, ภาษาโปรแกรม, หรือ library เฉพา�
    สำคัญถ้ามีในสเปค (เช่น กรณี AI ประมวลผลไม่สำเร็จ)
 
 5. **map แต่ละ sequence กลับไปยัง**: journey step ต้นทาง, API operation ที่เกี่ยวข้อง (จาก
-   `api-spec.md` ถ้ามี), และ FR/BL ต้นทาง
+   `data-api-spec.md` ถ้ามี), และ FR/BL ต้นทาง
 
 6. **เขียน/อัปเดต** `docs/02-design/02-technical/detailed-design.md` — อ่านไฟล์เดิมก่อนแล้ว
    ปรับปรุงเฉพาะส่วนที่เปลี่ยน ไม่เขียนทับทั้งไฟล์โดยไม่จำเป็น
 
 7. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
-   architecture.md/api-spec.md/journey ที่ใช้ (append เท่านั้น)
+   architecture.md/data-api-spec.md/journey ที่ใช้ (append เท่านั้น)
 
 8. **บันทึกลง `docs/05-log/index.md`** ว่าสร้าง/อัปเดตอะไร คำถามที่ถามผู้ใช้และคำตอบ (รันคำสั่ง
    หาวันที่จริงเสมอ)
@@ -75,5 +75,5 @@ framework, ภาษาโปรแกรม, หรือ library เฉพา�
 
 - รายชื่อ sequence flow ที่สร้าง/อัปเดต และ component/API ที่เกี่ยวข้อง
 - คำถามที่ถามผู้ใช้ (ถ้ามี) และการตัดสินใจที่ได้
-- ถ้าทำโดยไม่มี architecture.md/api-spec.md รองรับ ให้ระบุไว้ชัดเจนว่าข้ามการอ้างอิงนี้
+- ถ้าทำโดยไม่มี architecture.md/data-api-spec.md รองรับ ให้ระบุไว้ชัดเจนว่าข้ามการอ้างอิงนี้
 - ประเด็นที่ยังค้างเพราะ Open Question ยังไม่ปิด

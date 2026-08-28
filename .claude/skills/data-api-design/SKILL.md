@@ -2,20 +2,22 @@
 name: data-api-design
 description: >
   สร้าง/ปรับปรุงเอกสาร Database Schema และ API Spec ของ Local Story Hub แบบ conceptual (ยังไม่
-  ผูกมัดกับ technical stack) ประกอบด้วย ER Diagram, รายละเอียดแต่ละตาราง/entity, และรายการ API
-  operation บันทึกที่ docs/02-design/02-technical/database-schema.md และ
-  docs/02-design/02-technical/api-spec.md ใช้เมื่อผู้ใช้ขอออกแบบ database schema, ER diagram,
-  หรือ API spec ไม่ใช้สำหรับ high-level architecture (ใช้ skill `architecture-design`) หรือ
-  sequence flow ละเอียด (ใช้ skill `detailed-design`)
+  ผูกมัดกับ technical stack) รวมไว้ใน**ไฟล์เดียว** ประกอบด้วย ER Diagram, รายละเอียดแต่ละ
+  ตาราง/entity, และรายการ API operation บันทึกที่
+  docs/02-design/02-technical/data-api-spec.md (แยกจาก High-Level Architecture ซึ่งเป็นอีก
+  ไฟล์ต่างหาก — ดู skill `architecture-design`) ใช้เมื่อผู้ใช้ขอออกแบบ database schema, ER
+  diagram, หรือ API spec ไม่ใช้สำหรับ high-level architecture (ใช้ skill `architecture-design`)
+  หรือ sequence flow ละเอียด (ใช้ skill `detailed-design`)
 ---
 
 # Database Schema & API Spec (Conceptual)
 
 ทักษะนี้แปล Requirement + Backlog + Feature List + User Journey ของ Local Story Hub ที่มีอยู่
-ให้เป็นเอกสาร **Database Schema และ API Spec แบบ conceptual** — ระบุ entity/ตาราง, field,
-ความสัมพันธ์, และ operation ที่ระบบต้องมี โดย **ห้ามผูกมัดกับ technical stack เฉพาะเจาะจง**
-(ห้ามระบุยี่ห้อฐานข้อมูล, รูปแบบ API เฉพาะ framework, หรือ data type เฉพาะภาษาโปรแกรม — ใช้
-ประเภทข้อมูลเชิงแนวคิดแทน)
+ให้เป็นเอกสาร **Database Schema และ API Spec แบบ conceptual รวมไว้ในไฟล์เดียว** — ระบุ
+entity/ตาราง, field, ความสัมพันธ์, และ operation ที่ระบบต้องมี โดย **ห้ามผูกมัดกับ technical
+stack เฉพาะเจาะจง** (ห้ามระบุยี่ห้อฐานข้อมูล, รูปแบบ API เฉพาะ framework, หรือ data type เฉพาะ
+ภาษาโปรแกรม — ใช้ประเภทข้อมูลเชิงแนวคิดแทน) เอกสารนี้เป็นคนละไฟล์กับ High-Level Architecture
+โดยเจตนา — ดู `architecture-design` สำหรับไฟล์นั้น
 
 `docs/` เป็นส่วนหนึ่งของ Obsidian vault ที่ root ของ repo (`newLinkFormat: relative`,
 `useMarkdownLinks: false`) — ทุกลิงก์ต้องเป็น wikilink แบบ relative path เท่านั้น
@@ -57,9 +59,9 @@ description: >
 6. **ระบุ API operation** ต่อ entity/feature: operation, input, output, เงื่อนไขสิทธิ์การเข้าถึง
    (ถ้ามี), และ map กลับไปยัง journey step / FR / BL ที่ทำให้เกิด operation นี้
 
-7. **เขียน/อัปเดตทั้งสองไฟล์**: `docs/02-design/02-technical/database-schema.md` และ
-   `docs/02-design/02-technical/api-spec.md` — อ่านไฟล์เดิมก่อนแล้วปรับปรุงเฉพาะส่วนที่เปลี่ยน
-   เชื่อมสองไฟล์นี้ด้วย wikilink ถึงกัน
+7. **เขียน/อัปเดตไฟล์เดียว**: `docs/02-design/02-technical/data-api-spec.md` แบ่งเป็น 2 หัวข้อ
+   หลักในไฟล์เดียวกัน — "## Database Schema" (entity + field + ER diagram) และ "## API Spec"
+   (operation list) — อ่านไฟล์เดิมก่อนแล้วปรับปรุงเฉพาะส่วนที่เปลี่ยน
 
 8. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
    journey/spec/architecture ที่ใช้ (append เท่านั้น)

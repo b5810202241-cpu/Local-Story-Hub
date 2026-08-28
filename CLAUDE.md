@@ -175,17 +175,18 @@ cloud) เว้นแต่ผู้ใช้ระบุเองว่าต�
 - **Skill** [.claude/skills/architecture-design/SKILL.md](.claude/skills/architecture-design/SKILL.md)
 - บันทึกที่ `docs/02-design/02-technical/architecture.md`
 
-**2. Database Schema + API Spec** — ER Diagram, รายละเอียดแต่ละ entity, และ API operation:
+**2. Database Schema + API Spec** — ER Diagram, รายละเอียดแต่ละ entity, และ API operation
+**รวมไว้ในไฟล์เดียว** (แยกจาก High-Level Architecture โดยเจตนา):
 - **Agent** [.claude/agents/data-api-designer.md](.claude/agents/data-api-designer.md)
 - **Skill** [.claude/skills/data-api-design/SKILL.md](.claude/skills/data-api-design/SKILL.md)
-- บันทึกที่ `docs/02-design/02-technical/database-schema.md` และ
-  `docs/02-design/02-technical/api-spec.md` — ควรมี `architecture.md` ก่อน (ไม่บังคับ)
+- บันทึกที่ `docs/02-design/02-technical/data-api-spec.md` (หัวข้อ "Database Schema" และ "API
+  Spec" อยู่ในไฟล์เดียวกัน) — ควรมี `architecture.md` ก่อน (ไม่บังคับ)
 
 **3. Detailed Design** — Sequence Flow ของการทำงานสำคัญที่ข้าม component:
 - **Agent** [.claude/agents/detailed-designer.md](.claude/agents/detailed-designer.md)
 - **Skill** [.claude/skills/detailed-design/SKILL.md](.claude/skills/detailed-design/SKILL.md)
 - บันทึกที่ `docs/02-design/02-technical/detailed-design.md` — ควรมี `architecture.md` +
-  `api-spec.md` ก่อน (ไม่บังคับ แต่ sequence จะอ้างอิง component/API จากสองไฟล์นั้น)
+  `data-api-spec.md` ก่อน (ไม่บังคับ แต่ sequence จะอ้างอิง component/API จากสองไฟล์นั้น)
 
 ทุกคู่ในกลุ่มนี้เป็นไฟล์แยกกัน (agent ≠ skill ในแต่ละคู่) — **แก้ทั้งสองไฟล์ในคู่เดียวกันพร้อม
 กันเสมอ** เหมือนคู่อื่น ๆ ทั้งหมดในโปรเจกต์นี้

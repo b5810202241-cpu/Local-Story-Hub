@@ -71,3 +71,15 @@
 - Consent บันทึกจริงผ่าน `localStorage` และแสดงสถานะเป็น badge ที่ header ทุกหน้าฝั่งนักท่องเที่ยว, ค้นหากรองผลลัพธ์แบบ live, บันทึกสถานที่โปรด/โพสต์รีวิวทำงานจริงและจำสถานะข้ามการโหลดหน้า
 - ปุ่ม AI ทุกปุ่มในหน้าสร้างคอนเทนต์ของชุมชนมีผลลัพธ์จริง (ไม่ใช่ปุ่มเปล่า) และการเผยแพร่/บันทึกร่างเชื่อมข้อมูลไปแสดงในตารางหน้า dashboard จริงผ่าน `localStorage` — จำลอง data flow ข้ามหน้าจอ
 - ฟอร์มเผยแพร่ผลงานนิสิตมีการตรวจสอบข้อมูลก่อนส่งจริง และแสดงหน้าจอสำเร็จเมื่อเผยแพร่
+
+### 2026-08-28 — เพิ่ม 3 คู่ agent/skill สำหรับ Technical Design (conceptual) + รวมไฟล์ Database/API เป็นไฟล์เดียว
+
+- เพิ่ม `architecture-designer`/`architecture-design`, `data-api-designer`/`data-api-design`, `detailed-designer`/`detailed-design` — ทั้งหมด conceptual ไม่ผูกมัดกับ technical stack ตามที่ผู้ใช้ขอ
+- ผู้ใช้ขอให้รวม Database Schema + API Spec เป็นไฟล์เดียว (`data-api-spec.md`) แทนการแยก 2 ไฟล์ — แก้ agent/skill ของคู่นั้นและ reference ใน `detailed-designer`/`detailed-design` ให้ตรงกันแล้ว ส่วน Architecture (High-Level Design) ยังคงแยกไฟล์ต่างหากตามที่ขอ
+
+### 2026-08-28 — รัน architecture-designer ครั้งแรก สร้าง architecture.md
+
+- ก่อนวาด data flow พบจุดตัดสินใจเชิงสถาปัตยกรรมที่ไม่มีคำตอบในสเปค (ไม่ใช่ Open Question ที่มีอยู่แล้ว) — ถามผู้ใช้ตามหลักการของ agent (≥3 ทางเลือกพร้อมข้อดี/ข้อเสีย): AI Content Service ควรเป็น Synchronous, Asynchronous ผ่านคิว, หรือ Hybrid — ผู้ใช้เลือก **Synchronous** เพราะสอดคล้องกับ [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]] ที่ออกแบบไว้แล้ว
+- ประเมิน Open Questions ทั้ง 14 ข้อใน [[../01-requirements/03-task/open-questions|open-questions]] แล้วพบว่าไม่มีข้อไหนบล็อกการออกแบบ conceptual ได้ (ออกแบบ component แบบกลาง ๆ ได้โดยไม่ต้องรู้คำตอบ) จึงไม่หยุดถามเพิ่ม แต่ระบุเป็นหมายเหตุ "Open Items" ไว้ในเอกสารแทน
+- สร้าง [[../02-design/02-technical/architecture|02-technical/architecture]]: ระบุ 6 component หลัก + data flow (Mermaid) ตาม User Journey ทั้ง 3 เส้นทาง + Decision Log + Open Items ที่กระทบสถาปัตยกรรมในอนาคต
+- เพิ่ม wikilink สองทางกับ spec ทั้ง 2 ไฟล์และ journey ทั้ง 3 ไฟล์แล้ว
