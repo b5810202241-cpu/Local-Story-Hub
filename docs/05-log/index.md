@@ -39,3 +39,9 @@
 - `student-content-journey` มี Open Question เชิงโครงสร้างจริง (ต้องผ่านอนุมัติจากชุมชน/อาจารย์ก่อนเผยแพร่หรือไม่) จึงวาด diagram แสดงทั้งสองเส้นทางที่เป็นไปได้แทนการเดาว่าจะเป็นเส้นทางไหน
 - เพิ่ม wikilink ย้อนกลับจาก `local-story-hub.md` และ `20260822-01-it-log-pdpa-consent.md` ไปยัง journey ที่เกี่ยวข้องแล้ว ตามกฎ bidirectional link
 
+### 2026-08-22 — ปิด Open Question เรื่องการอนุมัติผลงานนิสิต
+
+- ผู้ใช้ยืนยันว่าผลงานของนิสิต (FR-3.1) เผยแพร่ได้ทันทีโดยไม่ต้องผ่านการอนุมัติจากชุมชนหรืออาจารย์ก่อน — ย้ายจาก Open Questions ไปเป็น Business Rule ใน [[../01-requirements/01-spec/local-story-hub|local-story-hub]] แล้ว
+- อัปเดต BL-013 ใน [[../01-requirements/03-task/product-backlog|product-backlog]]: เพิ่ม Acceptance Criteria สะท้อนการเผยแพร่ทันที และปรับหมายเหตุว่าคำถามนี้ปิดแล้ว (ยังเหลือ Open Question ย่อยเรื่องวิธีเชื่อมโยงผลงานกับพื้นที่ชุมชน)
+- อัปเดต [[../01-requirements/03-task/open-questions|open-questions]] และ [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]: ตัดเส้นทาง "ต้องอนุมัติ" ออกจาก diagram เหลือ flow เดียว (อัปโหลด → เผยแพร่ทันที) — journey ยังเป็น DRAFT ต่อเพราะ Open Question ย่อยเรื่องการเชื่อมโยงกับชุมชนยังไม่ปิด
+
