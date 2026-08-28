@@ -136,6 +136,24 @@ design system เสมอ:
 รองรับทั้งสร้างทั้งระบบและระบุเจาะจง (เฉพาะ persona/feature/journey เดียว) ทุกจุดที่คลุมเครือ
 ต้องถามพร้อมเสนออย่างน้อย 3 ทางเลือกพร้อมข้อดี/ข้อเสียเสมอ ไม่ใช่ถามลอย ๆ หรือเดาเอง
 
+## Test Case Builder — Acceptance Criteria + User Journey → Test Plan
+
+Acceptance Criteria มีอยู่แล้วในทุก backlog item (ผ่าน `backlog-analyst`/`requirement-to-backlog`)
+เครื่องมือนี้แค่แปลงให้เป็น test case ที่พร้อมใช้ ไม่ได้แต่งเงื่อนไขใหม่:
+
+- **Agent** [.claude/agents/test-case-builder.md](.claude/agents/test-case-builder.md)
+- **Skill** [.claude/skills/test-cases/SKILL.md](.claude/skills/test-cases/SKILL.md)
+
+ทั้งสองไฟล์นี้ก็อธิบาย process ซ้ำกัน — **แก้ทั้งสองไฟล์พร้อมกันเสมอ** `docs/03-testing/01-test-plan/test-plan.md` แบ่งเป็น 2 ส่วนที่ปฏิบัติต่างกัน: **"Test Case จาก Acceptance
+Criteria"** (`TC-XXX`) — regenerate ทั้งหมดใหม่ทุกครั้งที่รันจาก backlog + journey ปัจจุบัน
+กับ **"Test Case เพิ่มเติม (เพิ่มโดยมนุษย์)"** (`TC-M-XXX`) — **ห้ามแตะต้องเด็ดขาด** เก็บ edge
+case ที่คนเพิ่มเอง คนละ namespace ID กับส่วน auto-generated เพื่อไม่ให้ชนกัน backlog item ที่
+ไม่มี step ใน journey ใดเลย (เช่น พฤติกรรม backend อย่าง log retention) จะไม่ถูกสร้าง test case
+ให้ แต่ระบุไว้ในหัวข้อ "Backlog ที่ยังไม่มี Test Case" แทน
+
+ยังไม่สร้างเครื่องมือบันทึกผลทดสอบจริง (`03-testing/02-test-result`) เพราะยังไม่มีโค้ดให้รัน
+ทดสอบ — รอจนกว่าจะเริ่มมีโค้ดจริงค่อยพิจารณาเพิ่ม
+
 ## โครงสร้างเอกสารและลำดับการไหลของงาน (docs pipeline)
 
 เอกสารทั้งหมดอยู่ใต้ `docs/` และแต่ละโฟลเดอร์มี `index.md` อธิบายจุดประสงค์ของตัวเอง ลำดับการไหลของงานคือ:

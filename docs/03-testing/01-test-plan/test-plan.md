@@ -6,7 +6,13 @@
 >
 > **สถานะรวม**: ทุก test case เป็น **ยังไม่ทดสอบ** เพราะยังไม่มีซอร์สโค้ดให้ทดสอบจริง (ดู `CLAUDE.md`) — เอกสารนี้เตรียมไว้ล่วงหน้าเพื่อให้พร้อมทดสอบทันทีที่มีระบบจริง — test case ที่มาจาก journey step ที่ยังเป็น DRAFT (ขึ้นกับ Open Question) ถูกทำเครื่องหมายไว้ในคอลัมน์หมายเหตุ ต้องยืนยัน requirement ให้นิ่งก่อนถือเป็น test case สุดท้าย
 
-## นักท่องเที่ยว — [[../../02-design/01-prototypes/tourist-journey|tourist-journey]]
+## Test Case จาก Acceptance Criteria
+
+> ส่วนนี้ regenerate ใหม่ทั้งหมดทุกครั้งที่รัน `test-case-builder` — ห้ามแก้ไขด้วยมือถาวร
+> (จะหายเมื่อรันใหม่) ถ้าต้องการเพิ่ม test case เอง ให้เพิ่มในหัวข้อ "Test Case เพิ่มเติม"
+> ด้านล่างแทน
+
+### นักท่องเที่ยว — [[../../02-design/01-prototypes/tourist-journey|tourist-journey]]
 
 | ID | Journey Step | Test Case (Given/When/Then) | Priority | Source | สถานะ | หมายเหตุ |
 |---|---|---|---|---|---|---|
@@ -19,7 +25,7 @@
 | TC-007 | 6 | Given นักท่องเที่ยวเคยเข้าดูแหล่งท่องเที่ยวในระบบ, When เขียนรีวิว, Then ระบบบันทึกและแสดงรีวิวนั้นในหน้าแหล่งท่องเที่ยว | Could | BL-011 | ยังไม่ทดสอบ | — |
 | TC-008 | 7 | Given นักท่องเที่ยวดูแหล่งท่องเที่ยวที่สนใจ, When กดบันทึก, Then ระบบเก็บรายการสถานที่โปรดไว้ให้ดูภายหลังได้ | Could | BL-012 | ยังไม่ทดสอบ | — |
 
-## ชุมชน — [[../../02-design/01-prototypes/community-content-journey|community-content-journey]]
+### ชุมชน — [[../../02-design/01-prototypes/community-content-journey|community-content-journey]]
 
 | ID | Journey Step | Test Case (Given/When/Then) | Priority | Source | สถานะ | หมายเหตุ |
 |---|---|---|---|---|---|---|
@@ -32,15 +38,24 @@
 | TC-015 | 6 | Given เนื้อหาภาษาไทยที่ชุมชนเขียนไว้, When เลือกให้ระบบแปลเป็นภาษาอังกฤษ, Then ระบบแสดงคำแปลคู่กับต้นฉบับให้ตรวจสอบก่อนเผยแพร่ | Must | BL-003 | ยังไม่ทดสอบ | DRAFT — รูปแบบการแปล (ข้อความอย่างเดียว/มีเสียงพากย์) ยังเป็น Open Question |
 | TC-016 | 7 | Given ผู้ใช้เข้าใช้งานหน้าจัดการคอนเทนต์, When แสดงผล, Then ตัวอักษรและปุ่มมีขนาดใหญ่พอมองเห็นชัด และขั้นตอนการใช้งานไม่ซับซ้อนเกินความจำเป็น | Must | BL-007 | ยังไม่ทดสอบ | — |
 
-## นิสิตนิเทศศาสตร์ — [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]
+### นิสิตนิเทศศาสตร์ — [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]
 
 | ID | Journey Step | Test Case (Given/When/Then) | Priority | Source | สถานะ | หมายเหตุ |
 |---|---|---|---|---|---|---|
 | TC-017 | 3 | Given นิสิตอัปโหลดผลงานเสร็จ, When กดเผยแพร่, Then ระบบเผยแพร่ผลงานทันทีโดยไม่ต้องรอการอนุมัติจากชุมชนหรืออาจารย์ก่อน | Must | BL-013 | ยังไม่ทดสอบ | — (Open Question เรื่องอนุมัติปิดแล้ว 2026-08-22) |
 | TC-018 | 4 | Given นิสิตสร้างผลงานคอนเทนต์ที่เกี่ยวกับชุมชนใดชุมชนหนึ่ง, When เผยแพร่ผ่านระบบ, Then ผลงานนั้นแสดงเชื่อมโยงกับชุมชนที่เกี่ยวข้องให้นักท่องเที่ยว/ชุมชนเห็นได้ | Must | BL-013 | ยังไม่ทดสอบ | DRAFT — วิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชนยังเป็น Open Question |
 
+## Test Case เพิ่มเติม (เพิ่มโดยมนุษย์)
+
+> ส่วนนี้ `test-case-builder` จะไม่แตะต้องเด็ดขาดไม่ว่ารันกี่ครั้ง — ใช้เก็บ test case ที่คิดเพิ่มเอง
+> (เช่น edge case ที่ไม่มีใน Acceptance Criteria) ใช้ ID ขึ้นต้นด้วย `TC-M-` (เช่น `TC-M-001`)
+> เพื่อไม่ให้ชนกับเลขในส่วน auto-generated ด้านบน — ยังไม่มีรายการในส่วนนี้
+
+## Backlog ที่ยังไม่มี Test Case
+
+- BL-014, BL-017 (พฤติกรรม backend/log — ไม่มี step ใน journey ใดโดยตรง ควรมี test plan แยกเมื่อมี technical design ของ 02-technical รองรับ)
+
 ## สรุป
 
-- รวม 18 test case จาก 13 backlog item (ครอบคลุม 3 journey ทั้งหมด)
+- รวม 18 test case จาก 13 backlog item (ครอบคลุม 3 journey ทั้งหมด) — ยังไม่มี test case เพิ่มเติมที่มนุษย์เพิ่มเอง
 - test case ที่เป็น DRAFT เพราะ Open Question ยังไม่ปิด: 8 จาก 18 ข้อ (TC-001, TC-002, TC-003, TC-005, TC-009, TC-014, TC-015, TC-018)
-- backlog item ที่ยังไม่อยู่ใน test plan นี้เพราะไม่มี step ใน journey ใดโดยตรง: BL-014, BL-017 (พฤติกรรม backend/log — ควรมี test plan แยกเมื่อมี technical design ของ 02-technical รองรับ)
