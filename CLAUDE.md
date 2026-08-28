@@ -161,6 +161,35 @@ case ที่คนเพิ่มเอง คนละ namespace ID กับ
 ยังไม่สร้างเครื่องมือบันทึกผลทดสอบจริง (`03-testing/02-test-result`) เพราะยังไม่มีโค้ดให้รัน
 ทดสอบ — รอจนกว่าจะเริ่มมีโค้ดจริงค่อยพิจารณาเพิ่ม
 
+## Technical Design (Conceptual) — 3 คู่ agent/skill สำหรับ `02-design/02-technical`
+
+ครอบคลุม High-Level Architecture, Database Schema/API Spec, และ Detailed Design **ทั้งหมด
+เป็น conceptual — ห้ามผูกมัดกับ technical stack เฉพาะเจาะจง** (framework/ภาษา/ยี่ห้อฐานข้อมูล/
+cloud) เว้นแต่ผู้ใช้ระบุเองว่าตัดสินใจแล้ว ทั้ง 3 คู่ยึดหลักการเดียวกัน: **จุดไหนต้องตัดสินใจ
+เชิงเทคนิคแทนผู้ใช้ ห้ามเดา ต้องถามพร้อมเสนออย่างน้อย 3 แนวทางพร้อมข้อดี/ข้อเสียเสมอ** และ
+เขียนทับเฉพาะส่วนที่เปลี่ยนในไฟล์เดิม (ไม่ regenerate ทั้งไฟล์แบบ feature-list/open-questions
+เพราะเอกสารกลุ่มนี้มีเนื้อหาเชิงตัดสินใจที่มนุษย์มักแก้ไขเพิ่มเติมด้วยมือ)
+
+**1. Architecture** — component หลักของระบบ + data flow ตาม User Journey แต่ละเส้นทาง:
+- **Agent** [.claude/agents/architecture-designer.md](.claude/agents/architecture-designer.md)
+- **Skill** [.claude/skills/architecture-design/SKILL.md](.claude/skills/architecture-design/SKILL.md)
+- บันทึกที่ `docs/02-design/02-technical/architecture.md`
+
+**2. Database Schema + API Spec** — ER Diagram, รายละเอียดแต่ละ entity, และ API operation:
+- **Agent** [.claude/agents/data-api-designer.md](.claude/agents/data-api-designer.md)
+- **Skill** [.claude/skills/data-api-design/SKILL.md](.claude/skills/data-api-design/SKILL.md)
+- บันทึกที่ `docs/02-design/02-technical/database-schema.md` และ
+  `docs/02-design/02-technical/api-spec.md` — ควรมี `architecture.md` ก่อน (ไม่บังคับ)
+
+**3. Detailed Design** — Sequence Flow ของการทำงานสำคัญที่ข้าม component:
+- **Agent** [.claude/agents/detailed-designer.md](.claude/agents/detailed-designer.md)
+- **Skill** [.claude/skills/detailed-design/SKILL.md](.claude/skills/detailed-design/SKILL.md)
+- บันทึกที่ `docs/02-design/02-technical/detailed-design.md` — ควรมี `architecture.md` +
+  `api-spec.md` ก่อน (ไม่บังคับ แต่ sequence จะอ้างอิง component/API จากสองไฟล์นั้น)
+
+ทุกคู่ในกลุ่มนี้เป็นไฟล์แยกกัน (agent ≠ skill ในแต่ละคู่) — **แก้ทั้งสองไฟล์ในคู่เดียวกันพร้อม
+กันเสมอ** เหมือนคู่อื่น ๆ ทั้งหมดในโปรเจกต์นี้
+
 ## โครงสร้างเอกสารและลำดับการไหลของงาน (docs pipeline)
 
 เอกสารทั้งหมดอยู่ใต้ `docs/` และแต่ละโฟลเดอร์มี `index.md` อธิบายจุดประสงค์ของตัวเอง ลำดับการไหลของงานคือ:
