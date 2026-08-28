@@ -8,6 +8,8 @@
 > ดู User Journey (DRAFT) ที่ใช้สเปคนี้ประกอบได้ที่ [[../../02-design/01-prototypes/tourist-journey|tourist-journey]]
 >
 > ดู High-Level Architecture (conceptual) ที่ใช้สเปคนี้ประกอบได้ที่ [[../../02-design/02-technical/architecture|architecture]]
+>
+> ดู Database Schema + API Spec (conceptual) ที่ใช้สเปคนี้ประกอบได้ที่ [[../../02-design/02-technical/data-api-spec|data-api-spec]]
 
 ## Context
 

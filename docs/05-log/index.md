@@ -83,3 +83,10 @@
 - ประเมิน Open Questions ทั้ง 14 ข้อใน [[../01-requirements/03-task/open-questions|open-questions]] แล้วพบว่าไม่มีข้อไหนบล็อกการออกแบบ conceptual ได้ (ออกแบบ component แบบกลาง ๆ ได้โดยไม่ต้องรู้คำตอบ) จึงไม่หยุดถามเพิ่ม แต่ระบุเป็นหมายเหตุ "Open Items" ไว้ในเอกสารแทน
 - สร้าง [[../02-design/02-technical/architecture|02-technical/architecture]]: ระบุ 6 component หลัก + data flow (Mermaid) ตาม User Journey ทั้ง 3 เส้นทาง + Decision Log + Open Items ที่กระทบสถาปัตยกรรมในอนาคต
 - เพิ่ม wikilink สองทางกับ spec ทั้ง 2 ไฟล์และ journey ทั้ง 3 ไฟล์แล้ว
+
+### 2026-08-28 — รัน data-api-designer ครั้งแรก สร้าง data-api-spec.md
+
+- ก่อนออกแบบ entity พบจุดตัดสินใจเชิงโครงสร้างข้อมูลที่ไม่มีคำตอบในสเปค — ถามผู้ใช้ (≥3 ทางเลือกพร้อมข้อดี/ข้อเสีย): นักท่องเที่ยวต้องมีบัญชีผู้ใช้ (login) หรือไม่สำหรับเขียนรีวิว/บันทึกสถานที่โปรด — ผู้ใช้เลือก **ต้องมีบัญชีเต็มรูปแบบ** (ไม่ใช่ตัวเลือกที่แนะนำไว้ซึ่งคือแบบไม่มีบัญชี)
+- **ผลกระทบสำคัญ**: [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]] ฝั่งนักท่องเที่ยวออกแบบไว้แบบไม่มี login (ใช้ `localStorage`) จึงไม่ตรงกับการตัดสินใจนี้อีกต่อไป — ยังไม่ได้แก้ไข prototype ในรอบนี้ บันทึกไว้เป็นรายการที่ต้องตามแก้ทั้งใน `data-api-spec.md` และที่นี่
+- สร้าง [[../02-design/02-technical/data-api-spec|02-technical/data-api-spec]]: 8 entity (UserAccount แบบรวม role เดียวแทนการแยก 3 entity, Community, Content, Review, Bookmark, StudentWork, ConsentRecord, AccessLog) พร้อม ER Diagram (Mermaid) และ API operation ครบทุก feature หลัก
+- เพิ่ม wikilink สองทางกับ architecture.md และ spec ทั้ง 2 ไฟล์แล้ว

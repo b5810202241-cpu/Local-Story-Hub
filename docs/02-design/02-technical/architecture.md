@@ -2,6 +2,7 @@
 
 - **สถานะ**: Draft — conceptual เท่านั้น ยังไม่ผูกมัดกับ technical stack (framework/ภาษา/ยี่ห้อฐานข้อมูล/cloud) ใด ๆ
 - **อ้างอิงจาก**: [[../../01-requirements/01-spec/local-story-hub|local-story-hub]], [[../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]], [[../../01-requirements/03-task/feature-list|feature-list]], [[../01-prototypes/tourist-journey|tourist-journey]], [[../01-prototypes/community-content-journey|community-content-journey]], [[../01-prototypes/student-content-journey|student-content-journey]]
+- **ดู Database Schema + API Spec ที่ต่อยอดจากไฟล์นี้**: [[data-api-spec|data-api-spec]]
 
 ## Context
 
@@ -15,7 +16,7 @@
 | **API / Application Layer** | รับคำขอจาก Client, ควบคุม business logic และสิทธิ์การเข้าถึง, ประสานงานกับ component อื่นทั้งหมด — เป็นจุดเดียวที่ Client คุยด้วยโดยตรง |
 | **AI Content Service** | ปรับภาพ (FR-1.1), คิดแคปชัน (FR-1.2), แปลภาษา (FR-1.3), แนะนำ SEO (FR-1.4), แนะนำวิธีเล่าเรื่อง (FR-1.5) — ทำงานแบบ **Synchronous** (ดู Decision Log) |
 | **Consent & Log Service** | แสดง/บันทึก Consent (BL-015, BL-016), บันทึก access log ของผู้ใช้งานทุกคนอย่างน้อย 90 วัน (BL-014), เก็บหลักฐาน consent (BL-017) |
-| **Database** | เก็บข้อมูลหลักของระบบทั้งหมด (ชุมชน, คอนเทนต์, ผู้ใช้, รีวิว, ผลงานนิสิต, บันทึก consent, log) — ดูรายละเอียด entity ที่ [[data-api-spec|data-api-spec]] (เมื่อสร้างแล้ว) |
+| **Database** | เก็บข้อมูลหลักของระบบทั้งหมด (ชุมชน, คอนเทนต์, ผู้ใช้, รีวิว, ผลงานนิสิต, บันทึก consent, log) — ดูรายละเอียด entity ที่ [[data-api-spec|data-api-spec]] |
 | **External: Web Analytics** | เชื่อมต่อ Google Analytics เฉพาะเมื่อผู้ใช้ยินยอม (ผูกกับ Consent & Log Service) |
 
 ## Data Flow ตาม User Journey
