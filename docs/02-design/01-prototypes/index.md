@@ -10,6 +10,8 @@
 
 ## เอกสารในหมวดนี้
 
+- [[DESIGN|DESIGN.md]] — Design System (Brand Identity, Design Tokens, UI Components) แนวทาง earth tone / minimalist / Muji-inspired
+
 > ทุก journey ด้านล่างเป็น **DRAFT** — ขึ้นกับ Open Question ที่ยังไม่ปิด (ดู [[../../01-requirements/03-task/open-questions|open-questions]]) ต้องยืนยันกับผู้มีส่วนได้ส่วนเสียก่อนถือเป็นเวอร์ชันสุดท้าย
 
 - [[tourist-journey|tourist-journey]] — นักท่องเที่ยว: ค้นหาและวางแผนเที่ยวชุมชน

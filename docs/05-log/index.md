@@ -52,3 +52,9 @@
 - test case ที่มาจาก journey step ที่ยังเป็น DRAFT (8 จาก 18 ข้อ) ถูกทำเครื่องหมายไว้ในคอลัมน์หมายเหตุ เพื่อไม่ให้ถือเป็น test case สุดท้ายจนกว่า Open Question ที่เกี่ยวข้องจะปิด
 - เพิ่ม wikilink สองทางระหว่าง test plan กับ journey ทั้ง 3 ไฟล์แล้ว
 
+### 2026-08-22 — สร้าง DESIGN.md (Design System)
+
+- สร้าง [[../02-design/01-prototypes/DESIGN|02-design/01-prototypes/DESIGN]] ตามที่ผู้ใช้ขอ แนวทาง earth tone / minimalist / Muji-inspired ครอบคลุม Brand Identity & CI, Design Tokens (Colors, Typography, Spacing), และ UI Components & Pattern
+- ผูก design decision กับ requirement จริงในสเปค เช่น ขนาดตัวอักษรเริ่มต้น 18px และปุ่มขั้นต่ำ 48px มาจาก FR-1.7 (ผู้สูงอายุ), pattern Consent Banner มาจาก BL-015/BL-016
+- ระบุหมายเหตุจุดที่ Open Question (แพลตฟอร์ม, TTS) ยังกระทบ pattern บางส่วนไว้ท้ายเอกสาร ไม่ได้ฟันธงแทน
+
