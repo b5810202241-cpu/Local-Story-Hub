@@ -114,11 +114,11 @@ gate "Open Question ที่กระทบ scope ใหญ่ต้องป�
 `docs/02-design/01-prototypes/{persona-slug}-journey.md` พร้อม wikilink กลับไปยัง spec ต้นทาง
 (bidirectional ตามกฎเดิม)
 
-## Prototype Builder — สังเคราะห์ Requirement + Backlog + Feature List + User Journey เป็นหน้าจอ HTML
+## Prototype Builder — สังเคราะห์ Requirement + Backlog + Feature List + User Journey เป็นหน้าจอ HTML แบบ Interactive
 
 เครื่องมือที่แปลงทุกอย่างที่โปรเจกต์นี้สะสมไว้ (spec, backlog, feature list, journey) ให้เป็น
-Prototype จริงที่เปิดในเบราว์เซอร์ได้ ยึด `docs/02-design/01-prototypes/DESIGN.md` เป็น
-design system เสมอ:
+**Interactive Prototype** จริงที่เปิดในเบราว์เซอร์ได้ (มีพฤติกรรมจริงเมื่อคลิก/กรอกฟอร์ม ไม่ใช่
+แค่ mockup นิ่ง) ยึด `docs/02-design/01-prototypes/DESIGN.md` เป็น design system เสมอ:
 
 - **Agent** [.claude/agents/prototype-builder.md](.claude/agents/prototype-builder.md)
 - **Skill** [.claude/skills/prototype-builder/SKILL.md](.claude/skills/prototype-builder/SKILL.md)
@@ -128,10 +128,17 @@ design system เสมอ:
 1. **ไม่มี DESIGN.md → ห้ามเดาโทนสี/สไตล์เอง** ต้องหยุดถามผู้ใช้ก่อน (เสนอ ≥3 ทางเลือกพร้อม
    ข้อดี/ข้อเสีย) แล้วสร้าง DESIGN.md ให้ก่อนค่อยทำ prototype ต่อ
 2. **ต้องเสนอแผนให้ผู้ใช้ยืนยันก่อนสร้างไฟล์จริงเสมอ** (หน้าจอที่จะสร้าง, อ้างอิงจากอะไร,
-   component ที่ใช้, folder version ที่จะเก็บ) — ห้ามข้ามแม้ผู้ใช้ขอให้ "ทำเลย"
+   component ที่ใช้, พฤติกรรม Interactive ที่จะใส่ต่อหน้าจอ, folder version ที่จะเก็บ) — ห้าม
+   ข้ามแม้ผู้ใช้ขอให้ "ทำเลย"
 3. **มี prototype version เดิมอยู่แล้ว → ต้องถามทุกครั้งไม่มีข้อยกเว้น** ว่าจะสร้าง version ใหม่
    (`prototype-v{N+1}/`) หรือแก้ version ล่าสุด พร้อมให้คำแนะนำ แต่ผู้ใช้ตัดสินใจเอง
 4. เช็ค `open-questions.md` ก่อนวาดหน้าจอเสมอ เหมือน `user-journey-designer`
+5. **Interactive baseline เป็นค่าเริ่มต้นของทุกหน้าจอ ไม่ใช่ทางเลือก**: ปุ่ม/ฟอร์มต้องมีผลลัพธ์
+   จริงเมื่อกด, decision point ใน journey ต้องมี UI ให้เลือกจริง, state ที่ควรอยู่ข้ามหน้าให้
+   persist ด้วย `localStorage`, data ที่ควรไปโผล่หน้าอื่นให้จำลอง data flow จริงข้ามหน้าจอ,
+   ฟอร์ม validate ก่อนส่งจริง, ช่องค้นหา/กรองข้อมูลกรองแบบ live จริง — รายละเอียดเต็มอยู่ใน
+   agent/skill ทั้งสองไฟล์ ห้ามส่ง static HTML เปล่า ๆ เว้นแต่ผู้ใช้ระบุไว้ในแผนที่ยืนยันแล้ว
+   ว่าต้องการ static
 
 รองรับทั้งสร้างทั้งระบบและระบุเจาะจง (เฉพาะ persona/feature/journey เดียว) ทุกจุดที่คลุมเครือ
 ต้องถามพร้อมเสนออย่างน้อย 3 ทางเลือกพร้อมข้อดี/ข้อเสียเสมอ ไม่ใช่ถามลอย ๆ หรือเดาเอง

@@ -1,18 +1,20 @@
 ---
 name: prototype-builder
 description: >
-  สร้าง UI Prototype (หน้าจอ HTML ที่ใช้งานได้จริงในเบราว์เซอร์) ของ Local Story Hub โดย
-  สังเคราะห์จาก Requirement spec, Product Backlog, Feature List, และ User Journey เข้าด้วยกัน
-  อ้างอิงโทนสี/ตัวอักษร/คอมโพเนนต์จาก DESIGN.md เสมอ รองรับทั้งสร้างทั้งระบบและเจาะจงเฉพาะ
-  persona/feature/journey ใช้เมื่อผู้ใช้ขอ "สร้าง prototype", "ทำ mockup", "ขอ prototype ของ
-  ฟีเจอร์/journey นี้", หรือ "ปรับ prototype เดิม"
+  สร้าง **Interactive UI Prototype** เป็นไฟล์ HTML ที่ใช้งานได้จริงในเบราว์เซอร์ (มีพฤติกรรม
+  จริงเมื่อคลิก/กรอกฟอร์ม ไม่ใช่แค่ mockup นิ่ง ๆ) ของ Local Story Hub โดยสังเคราะห์จาก
+  Requirement spec, Product Backlog, Feature List, และ User Journey เข้าด้วยกัน อ้างอิงโทนสี/
+  ตัวอักษร/คอมโพเนนต์จาก DESIGN.md เสมอ รองรับทั้งสร้างทั้งระบบและเจาะจงเฉพาะ
+  persona/feature/journey ใช้เมื่อผู้ใช้ขอ "สร้าง prototype", "ทำ interactive mockup", "ขอ
+  prototype ของฟีเจอร์/journey นี้", หรือ "ปรับ prototype เดิม"
 ---
 
 # Prototype Builder
 
 ทักษะนี้แปล Requirement + Backlog + Feature List + User Journey ของ Local Story Hub ที่มีอยู่
-แล้วให้เป็นหน้าจอ HTML ที่ใช้งานได้จริง (เปิดในเบราว์เซอร์ได้ทันที) โดยยึดโทนสีและคอมโพเนนต์
-จาก DESIGN.md เสมอ
+แล้วให้เป็นหน้าจอ HTML **แบบ Interactive** (เปิดในเบราว์เซอร์ได้ทันที) โดยยึดโทนสีและคอมโพเนนต์
+จาก DESIGN.md เสมอ — **prototype ที่สร้างต้องมีพฤติกรรมจริงเสมอ ไม่ใช่แค่ mockup นิ่ง ๆ** (ดู
+นิยาม "Interactive baseline" ในขั้นตอนที่ 7)
 
 `docs/` เป็นส่วนหนึ่งของ Obsidian vault ที่ root ของ repo (`newLinkFormat: relative`,
 `useMarkdownLinks: false`) — ทุกลิงก์ระหว่างเอกสาร Markdown ต้องเป็น wikilink แบบ relative
@@ -69,7 +71,9 @@ Journey ที่เกี่ยวข้องใน `docs/02-design/01-prototy
 
 ก่อนสร้างไฟล์ใด ๆ ต้องสรุปแผนให้ผู้ใช้ตรวจสอบและยืนยันก่อนเสมอ ระบุ: หน้าจอที่จะสร้างทั้งหมด
 พร้อมชื่อไฟล์, แต่ละหน้าจออ้างอิงจาก journey/FR/BL อะไร, คอมโพเนนต์จาก DESIGN.md ที่จะใช้,
-จุดที่เป็น DRAFT (ถ้ามี), และจะเก็บที่ folder version ไหน (ดูข้อ 6) **ห้ามลงมือสร้างไฟล์จริง
+**พฤติกรรม Interactive ที่จะใส่ในแต่ละหน้าจอ** (ฟอร์มไหน validate, ปุ่มไหนมีผลลัพธ์จริง, จุด
+ไหนจำ state ข้ามหน้าด้วย `localStorage`, มีส่งข้อมูลข้ามหน้าจอไหม — ดูรายการฐานในข้อ 7), จุด
+ที่เป็น DRAFT (ถ้ามี), และจะเก็บที่ folder version ไหน (ดูข้อ 6) **ห้ามลงมือสร้างไฟล์จริง
 จนกว่าผู้ใช้จะยืนยันแผนนี้**
 
 ### 6. ตัดสินใจเรื่อง Folder Version (ถามทุกครั้งที่มีเวอร์ชันเดิมอยู่แล้ว)
@@ -89,12 +93,30 @@ List โฟลเดอร์ใน `docs/02-design/01-prototypes/prototype-v*/`
 
 ### 7. สร้างไฟล์ Prototype
 
-แต่ละหน้าจอเป็นไฟล์ HTML แยก (self-contained: inline CSS ในไฟล์เดียว เปิดตรงจากเบราว์เซอร์ได้
-โดยไม่ต้อง build, ไม่พึ่ง CDN ภายนอก) ใช้ CSS variable ตาม token ใน `DESIGN.md` แปลงเป็น CSS
-custom properties จริง ตั้งชื่อไฟล์ตาม screen/journey step ที่สื่อความหมาย บันทึกที่
-`docs/02-design/01-prototypes/prototype-v{N}/` พร้อมสร้าง
-`prototype-v{N}/README.md` สรุปแผนที่ยืนยันแล้ว (จากข้อ 5) พร้อม wikilink กลับไปยัง
-journey/spec/backlog ต้นทางของแต่ละหน้าจอ
+แต่ละหน้าจอเป็นไฟล์ HTML แยก (self-contained: inline CSS + inline JavaScript (vanilla ไม่ใช้
+library ภายนอก) ในไฟล์เดียว เปิดตรงจากเบราว์เซอร์ได้โดยไม่ต้อง build, ไม่พึ่ง CDN ภายนอกยกเว้น
+ฟอนต์ Google Fonts) ใช้ CSS variable ตาม token ใน `DESIGN.md` แปลงเป็น CSS custom properties
+จริง ตั้งชื่อไฟล์ตาม screen/journey step ที่สื่อความหมาย บันทึกที่
+`docs/02-design/01-prototypes/prototype-v{N}/` พร้อมสร้าง `prototype-v{N}/README.md` สรุปแผน
+ที่ยืนยันแล้ว (จากข้อ 5) พร้อม wikilink กลับไปยัง journey/spec/backlog ต้นทางของแต่ละหน้าจอ
+และสรุปพฤติกรรม Interactive ที่ใส่ไว้ต่อหน้าจอ (ดูตัวอย่างรูปแบบใน `prototype-v1/README.md`)
+
+**Interactive baseline — ทุก prototype ที่สร้างต้องมีอย่างน้อยเท่าที่เกี่ยวข้องกับหน้าจอนั้น
+(เป็นค่าเริ่มต้น ไม่ใช่ทางเลือก เว้นแต่ผู้ใช้ขอให้ทำ static ในแผนที่ตกลงกันไว้):**
+
+1. **ปุ่ม/การกระทำต้องมีผลลัพธ์จริงเมื่อกด** — ห้ามมีปุ่มที่กดแล้วไม่เกิดอะไรขึ้นเลย จำลองการ
+   ประมวลผล (เช่นปุ่ม AI) ด้วย loading state สั้น ๆ แล้วโชว์ผลลัพธ์จริง
+2. **จุดที่ journey มี decision/ทางแยก ต้องมี UI ให้เลือกจริงและเห็นผลต่างกันตามที่เลือก**
+3. **State ที่ควรอยู่ข้ามการโหลดหน้า ให้ persist ด้วย `localStorage`** แล้วสะท้อนสถานะในหน้าอื่น
+   ที่เกี่ยวข้องด้วย
+4. **ถ้า journey มีการสร้าง/ส่งข้อมูลที่ควรไปปรากฏในอีกหน้าจอหนึ่ง ให้จำลอง data flow นั้นจริง**
+   ผ่าน `localStorage` ระหว่างหน้าจอ ไม่ใช่แค่ redirect เฉย ๆ
+5. **ฟอร์มต้อง validate ก่อนดำเนินการจริง** พร้อมข้อความแจ้งข้อผิดพลาดที่อ่านเข้าใจง่าย ไม่ใช่
+   alert ทั่วไป
+6. **ช่องค้นหา/กรองข้อมูล ต้องกรองผลลัพธ์แบบ live จริง** พร้อม empty state เมื่อไม่พบผลลัพธ์
+
+ถ้าหน้าจอไหนไม่มีจุดที่เข้าเงื่อนไขข้างต้นเลย ก็ไม่ต้องฝืนใส่ interactivity ที่ไม่มีเหตุผลรองรับ
+ใน journey/requirement
 
 ### 8. เชื่อมโยงกลับ (bidirectional link) และรายงาน
 
