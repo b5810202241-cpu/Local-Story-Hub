@@ -12,3 +12,4 @@
 
 - [[product-backlog|product-backlog]] — Product Backlog ของโปรเจกต์
 - [[open-questions|open-questions]] — สรุป Open Questions ที่ยังค้างอยู่จากทุกไฟล์ spec (snapshot สถานะปัจจุบัน ไม่ใช่ log ประวัติ)
+- [[feature-list|feature-list]] — สรุป backlog เป็น Feature List ระดับสูงพร้อม MoSCoW (snapshot คำนวณจาก product-backlog.md เสมอ)
