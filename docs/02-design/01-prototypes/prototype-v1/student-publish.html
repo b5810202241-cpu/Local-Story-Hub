@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — เผยแพร่ผลงานนิสิต</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:680px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-sm);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-xl);}
+.step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
+label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);}
+input[type=text], select, textarea{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;}
+textarea{min-height:80px;}
+.upload-box{border:2px dashed var(--color-stone);border-radius:var(--radius-md);padding:var(--space-2xl);text-align:center;color:var(--color-bark);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-top:var(--space-sm);}
+.info-note{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);font-size:15px;color:var(--color-bark);margin-top:var(--space-lg);}
+.publish-bar{display:flex;justify-content:flex-end;margin-top:var(--space-xl);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site"><a href="#">พื้นที่นิสิตนิเทศศาสตร์</a></nav>
+</header>
+
+<main>
+  <h1>เผยแพร่ผลงานสนับสนุนชุมชน</h1>
+  <p class="hint">ผลงานของคุณจะเผยแพร่ทันทีหลังกดยืนยัน ไม่ต้องรอการอนุมัติจากชุมชนหรืออาจารย์</p>
+
+  <div class="step">
+    <label>อัปโหลดผลงาน</label>
+    <div class="upload-box">ลากไฟล์มาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px">เลือกไฟล์ (วิดีโอ/ภาพ/บทความ)</button></div>
+  </div>
+
+  <div class="step">
+    <label for="title">ชื่อผลงาน</label>
+    <input type="text" id="title" placeholder="เช่น สารคดีสั้น: วิถีทอผ้าบ้านผาบ่อง">
+
+    <label for="community" style="margin-top:var(--space-md)">เลือกชุมชนที่เกี่ยวข้อง</label>
+    <select id="community">
+      <option>ชุมชนบ้านผาบ่อง</option>
+      <option>ชุมชนริมน้ำแม่กลอง</option>
+      <option>ชุมชนดอยสูง</option>
+    </select>
+    <div class="draft-note">DRAFT — วิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชนยังเป็น Open Question (ตัวอย่างนี้สมมติให้เลือกจาก dropdown)</div>
+
+    <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
+    <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
+  </div>
+
+  <div class="info-note">✓ Open Question เรื่องการอนุมัติก่อนเผยแพร่ถูกตอบแล้ว: ผลงานเผยแพร่ได้ทันที ไม่ต้องผ่านการอนุมัติ</div>
+
+  <div class="publish-bar">
+    <button class="btn btn-primary">เผยแพร่ผลงานทันที</button>
+  </div>
+</main>
+
+</body>
+</html>

@@ -58,3 +58,10 @@
 - ผูก design decision กับ requirement จริงในสเปค เช่น ขนาดตัวอักษรเริ่มต้น 18px และปุ่มขั้นต่ำ 48px มาจาก FR-1.7 (ผู้สูงอายุ), pattern Consent Banner มาจาก BL-015/BL-016
 - ระบุหมายเหตุจุดที่ Open Question (แพลตฟอร์ม, TTS) ยังกระทบ pattern บางส่วนไว้ท้ายเอกสาร ไม่ได้ฟันธงแทน
 
+### 2026-08-22 — สร้าง Prototype v1 ด้วย prototype-builder (ทั้งระบบ 3 persona)
+
+- เสนอแผน (6 หน้าจอ อ้างอิงจาก journey/FR ใด, component จาก DESIGN.md อะไรบ้าง) ให้ผู้ใช้ยืนยันก่อนตามกฎบังคับของ `prototype-builder` แล้วจึงลงมือสร้าง — ยังไม่มี version เดิมมาก่อนจึงสร้าง `prototype-v1/` ได้เลยโดยไม่ต้องถามเรื่อง folder version
+- สร้าง [[../02-design/01-prototypes/prototype-v1/README|02-design/01-prototypes/prototype-v1]]: 6 หน้าจอ HTML self-contained (ยึด DESIGN.md ทุก token) ครอบคลุมทั้ง 3 journey — นักท่องเที่ยว 3 หน้า, ชุมชน 2 หน้า, นิสิต 1 หน้า
+- จุดที่เป็น DRAFT ในแต่ละหน้าจอถูกทำเครื่องหมายไว้ในหน้าจอเองด้วย badge "DRAFT" ไม่ใช่แค่ในเอกสารข้างนอก เพื่อให้เห็นชัดตอนรีวิว
+- เพิ่ม wikilink สองทางระหว่าง prototype-v1 กับ journey ทั้ง 3 ไฟล์ และ index ของ 01-prototypes แล้ว
+

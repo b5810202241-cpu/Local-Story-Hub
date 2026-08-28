@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — สร้างคอนเทนต์ใหม่</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:720px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-xl);}
+.step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
+.step h2{font-size:22px;margin:0 0 var(--space-sm);display:flex;align-items:center;gap:var(--space-sm);}
+.step .step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:var(--color-clay);color:var(--color-paper);font-size:14px;font-weight:700;}
+.step p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-md);}
+.upload-box{border:2px dashed var(--color-stone);border-radius:var(--radius-md);padding:var(--space-2xl);text-align:center;color:var(--color-bark);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);margin-top:var(--space-sm);}
+input[type=text], textarea{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);}
+textarea{min-height:100px;}
+label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);}
+.suggestion-list{display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-top:var(--space-sm);}
+.suggestion-list span{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:999px;padding:4px 12px;font-size:14px;}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-top:var(--space-sm);}
+.toggle-row{display:flex;align-items:center;gap:var(--space-md);}
+.publish-bar{display:flex;justify-content:flex-end;gap:var(--space-md);margin-top:var(--space-xl);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site"><a href="community-dashboard.html">← กลับไปหน้าจัดการข้อมูล</a></nav>
+</header>
+
+<main>
+  <h1>สร้างคอนเทนต์ใหม่</h1>
+
+  <div class="step">
+    <h2><span class="step-num">1</span> อัปโหลดภาพ</h2>
+    <p class="hint">AI จะช่วยปรับภาพให้สวยเหมาะกับการโพสต์ (FR-1.1)</p>
+    <div class="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px">เลือกไฟล์</button></div>
+    <button class="btn btn-primary" style="margin-top:var(--space-md)">✨ ให้ AI ปรับภาพให้สวย</button>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">2</span> คิดแคปชันด้วย AI</h2>
+    <p class="hint">ป้อนคำสำคัญ แล้วให้ AI ช่วยแต่งแคปชัน (FR-1.2)</p>
+    <label for="kw">คำสำคัญ (Keyword)</label>
+    <input type="text" id="kw" placeholder="เช่น ทอผ้า, ภูมิปัญญา, แม่ฮ่องสอน">
+    <button class="btn btn-secondary" style="margin-top:var(--space-md)">✨ ให้ AI คิดแคปชัน</button>
+    <label style="margin-top:var(--space-md)">แคปชันที่แนะนำ (แก้ไขได้)</label>
+    <textarea>ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง สืบทอดจากรุ่นสู่รุ่นกว่า 80 ปี ✨</textarea>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">3</span> ให้ AI แนะนำวิธีเล่าเรื่อง</h2>
+    <p class="hint">ระบุหัวข้อที่อยากเล่า แล้วให้ AI ช่วยแนะนำโครงเรื่อง (FR-1.5)</p>
+    <button class="btn btn-secondary">✨ ขอคำแนะนำวิธีเล่าเรื่อง</button>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">4</span> คำแนะนำ SEO</h2>
+    <p class="hint">คำสำคัญที่คนมักใช้ค้นหาเนื้อหาแบบนี้</p>
+    <div class="suggestion-list"><span>#ทอผ้าแม่ฮ่องสอน</span><span>#เที่ยวชุมชน</span><span>#หัตถกรรมไทย</span></div>
+    <div class="draft-note">DRAFT — ต้องเชื่อมกับ search engine จริงหรือเป็นคำแนะนำภายในระบบเท่านั้น ยังเป็น Open Question</div>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">5</span> แปลเป็นภาษาอังกฤษ</h2>
+    <div class="toggle-row">
+      <label style="margin:0">แปลเนื้อหาเป็นภาษาอังกฤษด้วย AI</label>
+      <input type="checkbox">
+    </div>
+    <div class="draft-note">DRAFT — รูปแบบการแปล (ข้อความอย่างเดียว หรือมีเสียงพากย์ด้วย) ยังเป็น Open Question</div>
+  </div>
+
+  <div class="publish-bar">
+    <button class="btn btn-secondary">บันทึกฉบับร่าง</button>
+    <button class="btn btn-primary">เผยแพร่คอนเทนต์</button>
+  </div>
+</main>
+
+</body>
+</html>

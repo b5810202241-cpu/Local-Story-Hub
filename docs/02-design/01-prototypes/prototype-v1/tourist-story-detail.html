@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ชุมชนบ้านผาบ่อง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site a.active{color:var(--color-clay);font-weight:600;}
+main{max-width:780px;margin:0 auto;padding:var(--space-xl);}
+.hero-img{aspect-ratio:16/7;background:linear-gradient(135deg,var(--color-stone),var(--color-sand));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--color-bark);margin-bottom:var(--space-lg);}
+.title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-md);flex-wrap:wrap;}
+h1{font-size:32px;font-weight:600;margin:0;}
+.lang-toggle{display:inline-flex;border:1px solid var(--color-stone);border-radius:999px;overflow:hidden;}
+.lang-toggle button{border:none;background:transparent;padding:8px 16px;font-family:inherit;font-size:16px;cursor:pointer;color:var(--color-bark);}
+.lang-toggle button.active{background:var(--color-clay);color:var(--color-paper);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin:var(--space-sm) 0;}
+.story-text{font-size:18px;margin:var(--space-lg) 0;}
+.story-text[lang="en"]{display:none;}
+.map-box{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin:var(--space-xl) 0;}
+.map-box h2{font-size:22px;margin:0 0 var(--space-sm);}
+.actions{display:flex;gap:var(--space-md);margin:var(--space-xl) 0;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.reviews{margin-top:var(--space-2xl);}
+.reviews h2{font-size:22px;}
+textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:16px;color:var(--color-ink);}
+.review-item{border-top:1px solid var(--color-stone);padding:var(--space-md) 0;font-size:16px;color:var(--color-bark);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site">
+    <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
+    <a href="community-dashboard.html">สำหรับชุมชน</a>
+    <a href="#">เข้าสู่ระบบ</a>
+  </nav>
+</header>
+
+<main>
+  <div class="hero-img">ภาพชุมชนบ้านผาบ่อง (ปรับด้วย AI)</div>
+
+  <div class="title-row">
+    <h1>ชุมชนบ้านผาบ่อง</h1>
+    <div class="lang-toggle" role="group" aria-label="เลือกภาษา">
+      <button class="active" onclick="setLang('th', this)">ไทย</button>
+      <button onclick="setLang('en', this)">EN</button>
+    </div>
+  </div>
+  <div class="draft-note">DRAFT — ยืนยันเฉพาะไทย/อังกฤษหรือมีภาษาอื่น และมีเสียงพากย์ (TTS) หรือไม่ ยังเป็น Open Question</div>
+
+  <p class="story-text" lang="th">หมู่บ้านผาบ่องตั้งอยู่ท่ามกลางหุบเขาแม่ฮ่องสอน ชาวบ้านสืบทอดภูมิปัญญาการทอผ้าจากรุ่นสู่รุ่นมากว่า 80 ปี ทุกลายผ้าเล่าเรื่องราวของธรรมชาติรอบตัว ตั้งแต่สายน้ำ ภูเขา จนถึงฤดูกาล นักท่องเที่ยวสามารถเดินป่าชมเส้นทางธรรมชาติ และเรียนรู้การทอผ้ากับชาวบ้านโดยตรง</p>
+  <p class="story-text" lang="en">Ban Pha Bong sits among the valleys of Mae Hong Son, where villagers have carried on a weaving tradition for over 80 years. Every pattern tells a story of the surrounding nature. Visitors can hike community trails and learn weaving directly from local artisans.</p>
+
+  <div class="map-box">
+    <h2>หมุดหมายเดินทาง</h2>
+    <p>ห่างจากตัวเมืองแม่ฮ่องสอน 24 กม. · ใช้เวลาเดินทางประมาณ 45 นาที · มีจุดจอดรถชุมชน</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="this.textContent='บันทึกแล้ว ✓'">บันทึกสถานที่โปรด</button>
+    <a class="btn btn-primary" href="#review-form">เขียนรีวิว</a>
+  </div>
+
+  <section class="reviews" id="review-form">
+    <h2>รีวิวจากนักท่องเที่ยว</h2>
+    <textarea placeholder="แบ่งปันประสบการณ์ของคุณที่ชุมชนบ้านผาบ่อง..."></textarea>
+    <div style="margin-top:var(--space-md)"><button class="btn btn-primary">โพสต์รีวิว</button></div>
+
+    <div class="review-item">"ได้เรียนทอผ้าจริงกับคุณป้าในหมู่บ้าน อบอุ่นมากค่ะ" — นักท่องเที่ยว, ก.ค. 2569</div>
+  </section>
+</main>
+
+<script>
+function setLang(lang, btn){
+  document.querySelectorAll('.story-text').forEach(function(el){
+    el.style.display = (el.lang === lang) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

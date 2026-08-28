@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ค้นหาแหล่งท่องเที่ยวชุมชน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site a.active{color:var(--color-clay);font-weight:600;}
+main{max-width:1120px;margin:0 auto;padding:var(--space-xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
+.search-bar{display:flex;gap:var(--space-sm);margin-bottom:var(--space-xl);flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:220px;height:48px;padding:0 var(--space-md);border:1px solid var(--color-stone);border-radius:var(--radius-sm);font-size:18px;font-family:inherit;background:#fff;color:var(--color-ink);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;text-decoration:none;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-lg);}
+.card{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-md);overflow:hidden;display:flex;flex-direction:column;}
+.card .thumb{aspect-ratio:4/3;background:linear-gradient(135deg,var(--color-stone),var(--color-sand));display:flex;align-items:center;justify-content:center;color:var(--color-bark);font-size:14px;}
+.card .body{padding:var(--space-md);display:flex;flex-direction:column;gap:var(--space-xs);flex:1;}
+.card h3{font-size:22px;margin:0;}
+.card p{font-size:16px;color:var(--color-bark);margin:0;}
+.card a.btn-text{margin-top:auto;color:var(--color-indigo);font-weight:600;font-size:16px;text-decoration:none;}
+.result-note{font-size:14px;color:var(--color-bark);margin-bottom:var(--space-lg);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site">
+    <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
+    <a href="community-dashboard.html">สำหรับชุมชน</a>
+    <a href="#">เข้าสู่ระบบ</a>
+  </nav>
+</header>
+
+<main>
+  <h1>ค้นหาแหล่งท่องเที่ยวชุมชน</h1>
+  <div class="search-bar">
+    <input type="text" placeholder="ค้นหาชื่อชุมชน, จังหวัด, หรือกิจกรรม เช่น &quot;ทอผ้า เชียงราย&quot;" aria-label="ค้นหาแหล่งท่องเที่ยวชุมชน">
+    <button class="btn btn-primary">ค้นหา</button>
+  </div>
+  <p class="result-note">ผลลัพธ์จากข้อมูลที่ชุมชนเผยแพร่เองในระบบเท่านั้น (ไม่ใช่รีวิวจากบุคคลภายนอก)</p>
+
+  <div class="results">
+    <div class="card">
+      <div class="thumb">ภาพชุมชนบ้านผาบ่อง</div>
+      <div class="body">
+        <h3>ชุมชนบ้านผาบ่อง</h3>
+        <p>จ.แม่ฮ่องสอน · งานทอผ้า · เดินป่าชุมชน</p>
+        <a class="btn-text" href="tourist-story-detail.html">อ่านเรื่องราว →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="thumb">ภาพชุมชนริมน้ำแม่กลอง</div>
+      <div class="body">
+        <h3>ชุมชนริมน้ำแม่กลอง</h3>
+        <p>จ.สมุทรสงคราม · ตลาดน้ำ · อาหารพื้นถิ่น</p>
+        <a class="btn-text" href="tourist-story-detail.html">อ่านเรื่องราว →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="thumb">ภาพชุมชนดอยสูง</div>
+      <div class="body">
+        <h3>ชุมชนดอยสูง</h3>
+        <p>จ.เชียงราย · ไร่ชาขั้นบันได · ชาติพันธุ์</p>
+        <a class="btn-text" href="tourist-story-detail.html">อ่านเรื่องราว →</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

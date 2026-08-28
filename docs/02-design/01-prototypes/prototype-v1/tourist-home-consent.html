@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — หน้าแรก (นักท่องเที่ยว)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62; --color-error:#A13D2C;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px;
+  --space-2xl:48px; --space-3xl:64px; --space-4xl:96px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+a{color:var(--color-indigo);}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);background:var(--color-paper);}
+.wordmark{font-weight:700;font-size:22px;letter-spacing:0.02em;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site a.active{color:var(--color-clay);font-weight:600;}
+main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(--space-4xl);}
+.hero h1{font-size:40px;font-weight:600;line-height:1.25;margin:0 0 var(--space-md);text-wrap:balance;}
+.hero p{font-size:18px;color:var(--color-bark);max-width:60ch;margin:0 0 var(--space-xl);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;text-decoration:none;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-lg);margin-top:var(--space-2xl);}
+.card{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);}
+.card h3{font-size:22px;margin:0 0 var(--space-sm);}
+.card p{font-size:16px;color:var(--color-bark);margin:0;}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-left:var(--space-sm);vertical-align:middle;}
+
+/* Consent banner */
+.consent{position:fixed;left:0;right:0;bottom:0;background:var(--color-paper);border-top:1px solid var(--color-stone);box-shadow:0 -2px 12px rgba(46,42,34,0.08);padding:var(--space-lg) var(--space-xl);}
+.consent-inner{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-lg);}
+.consent p{flex:1 1 420px;font-size:18px;margin:0;min-width:260px;}
+.consent .actions{display:flex;gap:var(--space-md);flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="#">Local Story Hub</a>
+  <nav class="site">
+    <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
+    <a href="community-dashboard.html">สำหรับชุมชน</a>
+    <a href="#">เข้าสู่ระบบ</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>ฟังเรื่องราวจากชุมชนจริง ก่อนออกเดินทาง</h1>
+    <p>ค้นหาแหล่งท่องเที่ยวชุมชนที่น่าเชื่อถือ อ่านเรื่องราวที่เล่าโดยคนในพื้นที่จริง ไม่ใช่รีวิวจากคนแปลกหน้า</p>
+    <a class="btn btn-primary" href="tourist-search-results.html">เริ่มค้นหาชุมชน</a>
+  </section>
+
+  <section class="cards">
+    <div class="card">
+      <h3>ชุมชนบ้านผาบ่อง</h3>
+      <p>งานหัตถกรรมทอผ้าและเส้นทางเดินป่าชุมชน</p>
+    </div>
+    <div class="card">
+      <h3>ชุมชนริมน้ำแม่กลอง</h3>
+      <p>วิถีชีวิตชาวสวน ตลาดน้ำ และอาหารพื้นถิ่น</p>
+    </div>
+    <div class="card">
+      <h3>ชุมชนดอยสูง</h3>
+      <p>วัฒนธรรมชาติพันธุ์และไร่ชาขั้นบันได</p>
+    </div>
+  </section>
+</main>
+
+<div class="consent" role="dialog" aria-label="แจ้งการเก็บข้อมูล">
+  <div class="consent-inner">
+    <p>
+      เว็บไซต์นี้ใช้ Google Analytics และเก็บ IP Address เพื่อปรับปรุงการใช้งาน คุณสามารถเลือกยินยอมหรือปฏิเสธการเก็บข้อมูลที่ไม่จำเป็นได้
+      <span class="draft-note">DRAFT — รูปแบบ consent (แยกทีละประเภท/รวมทั้งหมด) ยังเป็น Open Question</span>
+    </p>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="document.querySelector('.consent').style.display='none'">ปฏิเสธที่ไม่จำเป็น</button>
+      <button class="btn btn-secondary" onclick="alert('ตัวอย่าง: เปิดหน้าตั้งค่ารายละเอียด Consent')">ตั้งค่า</button>
+      <button class="btn btn-primary" onclick="document.querySelector('.consent').style.display='none'">ยินยอมทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
