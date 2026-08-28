@@ -1,13 +1,15 @@
 ---
 name: architecture-designer
 description: >
-  ใช้ agent นี้เพื่อสร้าง/ปรับปรุงเอกสาร High-Level Architecture ของ Local Story Hub แบบ
-  conceptual (ยังไม่ผูกมัดกับ technical stack เช่น framework/ภาษา/ยี่ห้อฐานข้อมูล) ประกอบด้วย
-  component หลักของระบบและ data flow ตาม User Journey แต่ละเส้นทาง บันทึกที่
-  docs/02-design/02-technical/architecture.md ตัวอย่างคำขอ: "สร้าง architecture ให้หน่อย",
-  "ทำ high level design ของระบบ", "ปรับปรุง architecture ตาม requirement ใหม่", "วาด data flow
-  จาก user journey" ไม่ใช้ agent นี้สำหรับ database schema/API spec (ใช้ `data-api-designer`)
-  หรือ sequence flow ละเอียด (ใช้ `detailed-designer`)
+  ใช้ agent นี้เพื่อสร้าง/ปรับปรุงส่วน High-Level Architecture (component หลักของระบบและ data
+  flow ตาม User Journey แต่ละเส้นทาง) ของ Local Story Hub แบบ conceptual (ยังไม่ผูกมัดกับ
+  technical stack เช่น framework/ภาษา/ยี่ห้อฐานข้อมูล) บันทึกที่
+  docs/02-design/02-technical/architecture.md — ไฟล์นี้เป็น "ภาพรวมระบบ" ไฟล์เดียวที่รวม
+  Database Schema และ API Spec ไว้ด้วย (ดู `data-api-designer` สำหรับสองหัวข้อนั้น) agent นี้
+  ดูแลเฉพาะส่วน Component/Data Flow/ประเด็นข้ามระบบเท่านั้น ตัวอย่างคำขอ: "สร้าง architecture
+  ให้หน่อย", "ทำ high level design ของระบบ", "ปรับปรุง architecture ตาม requirement ใหม่",
+  "วาด data flow จาก user journey" ไม่ใช้ agent นี้สำหรับ sequence flow ละเอียด (ใช้
+  `detailed-designer`)
 tools: Read, Grep, Glob, Write, Edit, Bash
 model: inherit
 ---
@@ -58,10 +60,12 @@ provider ฯลฯ เว้นแต่ผู้ใช้ระบุเอง�
    แต่ไม่ต้องลงรายละเอียด UI เพราะเป็นหน้าที่ของ `DESIGN.md`/`prototype-builder`), ขอบเขตของ
    "ระบบจัดการข้อมูลชุมชน" ที่ยังเป็น Open Question
 
-6. **เขียน/อัปเดต** `docs/02-design/02-technical/architecture.md` — ถ้าไฟล์เดิมมีอยู่แล้ว ให้
-   อ่านก่อนแล้วปรับปรุงเฉพาะส่วนที่เปลี่ยน ไม่เขียนทับทั้งไฟล์โดยไม่จำเป็น (ต่างจาก feature-list/
-   open-questions ที่ regenerate เต็มไฟล์ เพราะเอกสารนี้มีเนื้อหาเชิงตัดสินใจที่มนุษย์อาจแก้ไข
-   เพิ่มเติมด้วยมือ)
+6. **แก้ไข `docs/02-design/02-technical/architecture.md`** — อ่านไฟล์เต็มก่อนเสมอ (ไฟล์นี้อาจมี
+   หัวข้อ "Database Schema"/"API Spec" ที่ `data-api-designer` ดูแลอยู่ ห้ามลบ/แก้หัวข้อเหล่านั้น)
+   แล้วแก้ไข/สร้างเฉพาะหัวข้อ Context, Component หลัก, Data Flow, ประเด็นข้ามระบบ, Decision
+   Log, Open Items — ปรับปรุงเฉพาะส่วนที่เปลี่ยน ไม่เขียนทับทั้งไฟล์โดยไม่จำเป็น (ต่างจาก
+   feature-list/open-questions ที่ regenerate เต็มไฟล์ เพราะเอกสารนี้มีเนื้อหาเชิงตัดสินใจที่
+   มนุษย์อาจแก้ไขเพิ่มเติมด้วยมือ)
 
 7. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
    journey/spec ที่ใช้ (append เท่านั้น ตามกฎ bidirectional link ของโปรเจกต์)

@@ -170,23 +170,28 @@ cloud) เว้นแต่ผู้ใช้ระบุเองว่าต�
 เขียนทับเฉพาะส่วนที่เปลี่ยนในไฟล์เดิม (ไม่ regenerate ทั้งไฟล์แบบ feature-list/open-questions
 เพราะเอกสารกลุ่มนี้มีเนื้อหาเชิงตัดสินใจที่มนุษย์มักแก้ไขเพิ่มเติมด้วยมือ)
 
-**1. Architecture** — component หลักของระบบ + data flow ตาม User Journey แต่ละเส้นทาง:
-- **Agent** [.claude/agents/architecture-designer.md](.claude/agents/architecture-designer.md)
-- **Skill** [.claude/skills/architecture-design/SKILL.md](.claude/skills/architecture-design/SKILL.md)
-- บันทึกที่ `docs/02-design/02-technical/architecture.md`
+**1+2. Architecture + Database Schema + API Spec — รวมไว้ในไฟล์เดียว** `docs/02-design/02-technical/architecture.md`
+เป็น "ภาพรวมระบบ" ไฟล์เดียว (ตามที่ผู้ใช้ขอ 2026-08-28 — เดิมเคยแยก `architecture.md` กับ
+`data-api-spec.md` สองไฟล์) มี **2 คู่ agent/skill ที่แก้ไฟล์เดียวกันนี้ คนละหัวข้อ**:
 
-**2. Database Schema + API Spec** — ER Diagram, รายละเอียดแต่ละ entity, และ API operation
-**รวมไว้ในไฟล์เดียว** (แยกจาก High-Level Architecture โดยเจตนา):
-- **Agent** [.claude/agents/data-api-designer.md](.claude/agents/data-api-designer.md)
-- **Skill** [.claude/skills/data-api-design/SKILL.md](.claude/skills/data-api-design/SKILL.md)
-- บันทึกที่ `docs/02-design/02-technical/data-api-spec.md` (หัวข้อ "Database Schema" และ "API
-  Spec" อยู่ในไฟล์เดียวกัน) — ควรมี `architecture.md` ก่อน (ไม่บังคับ)
+- **Architecture** (component หลัก + data flow ตาม User Journey + ประเด็นข้ามระบบ):
+  - **Agent** [.claude/agents/architecture-designer.md](.claude/agents/architecture-designer.md)
+  - **Skill** [.claude/skills/architecture-design/SKILL.md](.claude/skills/architecture-design/SKILL.md)
+- **Database Schema + API Spec** (ER Diagram, รายละเอียดแต่ละ entity, API operation):
+  - **Agent** [.claude/agents/data-api-designer.md](.claude/agents/data-api-designer.md)
+  - **Skill** [.claude/skills/data-api-design/SKILL.md](.claude/skills/data-api-design/SKILL.md)
 
-**3. Detailed Design** — Sequence Flow ของการทำงานสำคัญที่ข้าม component:
+ทั้งสองคู่นี้ **ต้องอ่านไฟล์ `architecture.md` เต็มไฟล์ก่อนแก้เสมอ** และแก้เฉพาะหัวข้อที่ตนดูแล
+(Architecture: Context/Component หลัก/Data Flow/ประเด็นข้ามระบบ/Decision Log/Open Items —
+Data & API: Database Schema/API Spec) ห้ามลบ/แก้หัวข้อของอีกฝ่าย
+
+**3. Detailed Design** — Sequence Flow ของการทำงานสำคัญที่ข้าม component (แยกไฟล์ต่างหาก
+เพราะเป็นรายละเอียดที่ลึกกว่าระดับภาพรวม):
 - **Agent** [.claude/agents/detailed-designer.md](.claude/agents/detailed-designer.md)
 - **Skill** [.claude/skills/detailed-design/SKILL.md](.claude/skills/detailed-design/SKILL.md)
-- บันทึกที่ `docs/02-design/02-technical/detailed-design.md` — ควรมี `architecture.md` +
-  `data-api-spec.md` ก่อน (ไม่บังคับ แต่ sequence จะอ้างอิง component/API จากสองไฟล์นั้น)
+- บันทึกที่ `docs/02-design/02-technical/detailed-design.md` — ควรมี `architecture.md`
+  (ครบทั้งส่วน Architecture และ Database/API) ก่อน (ไม่บังคับ แต่ sequence จะอ้างอิง
+  component/API จากไฟล์นั้น)
 
 ทุกคู่ในกลุ่มนี้เป็นไฟล์แยกกัน (agent ≠ skill ในแต่ละคู่) — **แก้ทั้งสองไฟล์ในคู่เดียวกันพร้อม
 กันเสมอ** เหมือนคู่อื่น ๆ ทั้งหมดในโปรเจกต์นี้

@@ -1,12 +1,13 @@
 ---
 name: architecture-design
 description: >
-  สร้าง/ปรับปรุงเอกสาร High-Level Architecture ของ Local Story Hub แบบ conceptual (ยังไม่ผูก
-  มัดกับ technical stack) ประกอบด้วย component หลักของระบบและ data flow ตาม User Journey แต่
-  ละเส้นทาง บันทึกที่ docs/02-design/02-technical/architecture.md ใช้เมื่อผู้ใช้ขอสร้าง/
-  ปรับปรุง architecture, high level design, หรือ data flow diagram ไม่ใช้สำหรับ database
-  schema/API spec (ใช้ skill `data-api-design`) หรือ sequence flow ละเอียด (ใช้ skill
-  `detailed-design`)
+  สร้าง/ปรับปรุงส่วน High-Level Architecture (component หลักของระบบและ data flow ตาม User
+  Journey แต่ละเส้นทาง) ของ Local Story Hub แบบ conceptual (ยังไม่ผูกมัดกับ technical stack)
+  บันทึกที่ docs/02-design/02-technical/architecture.md — ไฟล์นี้เป็น "ภาพรวมระบบ" ไฟล์เดียวที่
+  รวม Database Schema และ API Spec ไว้ด้วย (ดู skill `data-api-design` สำหรับสองหัวข้อนั้น)
+  ทักษะนี้ดูแลเฉพาะส่วน Component/Data Flow/ประเด็นข้ามระบบเท่านั้น ใช้เมื่อผู้ใช้ขอสร้าง/
+  ปรับปรุง architecture, high level design, หรือ data flow diagram ไม่ใช้สำหรับ sequence flow
+  ละเอียด (ใช้ skill `detailed-design`)
 ---
 
 # Architecture Design (Conceptual)
@@ -51,8 +52,10 @@ description: >
 5. **บันทึกประเด็นข้ามระบบ**: จุดที่ต้องเก็บ log 90 วัน/ขอ Consent (อ้างอิงสเปค IT log/PDPA),
    ข้อกำหนดผู้สูงอายุ (FR-1.7), ขอบเขตระบบจัดการข้อมูลชุมชนที่ยังเป็น Open Question
 
-6. **เขียน/อัปเดต** `docs/02-design/02-technical/architecture.md` — อ่านไฟล์เดิมก่อนแล้ว
-   ปรับปรุงเฉพาะส่วนที่เปลี่ยน ไม่เขียนทับทั้งไฟล์โดยไม่จำเป็น
+6. **แก้ไข `docs/02-design/02-technical/architecture.md`** — อ่านไฟล์เต็มก่อนเสมอ (ไฟล์นี้อาจมี
+   หัวข้อ "Database Schema"/"API Spec" ที่ skill `data-api-design` ดูแลอยู่ ห้ามลบ/แก้หัวข้อ
+   เหล่านั้น) แล้วแก้ไข/สร้างเฉพาะหัวข้อ Context, Component หลัก, Data Flow, ประเด็นข้ามระบบ,
+   Decision Log, Open Items — ปรับปรุงเฉพาะส่วนที่เปลี่ยน ไม่เขียนทับทั้งไฟล์โดยไม่จำเป็น
 
 7. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
    journey/spec ที่ใช้ (append เท่านั้น)

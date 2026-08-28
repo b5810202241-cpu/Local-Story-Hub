@@ -13,6 +13,5 @@
 
 > ทุกไฟล์ในหมวดนี้เป็น **conceptual** — ยังไม่ผูกมัดกับ technical stack เฉพาะเจาะจง
 
-- [[architecture|architecture]] — High-Level Architecture: component หลักและ data flow ตาม User Journey
-- [[data-api-spec|data-api-spec]] — Database Schema (ER Diagram + entity) และ API Spec รวมในไฟล์เดียว
+- [[architecture|architecture]] — ภาพรวมระบบไฟล์เดียว: High-Level Architecture (component + data flow), Database Schema (ER Diagram + entity), และ API Spec รวมไว้ในไฟล์เดียวกัน
 - [[detailed-design|detailed-design]] — Sequence Flow ของการทำงานสำคัญที่ข้าม component

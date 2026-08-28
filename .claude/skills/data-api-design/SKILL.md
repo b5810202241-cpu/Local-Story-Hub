@@ -1,23 +1,26 @@
 ---
 name: data-api-design
 description: >
-  สร้าง/ปรับปรุงเอกสาร Database Schema และ API Spec ของ Local Story Hub แบบ conceptual (ยังไม่
-  ผูกมัดกับ technical stack) รวมไว้ใน**ไฟล์เดียว** ประกอบด้วย ER Diagram, รายละเอียดแต่ละ
-  ตาราง/entity, และรายการ API operation บันทึกที่
-  docs/02-design/02-technical/data-api-spec.md (แยกจาก High-Level Architecture ซึ่งเป็นอีก
-  ไฟล์ต่างหาก — ดู skill `architecture-design`) ใช้เมื่อผู้ใช้ขอออกแบบ database schema, ER
-  diagram, หรือ API spec ไม่ใช้สำหรับ high-level architecture (ใช้ skill `architecture-design`)
-  หรือ sequence flow ละเอียด (ใช้ skill `detailed-design`)
+  สร้าง/ปรับปรุงส่วน Database Schema และ API Spec ของ Local Story Hub แบบ conceptual (ยังไม่
+  ผูกมัดกับ technical stack) ประกอบด้วย ER Diagram, รายละเอียดแต่ละตาราง/entity, และรายการ API
+  operation บันทึกที่ docs/02-design/02-technical/architecture.md (ไฟล์เดียวกับ High-Level
+  Architecture — ไฟล์นี้เป็น "ภาพรวมระบบ" รวมทุกอย่างไว้ที่เดียวตามที่ผู้ใช้ขอ ทักษะนี้แก้เฉพาะ
+  หัวข้อ "Database Schema" และ "API Spec" ในไฟล์นั้น ไม่แตะหัวข้ออื่นที่ skill
+  `architecture-design` ดูแล) ใช้เมื่อผู้ใช้ขอออกแบบ database schema, ER diagram, หรือ API spec
+  ไม่ใช้สำหรับ component/data flow ระดับสูง (ใช้ skill `architecture-design`) หรือ sequence
+  flow ละเอียด (ใช้ skill `detailed-design`)
 ---
 
 # Database Schema & API Spec (Conceptual)
 
 ทักษะนี้แปล Requirement + Backlog + Feature List + User Journey ของ Local Story Hub ที่มีอยู่
-ให้เป็นเอกสาร **Database Schema และ API Spec แบบ conceptual รวมไว้ในไฟล์เดียว** — ระบุ
-entity/ตาราง, field, ความสัมพันธ์, และ operation ที่ระบบต้องมี โดย **ห้ามผูกมัดกับ technical
-stack เฉพาะเจาะจง** (ห้ามระบุยี่ห้อฐานข้อมูล, รูปแบบ API เฉพาะ framework, หรือ data type เฉพาะ
-ภาษาโปรแกรม — ใช้ประเภทข้อมูลเชิงแนวคิดแทน) เอกสารนี้เป็นคนละไฟล์กับ High-Level Architecture
-โดยเจตนา — ดู `architecture-design` สำหรับไฟล์นั้น
+ให้เป็นส่วน **Database Schema และ API Spec แบบ conceptual** — ระบุ entity/ตาราง, field,
+ความสัมพันธ์, และ operation ที่ระบบต้องมี โดย **ห้ามผูกมัดกับ technical stack เฉพาะเจาะจง**
+(ห้ามระบุยี่ห้อฐานข้อมูล, รูปแบบ API เฉพาะ framework, หรือ data type เฉพาะภาษาโปรแกรม — ใช้
+ประเภทข้อมูลเชิงแนวคิดแทน) **ผลลัพธ์อยู่ในไฟล์เดียวกับ High-Level Architecture โดยเจตนา** —
+`docs/02-design/02-technical/architecture.md` คือไฟล์ "ภาพรวมระบบ" ไฟล์เดียว ให้แก้เฉพาะหัวข้อ
+"Database Schema" และ "API Spec" ในไฟล์นั้น ไม่แตะหัวข้ออื่นที่เป็นความรับผิดชอบของ skill
+`architecture-design`
 
 `docs/` เป็นส่วนหนึ่งของ Obsidian vault ที่ root ของ repo (`newLinkFormat: relative`,
 `useMarkdownLinks: false`) — ทุกลิงก์ต้องเป็น wikilink แบบ relative path เท่านั้น
@@ -38,10 +41,11 @@ stack เฉพาะเจาะจง** (ห้ามระบุยี่ห�
 1. **รวบรวมต้นทาง** — อ่าน spec ทั้งหมดใน `docs/01-requirements/01-spec/`,
    `docs/01-requirements/03-task/product-backlog.md`,
    `docs/01-requirements/03-task/feature-list.md` (ถ้ามี), และ User Journey ทุกไฟล์ใน
-   `docs/02-design/01-prototypes/*-journey.md` — ถ้ามี
-   `docs/02-design/02-technical/architecture.md` ให้อ่านประกอบด้วยเพื่อให้สอดคล้องกับ
-   component ที่ระบุไว้ (ถ้ายังไม่มีแจ้งผู้ใช้ว่าควรรัน `architecture-design` ก่อน แต่ยังทำต่อ
-   ได้โดยตรงจาก requirement ถ้าผู้ใช้ยืนยัน)
+   `docs/02-design/01-prototypes/*-journey.md` — ถ้ามี `docs/02-design/02-technical/architecture.md`
+   อยู่แล้ว **ต้องอ่านทั้งไฟล์เสมอ** (ไม่ใช่แค่อ่านประกอบ) เพราะเป็นไฟล์เดียวกับที่จะแก้ไขใน
+   ขั้นตอนที่ 7 ให้สอดคล้องกับ component ที่ระบุไว้ (ถ้ายังไม่มีไฟล์นี้เลยแจ้งผู้ใช้ว่าควรรัน
+   `architecture-design` ก่อน แต่ยังทำต่อได้โดยตรงจาก requirement ถ้าผู้ใช้ยืนยัน — จะสร้างไฟล์
+   ใหม่พร้อมหัวข้อ Database Schema/API Spec เท่านั้น)
 
 2. **เช็ค Open Questions ที่กระทบโครงสร้างข้อมูล/API** — อ่าน
    `docs/01-requirements/03-task/open-questions.md` คัดเฉพาะข้อที่กระทบจริง แล้วถามผู้ใช้เฉพาะ
@@ -59,12 +63,13 @@ stack เฉพาะเจาะจง** (ห้ามระบุยี่ห�
 6. **ระบุ API operation** ต่อ entity/feature: operation, input, output, เงื่อนไขสิทธิ์การเข้าถึง
    (ถ้ามี), และ map กลับไปยัง journey step / FR / BL ที่ทำให้เกิด operation นี้
 
-7. **เขียน/อัปเดตไฟล์เดียว**: `docs/02-design/02-technical/data-api-spec.md` แบ่งเป็น 2 หัวข้อ
-   หลักในไฟล์เดียวกัน — "## Database Schema" (entity + field + ER diagram) และ "## API Spec"
-   (operation list) — อ่านไฟล์เดิมก่อนแล้วปรับปรุงเฉพาะส่วนที่เปลี่ยน
+7. **แก้ไข `docs/02-design/02-technical/architecture.md`** — อ่านไฟล์เต็มก่อนเสมอ (มีหัวข้อ
+   อื่นที่ skill `architecture-design` ดูแลอยู่ ห้ามลบ/แก้หัวข้อเหล่านั้น) แล้วแก้ไข/สร้างเฉพาะ
+   หัวข้อ "## Database Schema" (entity + field + ER diagram) และ "## API Spec" (operation
+   list) — ถ้ายังไม่มีสองหัวข้อนี้ให้เพิ่มต่อท้าย ถ้ามีอยู่แล้วให้ปรับปรุงเฉพาะส่วนที่เปลี่ยน
 
-8. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
-   journey/spec/architecture ที่ใช้ (append เท่านั้น)
+8. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` (ถ้ายังไม่มี entry ของ
+   `architecture.md`) และเพิ่ม wikilink ย้อนกลับจาก journey/spec ที่ใช้ (append เท่านั้น)
 
 9. **บันทึกลง `docs/05-log/index.md`** ว่าสร้าง/อัปเดตอะไร คำถามที่ถามผู้ใช้และคำตอบ (รันคำสั่ง
    หาวันที่จริงเสมอ)

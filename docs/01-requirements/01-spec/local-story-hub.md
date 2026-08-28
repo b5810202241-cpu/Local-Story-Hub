@@ -10,9 +10,7 @@
 >
 > ดู User Journey (DRAFT) ที่แตกจากสเปคนี้ได้ที่ [[../../02-design/01-prototypes/tourist-journey|tourist-journey]], [[../../02-design/01-prototypes/community-content-journey|community-content-journey]], [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]
 >
-> ดู High-Level Architecture (conceptual) ที่แตกจากสเปคนี้ได้ที่ [[../../02-design/02-technical/architecture|architecture]]
->
-> ดู Database Schema + API Spec (conceptual) ที่แตกจากสเปคนี้ได้ที่ [[../../02-design/02-technical/data-api-spec|data-api-spec]]
+> ดู High-Level Design (conceptual — รวม Architecture + Database Schema + API Spec ในไฟล์เดียว) ที่แตกจากสเปคนี้ได้ที่ [[../../02-design/02-technical/architecture|architecture]]
 
 ## ต้นฉบับ (Verbatim จากไฟล์ที่แนบ)
 

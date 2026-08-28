@@ -97,3 +97,10 @@
 - สร้าง [[../02-design/02-technical/detailed-design|02-technical/detailed-design]]: 6 sequence diagram (Mermaid) ครอบคลุม Consent flow, ค้นหา/อ่านเรื่องราว, เขียนรีวิว, AI ปรับภาพ (พร้อม error handling), เผยแพร่คอนเทนต์ชุมชน, เผยแพร่ผลงานนิสิต — แต่ละ sequence map กลับ journey step/FR/API operation
 - ยืนยันความไม่สอดคล้องเรื่อง login นักท่องเที่ยวอีกครั้ง (sequence #3 ออกแบบให้ต้อง login ตาม data-api-spec แต่ journey/prototype เดิมยังไม่มี) — เพิ่มคำเตือนไว้ในเอกสารและ wikilink ของ tourist-journey ให้เห็นชัดเจน ยังไม่ได้แก้ไข journey/prototype ในรอบนี้
 - เพิ่ม wikilink สองทางกับ architecture.md, data-api-spec.md และ journey ทั้ง 3 ไฟล์แล้ว — **ครบทั้ง 3 เอกสารในกลุ่ม Technical Design (conceptual) ตามที่ผู้ใช้ขอไว้**
+
+### 2026-08-28 — รวม architecture.md + data-api-spec.md เป็นไฟล์เดียว (ภาพรวมระบบ)
+
+- ผู้ใช้ขอให้ High-Level Design มี "ภาพใหญ่ไว้ใช้ในระบบ 1 ไฟล์" รวมถึง database schema และ api spec ด้วย — ย้อนกลับการตัดสินใจแยกไฟล์เมื่อก่อนหน้านี้ในวันเดียวกัน
+- รวมเนื้อหาทั้งหมดของ [[../02-design/02-technical/architecture|02-technical/architecture]] (เดิม) และ `data-api-spec.md` (เดิม) เข้าเป็นไฟล์เดียว — ลบ `data-api-spec.md` ทิ้ง (ประวัติยังอยู่ใน git) แก้ไข wikilink ทุกจุดที่เคยชี้ไปยัง `data-api-spec.md` ให้ชี้มาที่ `architecture.md` แทน (detailed-design.md, 02-technical/index.md, local-story-hub.md, 20260822-01-it-log-pdpa-consent.md) — ยกเว้นบรรทัดใน Decision Log และ log รายการก่อนหน้าที่เป็นบันทึกประวัติ ไม่แก้ย้อนหลัง
+- ปรับปรุง `architecture-designer`/`architecture-design` และ `data-api-designer`/`data-api-design` ให้ทั้งสองคู่แก้ไฟล์ `architecture.md` ไฟล์เดียวกัน คนละหัวข้อ (อ่านทั้งไฟล์ก่อนแก้เสมอ ห้ามแตะหัวข้อของอีกฝ่าย) และแก้ reference ใน `detailed-designer`/`detailed-design` ให้ตรงกัน
+- อัปเดต `CLAUDE.md` ให้สะท้อนโครงสร้างใหม่ (2 คู่ agent/skill ใช้ไฟล์เดียวกัน + detailed-design แยกไฟล์ต่างหาก)

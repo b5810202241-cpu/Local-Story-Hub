@@ -30,9 +30,10 @@ component โดยเน้น **Sequence Flow** เป็นหลัก **ห
 
 ## ขั้นตอน
 
-1. **รวบรวมต้นทาง** — อ่าน `docs/02-design/02-technical/architecture.md` และ
-   `docs/02-design/02-technical/data-api-spec.md` (ถ้ายังไม่มี แจ้งผู้ใช้ว่าควรรัน
-   `architecture-design`/`data-api-design` ก่อน แต่ทำต่อโดยตรงจาก User Journey ได้ถ้าผู้ใช้
+1. **รวบรวมต้นทาง** — อ่าน `docs/02-design/02-technical/architecture.md` ทั้งไฟล์ (เป็นไฟล์
+   "ภาพรวมระบบ" ไฟล์เดียวที่รวม Component, Data Flow, Database Schema, และ API Spec ไว้ด้วยกัน)
+   (ถ้ายังไม่มีไฟล์นี้ แจ้งผู้ใช้ว่าควรรัน `architecture-design`/`data-api-design` ก่อน แต่ทำต่อ
+   โดยตรงจาก User Journey ได้ถ้าผู้ใช้
    ยืนยัน — ระบุไว้ในรายงานว่าข้ามการอ้างอิงนี้) และอ่าน User Journey ที่เกี่ยวข้องใน
    `docs/02-design/01-prototypes/*-journey.md`
 
@@ -54,7 +55,7 @@ component โดยเน้น **Sequence Flow** เป็นหลัก **ห
    ปรับปรุงเฉพาะส่วนที่เปลี่ยน
 
 7. เพิ่ม wikilink ใน `docs/02-design/02-technical/index.md` และเพิ่ม wikilink ย้อนกลับจาก
-   architecture.md/data-api-spec.md/journey ที่ใช้ (append เท่านั้น)
+   architecture.md/journey ที่ใช้ (append เท่านั้น)
 
 8. **บันทึกลง `docs/05-log/index.md`** ว่าสร้าง/อัปเดตอะไร คำถามที่ถามผู้ใช้และคำตอบ (รันคำสั่ง
    หาวันที่จริงเสมอ)
@@ -70,5 +71,5 @@ component โดยเน้น **Sequence Flow** เป็นหลัก **ห
 
 - รายชื่อ sequence flow ที่สร้าง/อัปเดต และ component/API ที่เกี่ยวข้อง
 - คำถามที่ถามผู้ใช้ (ถ้ามี) และการตัดสินใจที่ได้
-- ถ้าทำโดยไม่มี architecture.md/data-api-spec.md รองรับ ให้ระบุไว้ชัดเจน
+- ถ้าทำโดยไม่มี architecture.md รองรับ ให้ระบุไว้ชัดเจน
 - ประเด็นที่ยังค้างเพราะ Open Question ยังไม่ปิด
