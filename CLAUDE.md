@@ -114,6 +114,28 @@ gate "Open Question ที่กระทบ scope ใหญ่ต้องป�
 `docs/02-design/01-prototypes/{persona-slug}-journey.md` พร้อม wikilink กลับไปยัง spec ต้นทาง
 (bidirectional ตามกฎเดิม)
 
+## Prototype Builder — สังเคราะห์ Requirement + Backlog + Feature List + User Journey เป็นหน้าจอ HTML
+
+เครื่องมือที่แปลงทุกอย่างที่โปรเจกต์นี้สะสมไว้ (spec, backlog, feature list, journey) ให้เป็น
+Prototype จริงที่เปิดในเบราว์เซอร์ได้ ยึด `docs/02-design/01-prototypes/DESIGN.md` เป็น
+design system เสมอ:
+
+- **Agent** [.claude/agents/prototype-builder.md](.claude/agents/prototype-builder.md)
+- **Skill** [.claude/skills/prototype-builder/SKILL.md](.claude/skills/prototype-builder/SKILL.md)
+
+ทั้งสองไฟล์นี้ก็อธิบาย process ซ้ำกัน — **แก้ทั้งสองไฟล์พร้อมกันเสมอ** กฎสำคัญที่ห้ามข้าม:
+
+1. **ไม่มี DESIGN.md → ห้ามเดาโทนสี/สไตล์เอง** ต้องหยุดถามผู้ใช้ก่อน (เสนอ ≥3 ทางเลือกพร้อม
+   ข้อดี/ข้อเสีย) แล้วสร้าง DESIGN.md ให้ก่อนค่อยทำ prototype ต่อ
+2. **ต้องเสนอแผนให้ผู้ใช้ยืนยันก่อนสร้างไฟล์จริงเสมอ** (หน้าจอที่จะสร้าง, อ้างอิงจากอะไร,
+   component ที่ใช้, folder version ที่จะเก็บ) — ห้ามข้ามแม้ผู้ใช้ขอให้ "ทำเลย"
+3. **มี prototype version เดิมอยู่แล้ว → ต้องถามทุกครั้งไม่มีข้อยกเว้น** ว่าจะสร้าง version ใหม่
+   (`prototype-v{N+1}/`) หรือแก้ version ล่าสุด พร้อมให้คำแนะนำ แต่ผู้ใช้ตัดสินใจเอง
+4. เช็ค `open-questions.md` ก่อนวาดหน้าจอเสมอ เหมือน `user-journey-designer`
+
+รองรับทั้งสร้างทั้งระบบและระบุเจาะจง (เฉพาะ persona/feature/journey เดียว) ทุกจุดที่คลุมเครือ
+ต้องถามพร้อมเสนออย่างน้อย 3 ทางเลือกพร้อมข้อดี/ข้อเสียเสมอ ไม่ใช่ถามลอย ๆ หรือเดาเอง
+
 ## โครงสร้างเอกสารและลำดับการไหลของงาน (docs pipeline)
 
 เอกสารทั้งหมดอยู่ใต้ `docs/` และแต่ละโฟลเดอร์มี `index.md` อธิบายจุดประสงค์ของตัวเอง ลำดับการไหลของงานคือ:
