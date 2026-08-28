@@ -37,6 +37,9 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
 .draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-top:var(--space-sm);}
 .toggle-row{display:flex;align-items:center;gap:var(--space-md);}
 .publish-bar{display:flex;justify-content:flex-end;gap:var(--space-md);margin-top:var(--space-xl);}
+.ai-result{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);margin-top:var(--space-md);font-size:16px;display:none;}
+.ai-result.show{display:block;}
+.spinner-text{color:var(--color-bark);font-size:15px;margin-top:var(--space-sm);}
 </style>
 </head>
 <body>
@@ -50,10 +53,16 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
   <h1>สร้างคอนเทนต์ใหม่</h1>
 
   <div class="step">
+    <label for="content-title">ชื่อคอนเทนต์</label>
+    <input type="text" id="content-title" placeholder="เช่น เรื่องเล่าการทอผ้าบ้านผาบ่อง">
+  </div>
+
+  <div class="step">
     <h2><span class="step-num">1</span> อัปโหลดภาพ</h2>
     <p class="hint">AI จะช่วยปรับภาพให้สวยเหมาะกับการโพสต์ (FR-1.1)</p>
-    <div class="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px">เลือกไฟล์</button></div>
-    <button class="btn btn-primary" style="margin-top:var(--space-md)">✨ ให้ AI ปรับภาพให้สวย</button>
+    <div class="upload-box" id="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์</button></div>
+    <button class="btn btn-primary" id="enhance-btn" style="margin-top:var(--space-md)" onclick="enhanceImage()">✨ ให้ AI ปรับภาพให้สวย</button>
+    <div class="ai-result" id="enhance-result">✓ ปรับภาพเรียบร้อย — โทนสีอบอุ่นขึ้น คมชัดขึ้น (ยังคงความสมจริงตามหลัก DESIGN.md)</div>
   </div>
 
   <div class="step">
@@ -61,15 +70,16 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
     <p class="hint">ป้อนคำสำคัญ แล้วให้ AI ช่วยแต่งแคปชัน (FR-1.2)</p>
     <label for="kw">คำสำคัญ (Keyword)</label>
     <input type="text" id="kw" placeholder="เช่น ทอผ้า, ภูมิปัญญา, แม่ฮ่องสอน">
-    <button class="btn btn-secondary" style="margin-top:var(--space-md)">✨ ให้ AI คิดแคปชัน</button>
+    <button class="btn btn-secondary" style="margin-top:var(--space-md)" onclick="generateCaption()">✨ ให้ AI คิดแคปชัน</button>
     <label style="margin-top:var(--space-md)">แคปชันที่แนะนำ (แก้ไขได้)</label>
-    <textarea>ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง สืบทอดจากรุ่นสู่รุ่นกว่า 80 ปี ✨</textarea>
+    <textarea id="caption">ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง สืบทอดจากรุ่นสู่รุ่นกว่า 80 ปี ✨</textarea>
   </div>
 
   <div class="step">
     <h2><span class="step-num">3</span> ให้ AI แนะนำวิธีเล่าเรื่อง</h2>
     <p class="hint">ระบุหัวข้อที่อยากเล่า แล้วให้ AI ช่วยแนะนำโครงเรื่อง (FR-1.5)</p>
-    <button class="btn btn-secondary">✨ ขอคำแนะนำวิธีเล่าเรื่อง</button>
+    <button class="btn btn-secondary" onclick="suggestStory()">✨ ขอคำแนะนำวิธีเล่าเรื่อง</button>
+    <div class="ai-result" id="story-result">แนวทางที่แนะนำ: เริ่มจากภาพรวมของหมู่บ้าน → เล่าที่มาของภูมิปัญญาการทอผ้า → ปิดท้ายด้วยคำเชิญชวนให้มาเรียนรู้ด้วยตนเอง</div>
   </div>
 
   <div class="step">
@@ -83,16 +93,63 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
     <h2><span class="step-num">5</span> แปลเป็นภาษาอังกฤษ</h2>
     <div class="toggle-row">
       <label style="margin:0">แปลเนื้อหาเป็นภาษาอังกฤษด้วย AI</label>
-      <input type="checkbox">
+      <input type="checkbox" id="translate-toggle" onchange="toggleTranslation()">
     </div>
+    <div class="ai-result" id="translate-result">Every thread of this weaving tells the story of Ban Pha Bong — a craft passed down for over 80 years. ✨</div>
     <div class="draft-note">DRAFT — รูปแบบการแปล (ข้อความอย่างเดียว หรือมีเสียงพากย์ด้วย) ยังเป็น Open Question</div>
   </div>
 
   <div class="publish-bar">
-    <button class="btn btn-secondary">บันทึกฉบับร่าง</button>
-    <button class="btn btn-primary">เผยแพร่คอนเทนต์</button>
+    <button class="btn btn-secondary" onclick="saveContent('ฉบับร่าง')">บันทึกฉบับร่าง</button>
+    <button class="btn btn-primary" onclick="saveContent('เผยแพร่แล้ว')">เผยแพร่คอนเทนต์</button>
   </div>
 </main>
+
+<script>
+function selectFile(){
+  document.getElementById('upload-box').innerHTML = '✓ เลือกไฟล์แล้ว: pha-bong-weaving.jpg';
+}
+function enhanceImage(){
+  var btn = document.getElementById('enhance-btn');
+  btn.textContent = 'กำลังประมวลผลด้วย AI...';
+  btn.disabled = true;
+  setTimeout(function(){
+    document.getElementById('enhance-result').classList.add('show');
+    btn.textContent = '✨ ปรับอีกครั้ง';
+    btn.disabled = false;
+  }, 700);
+}
+var CAPTIONS = [
+  'ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง สืบทอดจากรุ่นสู่รุ่นกว่า 80 ปี ✨',
+  'จากภูเขาสู่ผืนผ้า — ทุกลวดลายบอกเล่าธรรมชาติรอบหมู่บ้านผาบ่อง 🧵',
+  'มาเรียนรู้ภูมิปัญญาทอผ้าจากมือชาวบ้านผาบ่องด้วยตัวคุณเอง 🌿'
+];
+var captionIndex = 0;
+function generateCaption(){
+  captionIndex = (captionIndex + 1) % CAPTIONS.length;
+  document.getElementById('caption').value = CAPTIONS[captionIndex];
+}
+function suggestStory(){
+  document.getElementById('story-result').classList.add('show');
+}
+function toggleTranslation(){
+  var checked = document.getElementById('translate-toggle').checked;
+  document.getElementById('translate-result').classList.toggle('show', checked);
+}
+
+function readContentList(){
+  try{ return JSON.parse(localStorage.getItem('lsh_community_content')) || []; }catch(e){ return []; }
+}
+function saveContent(status){
+  var title = document.getElementById('content-title').value.trim() || 'คอนเทนต์ไม่มีชื่อ';
+  var list = readContentList();
+  var today = new Date();
+  var dateStr = today.getDate() + '/' + (today.getMonth()+1) + '/' + (today.getFullYear()+543);
+  list.unshift({title: title, type: 'เรื่องราวชุมชน', status: status, date: dateStr});
+  localStorage.setItem('lsh_community_content', JSON.stringify(list));
+  window.location.href = 'community-dashboard.html';
+}
+</script>
 
 </body>
 </html>

@@ -33,6 +33,10 @@ textarea{min-height:80px;}
 .draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-top:var(--space-sm);}
 .info-note{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);font-size:15px;color:var(--color-bark);margin-top:var(--space-lg);}
 .publish-bar{display:flex;justify-content:flex-end;margin-top:var(--space-xl);}
+.field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
+.success-panel{display:none;text-align:center;padding:var(--space-2xl);background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);}
+.success-panel.show{display:block;}
+.success-panel h2{font-size:26px;color:var(--color-moss);margin:0 0 var(--space-sm);}
 </style>
 </head>
 <body>
@@ -43,36 +47,73 @@ textarea{min-height:80px;}
 </header>
 
 <main>
-  <h1>เผยแพร่ผลงานสนับสนุนชุมชน</h1>
-  <p class="hint">ผลงานของคุณจะเผยแพร่ทันทีหลังกดยืนยัน ไม่ต้องรอการอนุมัติจากชุมชนหรืออาจารย์</p>
+  <div id="form-view">
+    <h1>เผยแพร่ผลงานสนับสนุนชุมชน</h1>
+    <p class="hint">ผลงานของคุณจะเผยแพร่ทันทีหลังกดยืนยัน ไม่ต้องรอการอนุมัติจากชุมชนหรืออาจารย์</p>
 
-  <div class="step">
-    <label>อัปโหลดผลงาน</label>
-    <div class="upload-box">ลากไฟล์มาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px">เลือกไฟล์ (วิดีโอ/ภาพ/บทความ)</button></div>
+    <div class="step">
+      <label>อัปโหลดผลงาน</label>
+      <div class="upload-box" id="upload-box">ลากไฟล์มาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์ (วิดีโอ/ภาพ/บทความ)</button></div>
+    </div>
+
+    <div class="step">
+      <label for="title">ชื่อผลงาน</label>
+      <input type="text" id="title" placeholder="เช่น สารคดีสั้น: วิถีทอผ้าบ้านผาบ่อง">
+      <div class="field-error" id="title-error">กรุณาระบุชื่อผลงานก่อนเผยแพร่</div>
+
+      <label for="community" style="margin-top:var(--space-md)">เลือกชุมชนที่เกี่ยวข้อง</label>
+      <select id="community">
+        <option>ชุมชนบ้านผาบ่อง</option>
+        <option>ชุมชนริมน้ำแม่กลอง</option>
+        <option>ชุมชนดอยสูง</option>
+      </select>
+      <div class="draft-note">DRAFT — วิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชนยังเป็น Open Question (ตัวอย่างนี้สมมติให้เลือกจาก dropdown)</div>
+
+      <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
+      <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
+    </div>
+
+    <div class="info-note">✓ Open Question เรื่องการอนุมัติก่อนเผยแพร่ถูกตอบแล้ว: ผลงานเผยแพร่ได้ทันที ไม่ต้องผ่านการอนุมัติ</div>
+
+    <div class="publish-bar">
+      <button class="btn btn-primary" onclick="publishWork()">เผยแพร่ผลงานทันที</button>
+    </div>
   </div>
 
-  <div class="step">
-    <label for="title">ชื่อผลงาน</label>
-    <input type="text" id="title" placeholder="เช่น สารคดีสั้น: วิถีทอผ้าบ้านผาบ่อง">
-
-    <label for="community" style="margin-top:var(--space-md)">เลือกชุมชนที่เกี่ยวข้อง</label>
-    <select id="community">
-      <option>ชุมชนบ้านผาบ่อง</option>
-      <option>ชุมชนริมน้ำแม่กลอง</option>
-      <option>ชุมชนดอยสูง</option>
-    </select>
-    <div class="draft-note">DRAFT — วิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชนยังเป็น Open Question (ตัวอย่างนี้สมมติให้เลือกจาก dropdown)</div>
-
-    <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
-    <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
-  </div>
-
-  <div class="info-note">✓ Open Question เรื่องการอนุมัติก่อนเผยแพร่ถูกตอบแล้ว: ผลงานเผยแพร่ได้ทันที ไม่ต้องผ่านการอนุมัติ</div>
-
-  <div class="publish-bar">
-    <button class="btn btn-primary">เผยแพร่ผลงานทันที</button>
+  <div class="success-panel" id="success-panel">
+    <h2>เผยแพร่แล้ว ✓</h2>
+    <p id="success-text">ผลงานของคุณแสดงเชื่อมโยงกับชุมชนที่เลือกแล้ว</p>
+    <button class="btn btn-secondary" onclick="resetForm()">เผยแพร่ผลงานอีกชิ้น</button>
   </div>
 </main>
+
+<script>
+function selectFile(){
+  document.getElementById('upload-box').innerHTML = '✓ เลือกไฟล์แล้ว: student-doc-pha-bong.mp4';
+}
+function publishWork(){
+  var titleEl = document.getElementById('title');
+  var title = titleEl.value.trim();
+  var errorEl = document.getElementById('title-error');
+  if(!title){
+    errorEl.style.display = 'block';
+    titleEl.focus();
+    return;
+  }
+  errorEl.style.display = 'none';
+  var community = document.getElementById('community').value;
+  document.getElementById('success-text').textContent = 'ผลงาน "' + title + '" แสดงเชื่อมโยงกับ' + community + 'แล้ว';
+  document.getElementById('form-view').style.display = 'none';
+  document.getElementById('success-panel').classList.add('show');
+}
+function resetForm(){
+  document.getElementById('title').value = '';
+  document.getElementById('desc').value = '';
+  document.getElementById('upload-box').innerHTML = 'ลากไฟล์มาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์ (วิดีโอ/ภาพ/บทความ)</button>';
+  document.getElementById('success-panel').classList.remove('show');
+  document.getElementById('form-view').style.display = 'block';
+}
+</script>
 
 </body>
 </html>

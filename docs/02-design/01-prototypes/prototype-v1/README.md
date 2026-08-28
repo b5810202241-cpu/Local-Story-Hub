@@ -6,6 +6,13 @@
 
 เปิดไฟล์ HTML ตรงจากเบราว์เซอร์ได้เลย ไม่ต้อง build (self-contained, โหลดฟอนต์ Sarabun จาก Google Fonts เท่านั้น) — path เต็ม: `docs/02-design/01-prototypes/prototype-v1/`
 
+**Interactive**: ทุกหน้าจอมีพฤติกรรมจริง ไม่ใช่แค่ static mockup —
+- Consent (`tourist-home-consent.html`): ปุ่มยินยอม/ปฏิเสธ/ตั้งค่าแยกทีละประเภท บันทึกลง `localStorage` จริง แล้วสถานะแสดงเป็น badge ที่ header ของทุกหน้าฝั่งนักท่องเที่ยว
+- ค้นหา (`tourist-search-results.html`): ช่องค้นหากรองการ์ดผลลัพธ์แบบ live พร้อม empty state
+- รายละเอียดสถานที่ (`tourist-story-detail.html`): สลับภาษาไทย/อังกฤษได้จริง, ปุ่มบันทึกสถานที่โปรด toggle และจำสถานะข้ามการโหลดหน้าใหม่ (`localStorage`), โพสต์รีวิวใหม่ขึ้นในรายการทันทีโดยไม่ reload
+- สร้างคอนเทนต์ (`community-create-content.html`): ปุ่ม AI ทุกปุ่มมีผลลัพธ์จริง (ปรับภาพมี loading state, คิดแคปชันสลับข้อความจริง, แนะนำเรื่องเล่า/แปลภาษาแสดงผลลัพธ์), กดเผยแพร่/บันทึกร่างแล้ว**ไปโผล่ในตาราง `community-dashboard.html` จริง** (เชื่อมข้อมูลข้ามหน้าผ่าน `localStorage`)
+- เผยแพร่ผลงานนิสิต (`student-publish.html`): ตรวจสอบฟอร์ม (ต้องกรอกชื่อผลงานก่อน) แล้วแสดงหน้าจอสำเร็จจริงเมื่อเผยแพร่
+
 ## หน้าจอในเวอร์ชันนี้
 
 ### นักท่องเที่ยว — อ้างอิงจาก [[../tourist-journey|tourist-journey]]

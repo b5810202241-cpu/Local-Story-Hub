@@ -74,26 +74,57 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
   </div>
 
   <div class="actions">
-    <button class="btn btn-secondary" onclick="this.textContent='บันทึกแล้ว ✓'">บันทึกสถานที่โปรด</button>
+    <button class="btn btn-secondary" id="bookmark-btn" onclick="toggleBookmark()">บันทึกสถานที่โปรด</button>
     <a class="btn btn-primary" href="#review-form">เขียนรีวิว</a>
   </div>
 
   <section class="reviews" id="review-form">
     <h2>รีวิวจากนักท่องเที่ยว</h2>
-    <textarea placeholder="แบ่งปันประสบการณ์ของคุณที่ชุมชนบ้านผาบ่อง..."></textarea>
-    <div style="margin-top:var(--space-md)"><button class="btn btn-primary">โพสต์รีวิว</button></div>
+    <textarea id="review-text" placeholder="แบ่งปันประสบการณ์ของคุณที่ชุมชนบ้านผาบ่อง..."></textarea>
+    <div style="margin-top:var(--space-md)"><button class="btn btn-primary" onclick="postReview()">โพสต์รีวิว</button></div>
 
-    <div class="review-item">"ได้เรียนทอผ้าจริงกับคุณป้าในหมู่บ้าน อบอุ่นมากค่ะ" — นักท่องเที่ยว, ก.ค. 2569</div>
+    <div id="review-list">
+      <div class="review-item">"ได้เรียนทอผ้าจริงกับคุณป้าในหมู่บ้าน อบอุ่นมากค่ะ" — นักท่องเที่ยว, ก.ค. 2569</div>
+    </div>
   </section>
 </main>
 
 <script>
+var PLACE_ID = 'ban-pha-bong';
+
 function setLang(lang, btn){
   document.querySelectorAll('.story-text').forEach(function(el){
     el.style.display = (el.lang === lang) ? 'block' : 'none';
   });
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
+}
+
+function readBookmarks(){
+  try{ return JSON.parse(localStorage.getItem('lsh_bookmarks')) || []; }catch(e){ return []; }
+}
+function renderBookmarkButton(){
+  var saved = readBookmarks().indexOf(PLACE_ID) !== -1;
+  document.getElementById('bookmark-btn').textContent = saved ? 'บันทึกแล้ว ✓ (กดเพื่อยกเลิก)' : 'บันทึกสถานที่โปรด';
+}
+function toggleBookmark(){
+  var list = readBookmarks();
+  var idx = list.indexOf(PLACE_ID);
+  if(idx === -1){ list.push(PLACE_ID); } else { list.splice(idx, 1); }
+  localStorage.setItem('lsh_bookmarks', JSON.stringify(list));
+  renderBookmarkButton();
+}
+renderBookmarkButton();
+
+function postReview(){
+  var textEl = document.getElementById('review-text');
+  var text = textEl.value.trim();
+  if(!text){ textEl.focus(); return; }
+  var item = document.createElement('div');
+  item.className = 'review-item';
+  item.textContent = '"' + text + '" — คุณ, เพิ่งเมื่อสักครู่';
+  document.getElementById('review-list').prepend(item);
+  textEl.value = '';
 }
 </script>
 

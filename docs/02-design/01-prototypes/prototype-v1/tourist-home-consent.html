@@ -39,6 +39,11 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
 .consent-inner{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-lg);}
 .consent p{flex:1 1 420px;font-size:18px;margin:0;min-width:260px;}
 .consent .actions{display:flex;gap:var(--space-md);flex-wrap:wrap;}
+.consent-settings{max-width:960px;margin:var(--space-md) auto 0;border-top:1px solid var(--color-stone);padding-top:var(--space-md);display:none;}
+.consent-settings.open{display:block;}
+.consent-settings label{display:flex;align-items:center;gap:var(--space-sm);font-size:16px;margin-bottom:var(--space-sm);}
+.consent-badge{font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:3px 12px;margin-left:var(--space-lg);}
+.consent-badge.answered{color:var(--color-moss);border-color:var(--color-moss);}
 </style>
 </head>
 <body>
@@ -49,6 +54,7 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
     <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
     <a href="community-dashboard.html">สำหรับชุมชน</a>
     <a href="#">เข้าสู่ระบบ</a>
+    <span id="consent-badge" class="consent-badge">ยังไม่ตอบ Consent</span>
   </nav>
 </header>
 
@@ -75,19 +81,63 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
   </section>
 </main>
 
-<div class="consent" role="dialog" aria-label="แจ้งการเก็บข้อมูล">
+<div class="consent" id="consent-banner" role="dialog" aria-label="แจ้งการเก็บข้อมูล">
   <div class="consent-inner">
     <p>
       เว็บไซต์นี้ใช้ Google Analytics และเก็บ IP Address เพื่อปรับปรุงการใช้งาน คุณสามารถเลือกยินยอมหรือปฏิเสธการเก็บข้อมูลที่ไม่จำเป็นได้
-      <span class="draft-note">DRAFT — รูปแบบ consent (แยกทีละประเภท/รวมทั้งหมด) ยังเป็น Open Question</span>
+      <span class="draft-note">DRAFT — รูปแบบ consent ยังเป็น Open Question — prototype นี้สาธิตไว้ทั้งสองแบบ (ยินยอม/ปฏิเสธทั้งหมด และตั้งค่าแยกทีละประเภท)</span>
     </p>
     <div class="actions">
-      <button class="btn btn-secondary" onclick="document.querySelector('.consent').style.display='none'">ปฏิเสธที่ไม่จำเป็น</button>
-      <button class="btn btn-secondary" onclick="alert('ตัวอย่าง: เปิดหน้าตั้งค่ารายละเอียด Consent')">ตั้งค่า</button>
-      <button class="btn btn-primary" onclick="document.querySelector('.consent').style.display='none'">ยินยอมทั้งหมด</button>
+      <button class="btn btn-secondary" onclick="saveConsent(false)">ปฏิเสธที่ไม่จำเป็น</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('consent-settings').classList.toggle('open')">ตั้งค่า</button>
+      <button class="btn btn-primary" onclick="saveConsent(true)">ยินยอมทั้งหมด</button>
+    </div>
+  </div>
+  <div class="consent-settings" id="consent-settings">
+    <div class="consent-inner" style="flex-direction:column;align-items:stretch;">
+      <label><input type="checkbox" checked disabled> การทำงานพื้นฐานของระบบ (จำเป็นเสมอ)</label>
+      <label><input type="checkbox" id="cs-analytics"> Google Analytics (วิเคราะห์การใช้งาน)</label>
+      <label><input type="checkbox" id="cs-marketing"> IP Address / เครื่องมือ tracking อื่น</label>
+      <button class="btn btn-primary" style="margin-top:var(--space-sm)" onclick="saveGranularConsent()">บันทึกการตั้งค่า</button>
     </div>
   </div>
 </div>
+
+<script>
+function readConsent(){
+  try{ return JSON.parse(localStorage.getItem('lsh_consent')); }catch(e){ return null; }
+}
+function renderConsentBadge(){
+  var c = readConsent();
+  var badge = document.getElementById('consent-badge');
+  if(!badge) return;
+  if(!c){ badge.textContent = 'ยังไม่ตอบ Consent'; badge.classList.remove('answered'); return; }
+  var parts = [];
+  if(c.analytics) parts.push('Analytics ✓');
+  if(c.marketing) parts.push('Tracking อื่น ✓');
+  badge.textContent = parts.length ? ('ยินยอม: ' + parts.join(', ')) : 'ปฏิเสธข้อมูลที่ไม่จำเป็น';
+  badge.classList.add('answered');
+}
+function hideBanner(){
+  document.getElementById('consent-banner').style.display = 'none';
+}
+function saveConsent(all){
+  localStorage.setItem('lsh_consent', JSON.stringify({necessary:true, analytics:all, marketing:all}));
+  renderConsentBadge();
+  hideBanner();
+}
+function saveGranularConsent(){
+  var analytics = document.getElementById('cs-analytics').checked;
+  var marketing = document.getElementById('cs-marketing').checked;
+  localStorage.setItem('lsh_consent', JSON.stringify({necessary:true, analytics:analytics, marketing:marketing}));
+  renderConsentBadge();
+  hideBanner();
+}
+(function init(){
+  renderConsentBadge();
+  if(readConsent()){ hideBanner(); }
+})();
+</script>
 
 </body>
 </html>

@@ -57,13 +57,33 @@ td{padding:var(--space-md);border-top:1px solid var(--color-stone);font-size:16p
     <thead>
       <tr><th>ชื่อคอนเทนต์</th><th>ประเภท</th><th>สถานะ</th><th>วันที่แก้ไข</th></tr>
     </thead>
-    <tbody>
+    <tbody id="content-rows">
       <tr><td>เรื่องเล่าการทอผ้าบ้านผาบ่อง</td><td>เรื่องราวชุมชน</td><td><span class="status published">เผยแพร่แล้ว</span></td><td>20 ส.ค. 2569</td></tr>
       <tr><td>เส้นทางเดินป่าชุมชน</td><td>สถานที่ท่องเที่ยว</td><td><span class="status draft">ฉบับร่าง</span></td><td>18 ส.ค. 2569</td></tr>
       <tr><td>ปฏิทินงานประเพณีประจำปี</td><td>เรื่องราวชุมชน</td><td><span class="status published">เผยแพร่แล้ว</span></td><td>2 ส.ค. 2569</td></tr>
     </tbody>
   </table>
 </main>
+
+<script>
+function readContentList(){
+  try{ return JSON.parse(localStorage.getItem('lsh_community_content')) || []; }catch(e){ return []; }
+}
+(function renderDynamicRows(){
+  var list = readContentList();
+  if(!list.length) return;
+  var tbody = document.getElementById('content-rows');
+  var frag = document.createDocumentFragment();
+  list.forEach(function(item){
+    var tr = document.createElement('tr');
+    var statusClass = item.status === 'เผยแพร่แล้ว' ? 'published' : 'draft';
+    tr.innerHTML = '<td>' + item.title + '</td><td>' + item.type + '</td>' +
+      '<td><span class="status ' + statusClass + '">' + item.status + '</span></td><td>' + item.date + '</td>';
+    frag.appendChild(tr);
+  });
+  tbody.insertBefore(frag, tbody.firstChild);
+})();
+</script>
 
 </body>
 </html>

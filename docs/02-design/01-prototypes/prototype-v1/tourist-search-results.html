@@ -34,6 +34,9 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
 .card p{font-size:16px;color:var(--color-bark);margin:0;}
 .card a.btn-text{margin-top:auto;color:var(--color-indigo);font-weight:600;font-size:16px;text-decoration:none;}
 .result-note{font-size:14px;color:var(--color-bark);margin-bottom:var(--space-lg);}
+.consent-badge{font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:3px 12px;margin-left:var(--space-lg);}
+.consent-badge.answered{color:var(--color-moss);border-color:var(--color-moss);}
+.empty-state{padding:var(--space-2xl);text-align:center;color:var(--color-bark);border:1px dashed var(--color-stone);border-radius:var(--radius-md);}
 </style>
 </head>
 <body>
@@ -44,19 +47,20 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
     <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
     <a href="community-dashboard.html">สำหรับชุมชน</a>
     <a href="#">เข้าสู่ระบบ</a>
+    <span id="consent-badge" class="consent-badge">ยังไม่ตอบ Consent</span>
   </nav>
 </header>
 
 <main>
   <h1>ค้นหาแหล่งท่องเที่ยวชุมชน</h1>
   <div class="search-bar">
-    <input type="text" placeholder="ค้นหาชื่อชุมชน, จังหวัด, หรือกิจกรรม เช่น &quot;ทอผ้า เชียงราย&quot;" aria-label="ค้นหาแหล่งท่องเที่ยวชุมชน">
-    <button class="btn btn-primary">ค้นหา</button>
+    <input type="text" id="search-input" placeholder="ค้นหาชื่อชุมชน, จังหวัด, หรือกิจกรรม เช่น &quot;ทอผ้า เชียงราย&quot;" aria-label="ค้นหาแหล่งท่องเที่ยวชุมชน" oninput="filterResults()">
+    <button class="btn btn-primary" onclick="filterResults()">ค้นหา</button>
   </div>
-  <p class="result-note">ผลลัพธ์จากข้อมูลที่ชุมชนเผยแพร่เองในระบบเท่านั้น (ไม่ใช่รีวิวจากบุคคลภายนอก)</p>
+  <p class="result-note">ผลลัพธ์จากข้อมูลที่ชุมชนเผยแพร่เองในระบบเท่านั้น (ไม่ใช่รีวิวจากบุคคลภายนอก) — ลองพิมพ์ "ทอผ้า" หรือ "ตลาดน้ำ" ในช่องค้นหาด้านบน</p>
 
-  <div class="results">
-    <div class="card">
+  <div class="results" id="results">
+    <div class="card" data-search="ชุมชนบ้านผาบ่อง แม่ฮ่องสอน งานทอผ้า เดินป่าชุมชน">
       <div class="thumb">ภาพชุมชนบ้านผาบ่อง</div>
       <div class="body">
         <h3>ชุมชนบ้านผาบ่อง</h3>
@@ -64,7 +68,7 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
         <a class="btn-text" href="tourist-story-detail.html">อ่านเรื่องราว →</a>
       </div>
     </div>
-    <div class="card">
+    <div class="card" data-search="ชุมชนริมน้ำแม่กลอง สมุทรสงคราม ตลาดน้ำ อาหารพื้นถิ่น">
       <div class="thumb">ภาพชุมชนริมน้ำแม่กลอง</div>
       <div class="body">
         <h3>ชุมชนริมน้ำแม่กลอง</h3>
@@ -72,7 +76,7 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
         <a class="btn-text" href="tourist-story-detail.html">อ่านเรื่องราว →</a>
       </div>
     </div>
-    <div class="card">
+    <div class="card" data-search="ชุมชนดอยสูง เชียงราย ไร่ชาขั้นบันได ชาติพันธุ์">
       <div class="thumb">ภาพชุมชนดอยสูง</div>
       <div class="body">
         <h3>ชุมชนดอยสูง</h3>
@@ -81,7 +85,36 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
       </div>
     </div>
   </div>
+  <div class="empty-state" id="empty-state" style="display:none;">ไม่พบชุมชนที่ตรงกับคำค้นหา ลองคำอื่นดูนะ</div>
 </main>
+
+<script>
+function readConsent(){
+  try{ return JSON.parse(localStorage.getItem('lsh_consent')); }catch(e){ return null; }
+}
+(function renderConsentBadge(){
+  var c = readConsent();
+  var badge = document.getElementById('consent-badge');
+  if(!c) return;
+  var parts = [];
+  if(c.analytics) parts.push('Analytics ✓');
+  if(c.marketing) parts.push('Tracking อื่น ✓');
+  badge.textContent = parts.length ? ('ยินยอม: ' + parts.join(', ')) : 'ปฏิเสธข้อมูลที่ไม่จำเป็น';
+  badge.classList.add('answered');
+})();
+
+function filterResults(){
+  var q = document.getElementById('search-input').value.trim().toLowerCase();
+  var cards = document.querySelectorAll('#results .card');
+  var visibleCount = 0;
+  cards.forEach(function(card){
+    var match = card.getAttribute('data-search').toLowerCase().indexOf(q) !== -1;
+    card.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  document.getElementById('empty-state').style.display = visibleCount === 0 ? '' : 'none';
+}
+</script>
 
 </body>
 </html>
