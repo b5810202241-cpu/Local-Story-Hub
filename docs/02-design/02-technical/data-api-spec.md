@@ -2,6 +2,7 @@
 
 - **สถานะ**: Draft — conceptual เท่านั้น ยังไม่ผูกมัดกับ technical stack (ยี่ห้อฐานข้อมูล/รูปแบบ API เฉพาะ framework) ใด ๆ
 - **อ้างอิงจาก**: [[../../01-requirements/01-spec/local-story-hub|local-story-hub]], [[../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]], [[../../01-requirements/03-task/feature-list|feature-list]], [[architecture|architecture]]
+- **ดู Detailed Design (Sequence Flow) ที่ต่อยอดจากไฟล์นี้**: [[detailed-design|detailed-design]]
 
 ## Decision Log
 

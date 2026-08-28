@@ -5,6 +5,7 @@
 - **ดู Test Plan ที่แตกจาก journey นี้**: [[../../03-testing/01-test-plan/test-plan|test-plan]] (TC-001–TC-008)
 - **ดู Prototype ที่แตกจาก journey นี้**: [[prototype-v1/README|prototype-v1]] (`tourist-home-consent.html`, `tourist-search-results.html`, `tourist-story-detail.html`)
 - **ดู Architecture (conceptual) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/architecture|architecture]]
+- **ดู Detailed Design (Sequence Flow) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/detailed-design|detailed-design]] (⚠️ sequence เรื่องรีวิวออกแบบใหม่ให้ต้อง login ซึ่งยังไม่ตรงกับ journey นี้ — ดูคำเตือนใน detailed-design)
 
 ## Diagram
 

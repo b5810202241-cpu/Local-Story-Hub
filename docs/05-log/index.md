@@ -90,3 +90,10 @@
 - **ผลกระทบสำคัญ**: [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]] ฝั่งนักท่องเที่ยวออกแบบไว้แบบไม่มี login (ใช้ `localStorage`) จึงไม่ตรงกับการตัดสินใจนี้อีกต่อไป — ยังไม่ได้แก้ไข prototype ในรอบนี้ บันทึกไว้เป็นรายการที่ต้องตามแก้ทั้งใน `data-api-spec.md` และที่นี่
 - สร้าง [[../02-design/02-technical/data-api-spec|02-technical/data-api-spec]]: 8 entity (UserAccount แบบรวม role เดียวแทนการแยก 3 entity, Community, Content, Review, Bookmark, StudentWork, ConsentRecord, AccessLog) พร้อม ER Diagram (Mermaid) และ API operation ครบทุก feature หลัก
 - เพิ่ม wikilink สองทางกับ architecture.md และ spec ทั้ง 2 ไฟล์แล้ว
+
+### 2026-08-28 — รัน detailed-designer ครั้งแรก สร้าง detailed-design.md (ครบทั้ง 3 คู่ Technical Design)
+
+- ก่อนวาด sequence ของ flow ที่ใช้ AI พบจุดพฤติกรรมระบบที่ไม่มีคำตอบในสเปคอีกจุด — ถามผู้ใช้ (≥3 ทางเลือกพร้อมข้อดี/ข้อเสีย): ถ้า AI ประมวลผลไม่สำเร็จควรทำอย่างไร — ผู้ใช้เลือก **แจ้ง error ทันที ให้ผู้ใช้กดลองใหม่เอง** (ไม่ retry อัตโนมัติ)
+- สร้าง [[../02-design/02-technical/detailed-design|02-technical/detailed-design]]: 6 sequence diagram (Mermaid) ครอบคลุม Consent flow, ค้นหา/อ่านเรื่องราว, เขียนรีวิว, AI ปรับภาพ (พร้อม error handling), เผยแพร่คอนเทนต์ชุมชน, เผยแพร่ผลงานนิสิต — แต่ละ sequence map กลับ journey step/FR/API operation
+- ยืนยันความไม่สอดคล้องเรื่อง login นักท่องเที่ยวอีกครั้ง (sequence #3 ออกแบบให้ต้อง login ตาม data-api-spec แต่ journey/prototype เดิมยังไม่มี) — เพิ่มคำเตือนไว้ในเอกสารและ wikilink ของ tourist-journey ให้เห็นชัดเจน ยังไม่ได้แก้ไข journey/prototype ในรอบนี้
+- เพิ่ม wikilink สองทางกับ architecture.md, data-api-spec.md และ journey ทั้ง 3 ไฟล์แล้ว — **ครบทั้ง 3 เอกสารในกลุ่ม Technical Design (conceptual) ตามที่ผู้ใช้ขอไว้**

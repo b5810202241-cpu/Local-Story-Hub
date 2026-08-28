@@ -5,6 +5,7 @@
 - **ดู Test Plan ที่แตกจาก journey นี้**: [[../../03-testing/01-test-plan/test-plan|test-plan]] (TC-017–TC-018)
 - **ดู Prototype ที่แตกจาก journey นี้**: [[prototype-v1/README|prototype-v1]] (`student-publish.html`)
 - **ดู Architecture (conceptual) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/architecture|architecture]]
+- **ดู Detailed Design (Sequence Flow) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/detailed-design|detailed-design]]
 
 > **อัปเดต 2026-08-22**: Open Question เชิงโครงสร้าง ("ต้องผ่านอนุมัติก่อนเผยแพร่หรือไม่") ที่เคยทำให้ journey นี้มีสองเส้นทางที่เป็นไปได้ **ถูกตอบแล้ว — ไม่ต้องผ่านอนุมัติ** (บันทึกเป็น Business Rule ใน `local-story-hub.md` แล้ว) diagram ด้านล่างจึงตัดเส้นทางอนุมัติออก เหลือ Open Question ปลีกย่อยอีกข้อเดียวคือวิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชน
 

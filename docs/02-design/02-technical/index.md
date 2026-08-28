@@ -15,3 +15,4 @@
 
 - [[architecture|architecture]] — High-Level Architecture: component หลักและ data flow ตาม User Journey
 - [[data-api-spec|data-api-spec]] — Database Schema (ER Diagram + entity) และ API Spec รวมในไฟล์เดียว
+- [[detailed-design|detailed-design]] — Sequence Flow ของการทำงานสำคัญที่ข้าม component
