@@ -45,3 +45,10 @@
 - อัปเดต BL-013 ใน [[../01-requirements/03-task/product-backlog|product-backlog]]: เพิ่ม Acceptance Criteria สะท้อนการเผยแพร่ทันที และปรับหมายเหตุว่าคำถามนี้ปิดแล้ว (ยังเหลือ Open Question ย่อยเรื่องวิธีเชื่อมโยงผลงานกับพื้นที่ชุมชน)
 - อัปเดต [[../01-requirements/03-task/open-questions|open-questions]] และ [[../../02-design/01-prototypes/student-content-journey|student-content-journey]]: ตัดเส้นทาง "ต้องอนุมัติ" ออกจาก diagram เหลือ flow เดียว (อัปโหลด → เผยแพร่ทันที) — journey ยังเป็น DRAFT ต่อเพราะ Open Question ย่อยเรื่องการเชื่อมโยงกับชุมชนยังไม่ปิด
 
+### 2026-08-22 — สร้าง Test Plan จาก User Journey ทั้ง 3 persona
+
+- สร้าง [[../03-testing/01-test-plan/test-plan|03-testing/01-test-plan/test-plan]] เป็นเอกสารแรกใน `03-testing` — แปลง Acceptance Criteria ของ backlog item ที่ปรากฏใน User Journey แต่ละ step ให้เป็น test case โดยตรง (18 test case จาก 13 backlog item)
+- BL-014 และ BL-017 (พฤติกรรม backend/log) ยังไม่มี test case เพราะไม่ปรากฏเป็น step ใน journey ใดโดยตรง — รอ technical design ใน `02-technical` ก่อน
+- test case ที่มาจาก journey step ที่ยังเป็น DRAFT (8 จาก 18 ข้อ) ถูกทำเครื่องหมายไว้ในคอลัมน์หมายเหตุ เพื่อไม่ให้ถือเป็น test case สุดท้ายจนกว่า Open Question ที่เกี่ยวข้องจะปิด
+- เพิ่ม wikilink สองทางระหว่าง test plan กับ journey ทั้ง 3 ไฟล์แล้ว
+

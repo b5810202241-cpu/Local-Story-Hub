@@ -7,3 +7,7 @@
 - ขอบเขตของการทดสอบ (in scope / out of scope)
 
 อ้างอิงจากข้อกำหนดใน [[../../01-requirements/01-spec/index|01-spec]] และการออกแบบใน [[../../02-design/index|02-design]] ผลของการทดสอบตาม test case เหล่านี้ให้บันทึกใน [[../02-test-result/index|02-test-result]]
+
+## เอกสารในหมวดนี้
+
+- [[test-plan|test-plan]] — test case ที่แปลงมาจาก Acceptance Criteria ของ backlog item ตามแต่ละ step ใน User Journey (ครอบคลุม 3 persona: นักท่องเที่ยว, ชุมชน, นิสิต)

@@ -2,6 +2,7 @@
 
 - **สถานะ**: DRAFT — ขึ้นกับ Open Question (ดูรายละเอียดที่ [[../../01-requirements/03-task/open-questions|open-questions]])
 - **อ้างอิงจาก**: [[../../01-requirements/01-spec/local-story-hub|local-story-hub]], [[../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]]
+- **ดู Test Plan ที่แตกจาก journey นี้**: [[../../03-testing/01-test-plan/test-plan|test-plan]] (TC-001–TC-008)
 
 ## Diagram
 
