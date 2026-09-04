@@ -1,0 +1,13 @@
+{
+  "name": "local-story-hub",
+  "version": "1.0.0",
+  "description": "Local Story Hub - Firestore seed scripts",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "seed": "node scripts/seed-firestore.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}
