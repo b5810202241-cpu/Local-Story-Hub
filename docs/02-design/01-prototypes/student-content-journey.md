@@ -3,7 +3,7 @@
 - **สถานะ**: DRAFT — ยังมี Open Question ปลีกย่อยเหลืออยู่ (ดูรายละเอียดที่ [[../../01-requirements/03-task/open-questions|open-questions]])
 - **อ้างอิงจาก**: [[../../01-requirements/01-spec/local-story-hub|local-story-hub]]
 - **ดู Test Plan ที่แตกจาก journey นี้**: [[../../03-testing/01-test-plan/test-plan|test-plan]] (TC-017–TC-020)
-- **ดู Prototype ที่แตกจาก journey นี้**: [[prototype-v1/README|prototype-v1]] (`student-publish.html`)
+- **ดู Prototype ที่แตกจาก journey นี้**: [[prototype-v1/README|prototype-v1]] (`student-publish.html`, `admin-review-student-work.html` — เพิ่ม 2026-09-04)
 - **ดู Architecture (conceptual) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/architecture|architecture]]
 - **ดู Detailed Design (Sequence Flow) ที่ใช้ journey นี้ประกอบ**: [[../02-technical/detailed-design|detailed-design]]
 

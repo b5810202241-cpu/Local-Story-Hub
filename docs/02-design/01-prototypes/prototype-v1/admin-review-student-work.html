@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ตรวจสอบผลงานนิสิต (อาจารย์)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);flex-wrap:wrap;gap:var(--space-sm);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site a.active{color:var(--color-clay);font-weight:600;}
+main{max-width:840px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-sm);}
+h2{font-size:26px;font-weight:600;margin:var(--space-2xl) 0 var(--space-md);}
+h3{font-size:22px;font-weight:600;margin:0 0 var(--space-xs);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-lg);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-xl);}
+.empty-state{color:var(--color-bark);font-size:16px;padding:var(--space-lg) 0;}
+.review-card{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-md);}
+.review-meta{font-size:14px;color:var(--color-bark);margin:0 0 var(--space-sm);}
+.review-desc{font-size:16px;margin:0 0 var(--space-md);}
+.action-row{display:flex;gap:var(--space-md);flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;text-decoration:none;}
+.btn-primary{background:var(--color-moss);color:#fff;}
+.btn-danger{background:transparent;color:#A13D2C;border-color:#A13D2C;}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.reject-form{display:none;margin-top:var(--space-md);padding-top:var(--space-md);border-top:1px solid var(--color-stone);}
+.reject-form.show{display:block;}
+.reject-form label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);}
+.reject-form textarea{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:16px;color:var(--color-ink);background:#fff;min-height:80px;}
+.field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);overflow:hidden;}
+th{text-align:left;background:var(--color-sand);padding:var(--space-md);font-size:16px;font-weight:600;}
+td{padding:var(--space-md);border-top:1px solid var(--color-stone);font-size:15px;vertical-align:top;}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;}
+.status.published{background:#E4F1E6;color:var(--color-moss);}
+.status.rejected{background:#F7E0DA;color:#A13D2C;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site">
+    <a href="student-publish.html">ส่งผลงาน (นิสิต)</a>
+    <a class="active" href="admin-review-student-work.html">ตรวจสอบผลงานนิสิต</a>
+    <a href="#">ออกจากระบบ · อาจารย์ที่ปรึกษา (role=admin)</a>
+  </nav>
+</header>
+
+<main>
+  <h1>ตรวจสอบผลงานนิสิตที่รออนุมัติ</h1>
+  <p class="hint">ผลงานที่นิสิตส่งเข้ามาจะเผยแพร่ได้ก็ต่อเมื่อได้รับอนุมัติจากอาจารย์ที่นี่เท่านั้น</p>
+  <div class="draft-note">DRAFT — จำนวนครั้งที่นิสิตส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติยังเป็น Open Question (ตัวอย่างนี้สมมติว่าไม่จำกัดครั้ง)</div>
+
+  <h2>รอการอนุมัติ</h2>
+  <div id="pending-list"></div>
+  <div class="empty-state" id="pending-empty" style="display:none;">ยังไม่มีผลงานรอการอนุมัติในขณะนี้</div>
+
+  <h2>ประวัติการตรวจสอบ</h2>
+  <table>
+    <thead>
+      <tr><th>ชื่อผลงาน</th><th>ชุมชน</th><th>สถานะ</th><th>หมายเหตุ</th></tr>
+    </thead>
+    <tbody id="history-rows"></tbody>
+  </table>
+</main>
+
+<script>
+var STORAGE_KEY = 'lsh_student_works';
+
+function escapeHtml(str){
+  var div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+function readWorks(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; }
+}
+function writeWorks(list){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+function seedWorks(){
+  return [
+    {id:'seed-1', title:'สารคดีสั้น: วิถีทอผ้าบ้านผาบ่อง', community:'ชุมชนบ้านผาบ่อง', desc:'บันทึกขั้นตอนการทอผ้าพื้นเมืองของกลุ่มแม่บ้านในชุมชน', status:'pending_approval', reason:''},
+    {id:'seed-2', title:'ภาพถ่ายเส้นทางเดินป่าดอยสูง', community:'ชุมชนดอยสูง', desc:'ชุดภาพถ่ายเส้นทางเดินป่าพร้อมคำบรรยายจุดพักระหว่างทาง', status:'pending_approval', reason:''},
+    {id:'seed-3', title:'คลิปสัมภาษณ์ปราชญ์ชุมชนริมน้ำแม่กลอง', community:'ชุมชนริมน้ำแม่กลอง', desc:'บทสัมภาษณ์ประวัติศาสตร์ชุมชนริมน้ำ', status:'published', reason:''},
+    {id:'seed-4', title:'บทความแนะนำร้านอาหารท้องถิ่น', community:'ชุมชนบ้านผาบ่อง', desc:'รวมร้านอาหารแนะนำในพื้นที่ชุมชน', status:'rejected', reason:'เนื้อหาโน้มเอียงไปทางโฆษณาร้านค้าเฉพาะเจาะจงมากเกินไป ควรปรับให้เป็นกลางและเชื่อมโยงกับเรื่องราวชุมชนมากขึ้น'}
+  ];
+}
+function ensureWorks(){
+  var works = readWorks();
+  if(!works){
+    works = seedWorks();
+    writeWorks(works);
+  }
+  return works;
+}
+
+function renderPending(works){
+  var pending = works.filter(function(w){ return w.status === 'pending_approval'; });
+  var container = document.getElementById('pending-list');
+  var emptyEl = document.getElementById('pending-empty');
+  container.innerHTML = '';
+  if(!pending.length){
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  pending.forEach(function(w){
+    var card = document.createElement('div');
+    card.className = 'review-card';
+    card.innerHTML =
+      '<h3>' + escapeHtml(w.title) + '</h3>' +
+      '<p class="review-meta">ชุมชนที่เกี่ยวข้อง: ' + escapeHtml(w.community) + '</p>' +
+      '<p class="review-desc">' + escapeHtml(w.desc || 'ไม่มีคำอธิบายเพิ่มเติม') + '</p>' +
+      '<div class="action-row">' +
+        '<button class="btn btn-primary" onclick="approveWork(\'' + w.id + '\')">อนุมัติ</button>' +
+        '<button class="btn btn-danger" onclick="toggleRejectForm(\'' + w.id + '\')">ไม่อนุมัติ</button>' +
+      '</div>' +
+      '<div class="reject-form" id="reject-form-' + w.id + '">' +
+        '<label for="reason-' + w.id + '">เหตุผลที่ไม่อนุมัติ (จะแจ้งกลับไปยังนิสิต)</label>' +
+        '<textarea id="reason-' + w.id + '" placeholder="เช่น เนื้อหายังไม่เชื่อมโยงกับชุมชนชัดเจน กรุณาปรับแก้และส่งใหม่"></textarea>' +
+        '<div class="field-error" id="reason-error-' + w.id + '">กรุณาระบุเหตุผลก่อนไม่อนุมัติ</div>' +
+        '<div class="action-row" style="margin-top:var(--space-md)">' +
+          '<button class="btn btn-danger" onclick="rejectWork(\'' + w.id + '\')">ยืนยันไม่อนุมัติ</button>' +
+          '<button class="btn btn-secondary" onclick="toggleRejectForm(\'' + w.id + '\')">ยกเลิก</button>' +
+        '</div>' +
+      '</div>';
+    container.appendChild(card);
+  });
+}
+
+function renderHistory(works){
+  var reviewed = works.filter(function(w){ return w.status === 'published' || w.status === 'rejected'; });
+  var tbody = document.getElementById('history-rows');
+  tbody.innerHTML = '';
+  if(!reviewed.length){
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--color-bark)">ยังไม่มีผลงานที่ตรวจสอบแล้ว</td></tr>';
+    return;
+  }
+  reviewed.forEach(function(w){
+    var statusLabel = w.status === 'published' ? 'อนุมัติแล้ว (เผยแพร่)' : 'ไม่อนุมัติ';
+    var statusClass = w.status === 'published' ? 'published' : 'rejected';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + escapeHtml(w.title) + '</td>' +
+      '<td>' + escapeHtml(w.community) + '</td>' +
+      '<td><span class="status ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td>' + (w.status === 'rejected' ? escapeHtml(w.reason) : '—') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAll(){
+  var works = ensureWorks();
+  renderPending(works);
+  renderHistory(works);
+}
+
+function approveWork(id){
+  var works = ensureWorks();
+  works = works.map(function(w){
+    if(w.id === id){ w.status = 'published'; w.reason = ''; }
+    return w;
+  });
+  writeWorks(works);
+  renderAll();
+}
+
+function toggleRejectForm(id){
+  var form = document.getElementById('reject-form-' + id);
+  form.classList.toggle('show');
+}
+
+function rejectWork(id){
+  var textarea = document.getElementById('reason-' + id);
+  var reason = textarea.value.trim();
+  var errorEl = document.getElementById('reason-error-' + id);
+  if(!reason){
+    errorEl.style.display = 'block';
+    textarea.focus();
+    return;
+  }
+  errorEl.style.display = 'none';
+  var works = ensureWorks();
+  works = works.map(function(w){
+    if(w.id === id){ w.status = 'rejected'; w.reason = reason; }
+    return w;
+  });
+  writeWorks(works);
+  renderAll();
+}
+
+renderAll();
+</script>
+
+</body>
+</html>

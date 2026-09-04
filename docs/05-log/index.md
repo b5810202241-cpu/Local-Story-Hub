@@ -117,3 +117,10 @@
   6. [[../02-design/02-technical/architecture|02-design/02-technical/architecture]] — แก้ Data Flow diagram ของนิสิต, เพิ่ม role=admin ใน UserAccount, เพิ่ม field `reviewer_id`/`rejection_reason` และปรับ `status` ของ StudentWork เป็น pending_approval/published/rejected, เพิ่ม API operation อนุมัติ/ไม่อนุมัติ, เพิ่ม Decision Log entry และ Open Item ใหม่ (จำนวนครั้งที่ส่งใหม่ได้)
   7. [[../02-design/02-technical/detailed-design|02-design/02-technical/detailed-design]] — ออกแบบ Sequence #6 ใหม่ทั้งหมดให้มี alt อนุมัติ/ไม่อนุมัติ พร้อม actor อาจารย์ (role=admin)
 - Open Question ที่ยังไม่ปิดจากการเปลี่ยนแปลงนี้: จำนวนครั้งที่นิสิตแก้ไขและส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติ (สมมติไว้ก่อนว่าไม่จำกัดครั้ง) — ควรยืนยันกับอาจารย์ที่ปรึกษาในภายหลัง
+
+### 2026-09-04 — เพิ่มหน้าจอ "อาจารย์อนุมัติ/ไม่อนุมัติผลงานนิสิต" ใน Prototype v1
+
+- ผู้ใช้ขอเพิ่ม prototype ฝั่งอาจารย์ต่อจากการกลับคำตัดสินใจเรื่องอนุมัติผลงานนิสิตข้างต้น — ถามผู้ใช้ก่อนตามกฎบังคับของ `prototype-builder` ว่าจะแก้ `prototype-v1/` เดิมหรือสร้าง `prototype-v2/` ใหม่ ผู้ใช้เลือก **แก้ไข prototype-v1 เดิม**
+- สร้าง `admin-review-student-work.html` ในโฟลเดอร์ [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]]: อาจารย์เห็นรายการผลงานรออนุมัติ (พร้อมข้อมูลตัวอย่างตั้งต้น) กดอนุมัติได้ทันที หรือกดไม่อนุมัติซึ่งบังคับกรอกเหตุผลก่อนยืนยัน แล้วย้ายไปตาราง "ประวัติการตรวจสอบ" — อ้างอิง FR-3.1, BL-018
+- แก้ `student-publish.html` ให้บันทึกผลงานที่ส่งเข้าคีย์ `localStorage` เดียวกัน (`lsh_student_works`) แทนที่จะเป็นแค่ข้อความสำเร็จลอย ๆ เพื่อให้ข้อมูลไหลข้ามหน้าไปยัง `admin-review-student-work.html` ได้จริง (จำลอง data flow ของ sequence #6 ใน [[../02-design/02-technical/detailed-design|detailed-design]]) — เพิ่มลิงก์นำทาง "มุมมองอาจารย์ (ตัวอย่าง)" ในหน้านี้ด้วย
+- อัปเดต `prototype-v1/README.md` และ `student-content-journey.md` ให้ชี้ไปยังหน้าจอใหม่ — จุดที่ยังเป็น DRAFT: จำนวนครั้งที่ส่งใหม่ได้หลังไม่ผ่านอนุมัติ (Open Question เดิม ยังไม่ปิด)
