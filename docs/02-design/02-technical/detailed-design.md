@@ -6,6 +6,7 @@
 ## Decision Log
 
 - **2026-08-28** — ถ้า AI Content Service ประมวลผลไม่สำเร็จ ระบบ**แจ้ง error ทันทีให้ผู้ใช้กดลองใหม่เอง** (ไม่มี retry อัตโนมัติ, ไม่ทำต่อเหมือนไม่มีอะไรเกิดขึ้น) — ผู้ใช้ยืนยันเอง หลังถูกถามพร้อม 3 ทางเลือก (อีก 2 ทางที่พิจารณาแล้วไม่เลือก: retry อัตโนมัติ 1-2 ครั้ง, ทำต่อเหมือนเดิมโดยไม่เตือน) เหตุผล: ง่ายที่สุด ตรงกับหลัก Synchronous ที่เลือกไว้ใน [[architecture|architecture]]
+- **2026-09-04** — Sequence #6 (นิสิตเผยแพร่ผลงาน) ออกแบบใหม่ทั้งหมดตามการกลับคำตัดสินใจใน [[architecture|architecture]]: ต้องผ่านการอนุมัติจากอาจารย์ (role=admin) ก่อนเผยแพร่เสมอ — ไม่ใช่จุดตัดสินใจใหม่ที่ agent ต้องถามผู้ใช้ (ผู้ใช้แก้ Business Rule ในสเปคโดยตรงแล้ว) จึงปรับ sequence ให้ตรงกันทันที
 
 > **⚠️ ความไม่สอดคล้องที่ยังไม่ได้แก้**: Sequence "นักท่องเที่ยวเขียนรีวิว" ด้านล่างออกแบบตามการตัดสินใจใน [[architecture|architecture]] ว่านักท่องเที่ยวต้องมีบัญชี (login) แต่ [[../01-prototypes/tourist-journey|tourist-journey]] และ [[../01-prototypes/prototype-v1/README|prototype-v1]] ที่มีอยู่ยังออกแบบแบบไม่มี login (ใช้ `localStorage`) — ยังไม่ได้อัปเดตสองไฟล์นั้นให้ตรงกัน (บันทึกไว้ตั้งแต่รอบที่แล้วใน `05-log`)
 
@@ -108,22 +109,42 @@ sequenceDiagram
 
 **อ้างอิง**: community-content-journey step 7 · FR-1.6, FR-1.7 · API: "เผยแพร่คอนเทนต์" ([[architecture|architecture]])
 
-### 6. นิสิตเผยแพร่ผลงานทันที (ไม่ต้องอนุมัติ)
+### 6. นิสิตส่งผลงานขออนุมัติ และอาจารย์อนุมัติ/ไม่อนุมัติ
+
+> **แก้ไข 2026-09-04**: กลับคำตัดสินใจเดิม — sequence นี้เคยเป็น "เผยแพร่ทันทีไม่ต้องอนุมัติ" (ยืนยัน 2026-08-22) ผู้ใช้แก้ Business Rule ให้ต้องผ่านการอนุมัติจากอาจารย์ (role=admin) เสมอ จึงออกแบบใหม่ทั้งหมด
 
 ```mermaid
 sequenceDiagram
   participant Client
   participant API
   participant DB as Database
+  participant Admin as Client: อาจารย์ (role=admin)
 
   Client->>API: อัปโหลดผลงาน + เลือกชุมชนที่เกี่ยวข้อง
-  API->>DB: บันทึก StudentWork (status=published)
-  Note over API,DB: เผยแพร่ทันทีเสมอ ไม่มีขั้นตอนรออนุมัติ (Business Rule ที่ยืนยันแล้วใน local-story-hub.md)
+  API->>DB: บันทึก StudentWork (status=pending_approval)
   DB-->>API: สำเร็จ
-  API-->>Client: แสดงผลงานที่เผยแพร่แล้ว
+  API-->>Client: แสดง "ส่งขออนุมัติแล้ว รอผลการตรวจสอบ"
+
+  Admin->>API: ดูรายการผลงานรออนุมัติ
+  API->>DB: query StudentWork (status=pending_approval)
+  DB-->>API: รายการผลงาน
+  API-->>Admin: แสดงรายการให้ตรวจสอบ
+
+  alt อนุมัติ
+    Admin->>API: กดอนุมัติ (student_work_id)
+    API->>DB: อัปเดต StudentWork (status=published, reviewer_id)
+    DB-->>API: สำเร็จ
+    API-->>Client: แจ้งผลงานได้รับอนุมัติและเผยแพร่แล้ว
+  else ไม่อนุมัติ
+    Admin->>API: กดไม่อนุมัติ (student_work_id, rejection_reason)
+    API->>DB: อัปเดต StudentWork (status=rejected, reviewer_id, rejection_reason)
+    DB-->>API: สำเร็จ
+    API-->>Client: แจ้งไม่ผ่านอนุมัติพร้อมเหตุผล
+    Client->>API: แก้ไขผลงานแล้วส่งใหม่ (วนกลับไปบันทึก pending_approval)
+  end
 ```
 
-**อ้างอิง**: student-content-journey step 1–3 · FR-3.1 · API: "อัปโหลด+เผยแพร่ผลงานทันที" ([[architecture|architecture]])
+**อ้างอิง**: student-content-journey step 1–5 · FR-3.1, BL-018 · API: "อัปโหลดผลงาน + ส่งขออนุมัติ", "ดูรายการผลงานรออนุมัติ", "อนุมัติผลงาน", "ไม่อนุมัติผลงาน" ([[architecture|architecture]]) · จำนวนครั้งที่ส่งใหม่ได้ยังเป็น Open Question (สมมติไม่จำกัดครั้ง)
 
 ## Open Items ที่กระทบเอกสารนี้
 

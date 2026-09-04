@@ -59,11 +59,14 @@ flowchart LR
 ```mermaid
 flowchart LR
   Client -->|อัปโหลดผลงาน + เลือกชุมชน| API[API / Application Layer]
-  API -->|บันทึกและเผยแพร่ทันที ไม่ต้องอนุมัติ| DB[(Database)]
-  DB -->|ผลงานที่เผยแพร่แล้ว| API --> Client
+  API -->|บันทึก status=pending_approval| DB[(Database)]
+  Admin[Client: อาจารย์ / ผู้ดูแลระบบ] -->|ตรวจสอบผลงานรออนุมัติ| API
+  API -->|อนุมัติ: status=published / ไม่อนุมัติ: status=rejected + เหตุผล| DB
+  DB -->|ผลลัพธ์การอนุมัติ| API --> Admin
+  DB -->|แจ้งผล/เหตุผล| API --> Client
 ```
 
-อ้างอิง: FR-3.1 ([[../../01-requirements/01-spec/local-story-hub|local-story-hub]]) — การอนุมัติก่อนเผยแพร่ถูกตอบแล้วว่าไม่ต้องมี (ดู Business Rules ในสเปค)
+อ้างอิง: FR-3.1 ([[../../01-requirements/01-spec/local-story-hub|local-story-hub]]) — **แก้ไข 2026-09-04**: กลับคำตัดสินใจเดิม ตอนนี้ผลงานนิสิตต้องผ่านการอนุมัติจากอาจารย์ (ผู้ดูแลระบบ) ก่อนเผยแพร่เสมอ (ดู Business Rules ในสเปค และ Decision Log ด้านล่าง)
 
 ## Database Schema
 
@@ -82,6 +85,7 @@ erDiagram
   USER_ACCOUNT ||--o{ STUDENT_WORK : authors
   USER_ACCOUNT ||--o{ CONSENT_RECORD : gives
   USER_ACCOUNT ||--o{ ACCESS_LOG : generates
+  USER_ACCOUNT ||--o{ STUDENT_WORK : "reviews (role=admin)"
 ```
 
 ### UserAccount
@@ -91,7 +95,7 @@ erDiagram
 | Field | ประเภท | บังคับ | คำอธิบาย |
 |---|---|---|---|
 | id | รหัสอ้างอิง | ใช่ | |
-| role | ตัวเลือก (community / tourist / student) | ใช่ | กำหนดสิทธิ์และหน้าที่ |
+| role | ตัวเลือก (community / tourist / student / admin) | ใช่ | กำหนดสิทธิ์และหน้าที่ — `admin` คืออาจารย์ที่ทำหน้าที่ผู้ดูแลระบบ มีสิทธิ์อนุมัติ/ไม่อนุมัติ StudentWork (เพิ่ม 2026-09-04) |
 | community_id | อ้างอิงไปยัง Community | เฉพาะ role=community | บัญชีนี้เป็นผู้จัดการชุมชนไหน — รายละเอียดสิทธิ์ยังเป็น Open Question |
 | display_name | ข้อความ | ใช่ | |
 | email / credential | ข้อความ | ใช่ | ใช้สำหรับ login — วิธีจริง (email/password, OAuth ฯลฯ) เป็นเรื่อง technical stack ไม่ระบุที่นี่ |
@@ -160,7 +164,9 @@ erDiagram
 | title | ข้อความ | ใช่ | |
 | description | ข้อความ | ไม่ | |
 | media_ref | อ้างอิงไฟล์ | ไม่ | |
-| status | ตัวเลือก (published เท่านั้น) | ใช่ | เผยแพร่ทันทีเสมอ ไม่มีสถานะรออนุมัติ (Business Rule ที่ยืนยันแล้วใน local-story-hub.md) |
+| status | ตัวเลือก (pending_approval / published / rejected) | ใช่ | ต้องผ่านการอนุมัติจากอาจารย์ (role=admin) ก่อนเป็น published เสมอ (Business Rule กลับคำตัดสินใจเมื่อ 2026-09-04 — เดิมเคยเป็น published เท่านั้น) |
+| reviewer_id | อ้างอิงไปยัง UserAccount (role=admin) | ไม่ | อาจารย์ผู้อนุมัติ/ไม่อนุมัติ — ว่างจนกว่าจะถูกตรวจสอบ |
+| rejection_reason | ข้อความ | ไม่ | บังคับกรอกเมื่อ status=rejected เท่านั้น |
 | created_at | วันที่-เวลา | ใช่ | |
 
 ### ConsentRecord
@@ -228,8 +234,11 @@ erDiagram
 
 | Operation | Input | Output | อ้างอิง |
 |---|---|---|---|
-| อัปโหลด+เผยแพร่ผลงานทันที | user_account (role=student), community_id, ข้อมูลผลงาน | student_work (published) | FR-3.1, student-content-journey |
-| ดูผลงานนิสิตที่เกี่ยวข้องกับชุมชน | community_id | รายการ student_work | FR-3.1 |
+| อัปโหลดผลงาน + ส่งขออนุมัติ | user_account (role=student), community_id, ข้อมูลผลงาน | student_work (pending_approval) | FR-3.1, student-content-journey · **แก้ไข 2026-09-04** (เดิมคือ "อัปโหลด+เผยแพร่ผลงานทันที") |
+| ดูรายการผลงานรออนุมัติ | user_account (role=admin) | รายการ student_work (pending_approval) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
+| อนุมัติผลงาน | student_work_id, user_account (role=admin) | student_work (published) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
+| ไม่อนุมัติผลงาน | student_work_id, user_account (role=admin), rejection_reason | student_work (rejected) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
+| ดูผลงานนิสิตที่เกี่ยวข้องกับชุมชน | community_id | รายการ student_work (เฉพาะ published) | FR-3.1 |
 
 ### Consent / Log
 
@@ -253,6 +262,7 @@ erDiagram
   > **ผลกระทบที่ต้องตามแก้**: [[../01-prototypes/prototype-v1/README|prototype-v1]] ปัจจุบันออกแบบฝั่งนักท่องเที่ยวแบบไม่มี login (ใช้ `localStorage` ต่ออุปกรณ์) — ไม่ตรงกับการตัดสินใจนี้อีกต่อไป ต้องอัปเดต prototype (เพิ่มหน้า login/register) และอาจกระทบ [[../../03-testing/01-test-plan/test-plan|test-plan]] (TC-001–TC-008) ในภายหลัง ยังไม่ได้แก้ในรอบนี้
 - **2026-08-28** — รวม UserAccount เป็น entity เดียว (มี field `role`) แทนการแยก 3 entity ตามกลุ่มผู้ใช้ เพื่อลดความซ้ำซ้อนของ schema — เป็นการเลือกรูปแบบ normalization ไม่ใช่การตัดสินใจเชิง requirement จึงไม่ได้ถามผู้ใช้ก่อน
 - **2026-08-28** — รวม High-Level Architecture + Database Schema + API Spec เป็นไฟล์เดียว (ไฟล์นี้) ตามที่ผู้ใช้ขอ เพื่อให้เป็นภาพรวมระบบไฟล์เดียวเรียกใช้งานง่าย — เดิมเคยแยกเป็น `architecture.md` และ `data-api-spec.md`
+- **2026-09-04** — **กลับคำตัดสินใจเดิม**: ผลงานนิสิต (StudentWork) ต้องผ่านการอนุมัติจากอาจารย์ (UserAccount role=admin) ก่อนเผยแพร่เสมอ เดิมเคยยืนยันเมื่อ 2026-08-22 ว่าเผยแพร่ได้ทันทีไม่ต้องอนุมัติ — ผู้ใช้แก้ไข Business Rule ในสเปคโดยตรง จึงตามแก้ Data Flow, StudentWork.status (เพิ่ม pending_approval/rejected), เพิ่ม field reviewer_id/rejection_reason, เพิ่ม role=admin ใน UserAccount, และ API Spec (เพิ่ม operation อนุมัติ/ไม่อนุมัติ) ให้สอดคล้องกัน
 
 ## Open Items ที่กระทบเอกสารนี้
 
@@ -265,3 +275,4 @@ erDiagram
 5. **รูปแบบ Consent (granular/เดียว)** — กระทบโครงสร้าง field ของ ConsentRecord
 6. **รายละเอียด Log ที่ต้องเก็บ** — กระทบ field ของ AccessLog
 7. **เชื่อมโยงผลงานนิสิตกับชุมชน** — ตอนนี้จำลองเป็น FK ตรง ๆ ตาม prototype-v1 อาจต้องปรับถ้าคำตอบจริงซับซ้อนกว่านี้
+8. **จำนวนครั้งที่นิสิตส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติ** — ตอนนี้สมมติว่าไม่จำกัดครั้ง (เพิ่ม 2026-09-04 พร้อมการอนุมัติผลงานนิสิต) ยังไม่ได้ยืนยันกับอาจารย์ที่ปรึกษา

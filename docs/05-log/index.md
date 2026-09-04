@@ -104,3 +104,16 @@
 - รวมเนื้อหาทั้งหมดของ [[../02-design/02-technical/architecture|02-technical/architecture]] (เดิม) และ `data-api-spec.md` (เดิม) เข้าเป็นไฟล์เดียว — ลบ `data-api-spec.md` ทิ้ง (ประวัติยังอยู่ใน git) แก้ไข wikilink ทุกจุดที่เคยชี้ไปยัง `data-api-spec.md` ให้ชี้มาที่ `architecture.md` แทน (detailed-design.md, 02-technical/index.md, local-story-hub.md, 20260822-01-it-log-pdpa-consent.md) — ยกเว้นบรรทัดใน Decision Log และ log รายการก่อนหน้าที่เป็นบันทึกประวัติ ไม่แก้ย้อนหลัง
 - ปรับปรุง `architecture-designer`/`architecture-design` และ `data-api-designer`/`data-api-design` ให้ทั้งสองคู่แก้ไฟล์ `architecture.md` ไฟล์เดียวกัน คนละหัวข้อ (อ่านทั้งไฟล์ก่อนแก้เสมอ ห้ามแตะหัวข้อของอีกฝ่าย) และแก้ reference ใน `detailed-designer`/`detailed-design` ให้ตรงกัน
 - อัปเดต `CLAUDE.md` ให้สะท้อนโครงสร้างใหม่ (2 คู่ agent/skill ใช้ไฟล์เดียวกัน + detailed-design แยกไฟล์ต่างหาก)
+
+### 2026-09-04 — กลับคำตัดสินใจ: ผลงานนิสิตต้องผ่านการอนุมัติจากอาจารย์ก่อนเผยแพร่
+
+- ผู้ใช้แก้ไข Business Rule ที่เคยยืนยันปิดไปแล้วเมื่อ 2026-08-22 ("เผยแพร่ทันทีไม่ต้องอนุมัติ") กลับเป็น **ต้องได้รับการอนุมัติจากอาจารย์ (ในฐานะผู้ดูแลระบบ) ก่อนเผยแพร่เสมอ** — เก็บประวัติการกลับคำตัดสินใจไว้ในข้อความแทนการลบทิ้ง ตามธรรมเนียมของโปรเจกต์
+- ไล่แก้ทุกชั้นเอกสารตามลำดับ dependency เพื่อให้สอดคล้องกันทั้งหมด:
+  1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — แก้ Business Rules ของ FR-3.1 พร้อมระบุว่าเป็นการกลับคำตัดสินใจจากวันที่ 2026-08-22
+  2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — แก้ AC ของ BL-013 ให้ระบุว่า supersede แล้ว และเพิ่ม **BL-018** (User Story ใหม่: อาจารย์ตรวจสอบและอนุมัติ/ไม่อนุมัติผลงานนิสิต) พร้อม AC แบบ Given/When/Then สำหรับเส้นทางอนุมัติและไม่อนุมัติ — priority Must
+  3. [[../02-design/01-prototypes/student-content-journey|02-design/01-prototypes/student-content-journey]] — วาด diagram ใหม่ เพิ่มเส้นทางอนุมัติ/ไม่อนุมัติ/แก้ไขส่งใหม่ (loop กลับ)
+  4. [[../02-design/01-prototypes/prototype-v1/README|02-design/01-prototypes/prototype-v1]] (`student-publish.html`) — แก้ข้อความ/ปุ่ม/หน้าจอสำเร็จให้สะท้อนว่าเป็นการ "ส่งขออนุมัติ" ไม่ใช่เผยแพร่ทันที (ยังไม่มีหน้าจอฝั่งอาจารย์สำหรับอนุมัติ/ไม่อนุมัติในเวอร์ชันนี้)
+  5. [[../03-testing/01-test-plan/test-plan|03-testing/01-test-plan/test-plan]] — แก้ TC-017 ให้ตรงกับ flow ใหม่ เพิ่ม TC-019/TC-020 (กรณีอนุมัติ/ไม่อนุมัติ) รวมเป็น 20 test case จาก 14 backlog item
+  6. [[../02-design/02-technical/architecture|02-design/02-technical/architecture]] — แก้ Data Flow diagram ของนิสิต, เพิ่ม role=admin ใน UserAccount, เพิ่ม field `reviewer_id`/`rejection_reason` และปรับ `status` ของ StudentWork เป็น pending_approval/published/rejected, เพิ่ม API operation อนุมัติ/ไม่อนุมัติ, เพิ่ม Decision Log entry และ Open Item ใหม่ (จำนวนครั้งที่ส่งใหม่ได้)
+  7. [[../02-design/02-technical/detailed-design|02-design/02-technical/detailed-design]] — ออกแบบ Sequence #6 ใหม่ทั้งหมดให้มี alt อนุมัติ/ไม่อนุมัติ พร้อม actor อาจารย์ (role=admin)
+- Open Question ที่ยังไม่ปิดจากการเปลี่ยนแปลงนี้: จำนวนครั้งที่นิสิตแก้ไขและส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติ (สมมติไว้ก่อนว่าไม่จำกัดครั้ง) — ควรยืนยันกับอาจารย์ที่ปรึกษาในภายหลัง

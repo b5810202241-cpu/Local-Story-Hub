@@ -49,7 +49,7 @@ textarea{min-height:80px;}
 <main>
   <div id="form-view">
     <h1>เผยแพร่ผลงานสนับสนุนชุมชน</h1>
-    <p class="hint">ผลงานของคุณจะเผยแพร่ทันทีหลังกดยืนยัน ไม่ต้องรอการอนุมัติจากชุมชนหรืออาจารย์</p>
+    <p class="hint">ผลงานของคุณจะถูกส่งให้อาจารย์ (ผู้ดูแลระบบ) ตรวจสอบและอนุมัติก่อน จึงจะเผยแพร่ได้</p>
 
     <div class="step">
       <label>อัปโหลดผลงาน</label>
@@ -73,16 +73,16 @@ textarea{min-height:80px;}
       <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
     </div>
 
-    <div class="info-note">✓ Open Question เรื่องการอนุมัติก่อนเผยแพร่ถูกตอบแล้ว: ผลงานเผยแพร่ได้ทันที ไม่ต้องผ่านการอนุมัติ</div>
+    <div class="info-note">ℹ️ ผลงานนี้จะยังไม่เผยแพร่ให้บุคคลอื่นเห็น จนกว่าอาจารย์จะกดอนุมัติ (แก้ไข Business Rule เมื่อ 2026-09-04)</div>
 
     <div class="publish-bar">
-      <button class="btn btn-primary" onclick="publishWork()">เผยแพร่ผลงานทันที</button>
+      <button class="btn btn-primary" onclick="publishWork()">ส่งขออนุมัติเพื่อเผยแพร่</button>
     </div>
   </div>
 
   <div class="success-panel" id="success-panel">
-    <h2>เผยแพร่แล้ว ✓</h2>
-    <p id="success-text">ผลงานของคุณแสดงเชื่อมโยงกับชุมชนที่เลือกแล้ว</p>
+    <h2>ส่งคำขอเรียบร้อย ✓</h2>
+    <p id="success-text">ผลงานของคุณถูกส่งให้อาจารย์ตรวจสอบแล้ว รอผลการอนุมัติ</p>
     <button class="btn btn-secondary" onclick="resetForm()">เผยแพร่ผลงานอีกชิ้น</button>
   </div>
 </main>
@@ -102,7 +102,7 @@ function publishWork(){
   }
   errorEl.style.display = 'none';
   var community = document.getElementById('community').value;
-  document.getElementById('success-text').textContent = 'ผลงาน "' + title + '" แสดงเชื่อมโยงกับ' + community + 'แล้ว';
+  document.getElementById('success-text').textContent = 'ผลงาน "' + title + '" ถูกส่งให้อาจารย์ตรวจสอบแล้ว (เกี่ยวข้องกับ' + community + ') รอผลการอนุมัติก่อนเผยแพร่';
   document.getElementById('form-view').style.display = 'none';
   document.getElementById('success-panel').classList.add('show');
 }
