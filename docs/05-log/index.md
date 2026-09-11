@@ -124,3 +124,25 @@
 - สร้าง `admin-review-student-work.html` ในโฟลเดอร์ [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]]: อาจารย์เห็นรายการผลงานรออนุมัติ (พร้อมข้อมูลตัวอย่างตั้งต้น) กดอนุมัติได้ทันที หรือกดไม่อนุมัติซึ่งบังคับกรอกเหตุผลก่อนยืนยัน แล้วย้ายไปตาราง "ประวัติการตรวจสอบ" — อ้างอิง FR-3.1, BL-018
 - แก้ `student-publish.html` ให้บันทึกผลงานที่ส่งเข้าคีย์ `localStorage` เดียวกัน (`lsh_student_works`) แทนที่จะเป็นแค่ข้อความสำเร็จลอย ๆ เพื่อให้ข้อมูลไหลข้ามหน้าไปยัง `admin-review-student-work.html` ได้จริง (จำลอง data flow ของ sequence #6 ใน [[../02-design/02-technical/detailed-design|detailed-design]]) — เพิ่มลิงก์นำทาง "มุมมองอาจารย์ (ตัวอย่าง)" ในหน้านี้ด้วย
 - อัปเดต `prototype-v1/README.md` และ `student-content-journey.md` ให้ชี้ไปยังหน้าจอใหม่ — จุดที่ยังเป็น DRAFT: จำนวนครั้งที่ส่งใหม่ได้หลังไม่ผ่านอนุมัติ (Open Question เดิม ยังไม่ปิด)
+
+### 2026-09-11 — เทียบ schema จริงใน Firestore กับ StudentWork และลบ ContentTypes ที่ไม่มีที่มาจาก requirement
+
+- ผู้ใช้ขอ "รวม" schema ของ Firestore ที่ seed ไว้จริง (`users`, `LSHRequests` ใน `LSH/scripts/seed-firestore.js`) เข้ากับ entity เชิงแนวคิด `StudentWork`/`UserAccount` ใน [[../02-design/02-technical/architecture|02-technical/architecture]] — ทั้งสองฝั่ง field/ภาษา/status ไม่ตรงกันเลย และ `ContentTypes` (VOD/album photo/Storytelling) ไม่มีที่มาจาก requirement/backlog/journey ใดๆ เลย จึงหยุดถามผู้ใช้ก่อนตามกฎของ `data-api-design` (ห้ามเดาโครงสร้างข้อมูล/ห้ามสร้าง entity ที่ไม่มีที่มา):
+  1. **ทิศทางการรวม schema** — เสนอ 3 ทาง (ยึด Firestore เป็นหลัก / ยึด schema เชิงแนวคิดเป็นหลัก / ไม่รวมจริงแค่ทำตาราง mapping) ผู้ใช้เลือก **ไม่รวมจริง แค่ทำตาราง mapping** — คงทั้งสอง schema แยกกันตามเดิม
+  2. **`ContentTypes`** — เสนอ 3 ทาง (เพิ่มเป็น entity ทางการพร้อมหมายเหตุ / ไม่เพิ่มเข้าสคีมาเชิงแนวคิด / ใส่เป็น Open Item รอ requirement) ผู้ใช้เลือก **เอาออกทั้งหมด** แล้วถามต่อว่า "ออกเลย" หมายถึงแค่เอกสารหรือรวม Firestore จริงด้วย — ผู้ใช้ยืนยัน **ลบทั้งหมด รวม Firestore จริงด้วย**
+- ผลจากการตัดสินใจ:
+  - ลบ collection `ContentTypes` (3 เอกสาร: ct001–ct003) ออกจาก Firestore project `lsh-nammon` จริง และลบ field `LSHTypeId`/`LSHTypeName` ออกจากทุกเอกสารใน `LSHRequests` (5 เอกสาร) ด้วยสคริปต์ one-off ที่ลบทิ้งหลังใช้งานเสร็จ (ไม่ commit เข้า repo)
+  - แก้ `LSH/scripts/seed-firestore.js` ให้ไม่สร้าง `ContentTypes`/`LSHTypeId`/`LSHTypeName` อีกต่อไป (กันไม่ให้ re-seed แล้วข้อมูลกลับมา)
+  - เพิ่มหัวข้อ "Mapping กับข้อมูลจริงใน Firestore" ต่อท้าย Database Schema ใน [[../02-design/02-technical/architecture|02-technical/architecture]] — ตาราง field-by-field เทียบ `users`/`LSHRequests` กับ `UserAccount`/`StudentWork` พร้อมระบุจุดต่าง (denormalized vs reference, ภาษาไทย vs อังกฤษ) และหมายเหตุว่ายังไม่ตัดสินใจว่าจะยึดฝั่งไหนตอน implement จริง
+  - อัปเดต [[../../CLAUDE|CLAUDE.md]] (root) ให้ตรงกับสถานะใหม่ (ตัด `ContentTypes` ออกจากรายการ collection จริง, ปรับคำเตือนเรื่อง schema ไม่ตรงกันให้ชี้ไปที่ตาราง mapping นี้แทน)
+- Open Item ที่ยังไม่ปิด: ยังไม่ตัดสินใจว่า schema ที่จะใช้ตอน implement จริงจะยึดฝั่ง Firestore ปัจจุบันหรือ `StudentWork` เชิงแนวคิด — ต้องถามผู้ใช้ก่อนเสมอเมื่อมีงานที่ต้องเลือกจริงจัง
+
+### 2026-09-11 — กลับคำตัดสินใจ: คง ContentTypes ไว้ตามเดิม ไม่ลบ
+
+- ผู้ใช้เปลี่ยนใจจากการตัดสินใจข้างต้นในวันเดียวกัน — ขอให้ **คง `ContentTypes` ไว้เหมือนเดิม ไม่ต้องลบแล้ว**
+- คืนค่าทุกอย่างกลับสู่สถานะก่อนลบ:
+  - คืน collection `ContentTypes` (3 เอกสาร: ct001–ct003) กลับเข้า Firestore project `lsh-nammon` และคืน field `LSHTypeId`/`LSHTypeName` ให้ `LSHRequests` ทั้ง 5 เอกสารเหมือนเดิมทุกประการ (ด้วยสคริปต์ one-off อีกครั้ง ลบทิ้งหลังใช้งานเสร็จ ไม่ commit เข้า repo)
+  - แก้ `LSH/scripts/seed-firestore.js` กลับให้สร้าง `ContentTypes`/`LSHTypeId`/`LSHTypeName` เหมือนเดิม
+  - แก้ [[../02-design/02-technical/architecture|02-technical/architecture]] หัวข้อ "Mapping กับข้อมูลจริงใน Firestore" ให้ตรงกับความจริงใหม่ (ไม่ใช่ "ถูกลบ" อีกต่อไป แต่ยังคงหมายเหตุเดิมไว้ว่าไม่มีที่มาจาก requirement — แค่ยังไม่ลบเท่านั้น)
+  - แก้ [[../../CLAUDE|CLAUDE.md]] (root) ให้ตรงกับสถานะใหม่เช่นกัน
+- Open Item เดิมยังคงอยู่เหมือนเดิม: `ContentTypes` ยังไม่มีที่มาจาก requirement/backlog ใดๆ เลย แค่ผู้ใช้เลือกคงไว้ในเชิงข้อมูลไปก่อน ไม่ใช่การตัดสินใจว่าฟีเจอร์นี้ผ่านการอนุมัติแล้ว

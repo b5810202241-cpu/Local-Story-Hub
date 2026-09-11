@@ -195,6 +195,23 @@ erDiagram
 
 > **หมายเหตุ**: field ของ AccessLog ยังไม่ครบถ้วนตามเจตนา — รายละเอียดที่ต้องเก็บ (user-agent ครบหรือไม่, ที่เก็บ, ผู้มีสิทธิ์เข้าถึง) ยังเป็น Open Question
 
+### Mapping กับข้อมูลจริงใน Firestore (`LSH/scripts/seed-firestore.js`)
+
+ก่อนมี Database Schema ชุดนี้ ผู้ใช้ให้สร้าง Firestore project `lsh-nammon` พร้อม seed ข้อมูลตัวอย่างไปแล้ว (collections `users`, `ContentTypes`, `LSHRequests`) เพื่อทดลองระบบเบื้องต้น **ข้อมูลชุดนี้เป็นของจริงที่ deploy อยู่ ไม่ใช่แค่เอกสาร** แต่ไม่ได้ถูกออกแบบตาม entity ด้านบน — ผู้ใช้ตัดสินใจ (2026-09-11) ว่า**จะไม่รวมทั้งสอง schema เป็นอันเดียวกันตอนนี้** ให้คงแยกกันไว้ก่อน พร้อมตาราง mapping นี้ไว้เทียบเคียงเมื่อต้องออกแบบ implement จริง:
+
+| Firestore (ของจริง) | Entity เชิงแนวคิดที่ใกล้เคียงที่สุด | หมายเหตุความต่าง |
+|---|---|---|
+| `users` (`name`, `email`, `role`) | `UserAccount` (`display_name`, `email`, `role`) | ตรงกันเกือบทั้งหมด — ยกเว้น role `teacher` ใน Firestore ตรงกับ role `admin` ใน UserAccount (อาจารย์ผู้อนุมัติ) คนละคำ |
+| `LSHRequests.title` | `StudentWork.title` | ตรงกัน |
+| `LSHRequests.Content` | `StudentWork.description` | ชื่อ field ต่างกัน (`Content` ตัว C ใหญ่ vs `description`) |
+| `LSHRequests.status` (`รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`) | `StudentWork.status` (`pending_approval`/`published`/`rejected`) | แนวคิดเดียวกัน 3 สถานะ แต่คนละภาษาและคนละชื่อค่า |
+| `LSHRequests.requesterId` + `requesterName` (denormalized) | `StudentWork.user_account_id` (reference อย่างเดียว ไป join เอาชื่อจาก UserAccount) | Firestore เก็บชื่อซ้ำไว้ตรงๆ (denormalized) ต่างจาก convention ของ entity อื่นในไฟล์นี้ |
+| `LSHRequests.approverId` + `approverName` (denormalized) | `StudentWork.reviewer_id` (reference ไปยัง UserAccount role=admin) | เหมือนแถวบน — denormalized vs reference |
+| `LSHRequests.createdAt` | `StudentWork.created_at` | ตรงกัน |
+| `ContentTypes` (`ct001` VOD / `ct002` album photo / `ct003` Storytelling) + `LSHRequests.LSHTypeId`/`LSHTypeName` | *(ไม่มี entity ที่ตรงกัน)* | **ไม่มีที่มาจาก requirement/backlog/journey ใดๆ เลย** — เป็นข้อมูลเฉพาะกิจที่ยังอยู่ใน Firestore จริงตามที่ผู้ใช้ยืนยัน (2026-09-11: ทดลองลบแล้วเปลี่ยนใจให้คงไว้) แต่**ยังไม่นำเข้าสคีมาเชิงแนวคิดนี้** จนกว่าจะมี requirement/backlog รองรับจริง — ห้ามเพิ่ม entity ให้ตรงกับสิ่งนี้เองโดยไม่ถาม |
+
+**ยังไม่ตัดสินใจว่าจะยึด schema ฝั่งไหนตอน implement จริง** — ห้ามเดาว่าอันไหนถูกต้องกว่า ให้ถามผู้ใช้ก่อนเสมอถ้ามีงานถัดไปที่ต้องเลือกใช้ field/collection name จริงจัง
+
 ## API Spec
 
 รูปแบบ operation เชิงแนวคิด (ไม่ผูกมัดกับ REST/GraphQL หรือ framework ใด) — คอลัมน์ "อ้างอิง" คือ journey step / FR / BL ที่ทำให้เกิด operation นี้

@@ -4,9 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ภาพรวมโปรเจกต์และสถานะปัจจุบัน
 
-โปรเจกต์นี้ยังไม่มีซอร์สโค้ด มีเพียงโครงสร้างเอกสาร (`docs/`) สำหรับบริหารจัดการโปรเจกต์แบบ end-to-end ตั้งแต่ requirement ไปจนถึง retrospective ยังไม่มี build/lint/test command เพราะยังไม่มีโค้ดให้รัน — เมื่อมีการเพิ่มโค้ดจริงในอนาคต ให้อัปเดตไฟล์นี้ด้วยคำสั่ง build/lint/test ที่เกี่ยวข้องทันที ไม่ปล่อยให้ไฟล์นี้ล้าหลังโค้ด
-
 โปรเจกต์จริงคือ **Local Story Hub** (AI-powered Community Storytelling & Learning Platform) สเปคจริงชุดแรกอยู่ที่ `docs/01-requirements/01-spec/local-story-hub.md` สรุปจากไฟล์ requirement ที่ผู้ใช้แนบมาเท่านั้น (ดู Open Questions ในไฟล์นั้นสำหรับรายละเอียดที่ยังไม่ตัดสินใจ เช่น แพลตฟอร์ม website/application, สิทธิ์การเข้าถึงของแต่ละชุมชน, non-functional requirements) ยังไม่มี Product Backlog จริงสำหรับสเปคนี้ — spec/backlog ตัวอย่าง (mock, เรื่อง Task Management) ที่ใช้สาธิตการทำงานของ agent/skill ถูกย้ายไปเก็บที่ `docs/00-archived/` แล้ว (ดู `docs/05-log/index.md`)
+
+ตัวแพลตฟอร์ม Local Story Hub เอง**ยังไม่มีซอร์สโค้ด** (ยังไม่ตัดสินใจ tech stack เพราะติด Open Question เรื่องแพลตฟอร์มด้านบน) — โค้ดจริงชิ้นเดียวที่มีตอนนี้คือยูทิลิตี้ seed ข้อมูลใน `LSH/` (ดูหัวข้อ "Firestore Seed Script" ด้านล่าง) ไม่ใช่ตัวแอปพลิเคชัน เมื่อเริ่มมีโค้ดแอปจริง (frontend/backend ของ Local Story Hub เอง) ให้อัปเดตไฟล์นี้ด้วยคำสั่ง build/lint/test ที่เกี่ยวข้องทันที ไม่ปล่อยให้ไฟล์นี้ล้าหลังโค้ด
+
+**⚠️ `leaveeasy/` ถูกบันทึกผิดที่เข้ามาใน repo นี้โดยไม่ได้ตั้งใจ — ไม่เกี่ยวข้องกับ Local Story Hub แม้แต่น้อย** เป็นไฟล์ของโปรเจกต์คนละตัว ("Leave Easy" ระบบลาออนไลน์, Firebase project `leaveeasy-nammon`) **ห้ามอ่าน แก้ไข สร้างไฟล์เพิ่ม หรืออ้างอิงโฟลเดอร์นี้เลยเวลาทำงานเกี่ยวกับ Local Story Hub** ไม่ต้องพยายามทำความเข้าใจหรือผูกเข้ากับ docs pipeline/agent/skill ใดๆ ด้านล่างนี้ทั้งสิ้น
+
+## Firestore Seed Script (`LSH/`)
+
+Node.js script ที่ใช้ `firebase-admin` seed ข้อมูลตัวอย่างลง Firestore project **`lsh-nammon`** (collections: `users`, `ContentTypes`, `LSHRequests`) — มีไว้สำหรับข้อมูลทดสอบตอน dev เท่านั้น ไม่ใช่ business logic ของตัวแอป:
+
+```bash
+cd LSH
+npm install
+npm run seed   # รัน scripts/seed-firestore.js
+```
+
+**Collections ทั้งหมดที่มีจริงใน Firestore ตอนนี้** (สร้างโดยสคริปต์นี้ ดู `scripts/seed-firestore.js` สำหรับ field ทั้งหมด):
+
+- **`users`** — field: `name`, `email`, `role`
+- **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
+- **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
+  - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
+
+ℹ️ **`LSHRequests`/`ContentTypes` เป็นข้อมูลตัวอย่างเฉพาะกิจ ไม่ใช่ schema ที่ตัดสินใจแล้ว** — schema เชิงแนวคิดที่แท้จริงอยู่ที่ entity `StudentWork`/`UserAccount` ใน `docs/02-design/02-technical/architecture.md` (field/ภาษา/status คนละชุดกัน และไม่มี entity ที่ตรงกับ `ContentTypes` เลย เพราะ "ประเภทผลงาน" ไม่มีที่มาจาก requirement ใดๆ) ผู้ใช้ตัดสินใจแล้ว (2026-09-11) ว่า**ยังไม่รวมสอง schema นี้เข้าด้วยกัน คง `ContentTypes` ไว้ตามเดิม** — ดูตาราง mapping ระหว่างสองฝั่งได้ในหัวข้อ "Database Schema" ของไฟล์นั้น — **ห้ามเดาว่าอันไหนควรใช้จริงตอน implement ให้ถามผู้ใช้ก่อนเสมอ**
+
+ต้องมี `LSH/serviceAccountKey.json` ก่อนรัน (ดาวน์โหลดจาก Firebase Console → Project Settings → Service Accounts → Generate new private key) — ไฟล์นี้ถูก `.gitignore` ไว้แล้วทั้งใน `LSH/.gitignore`, ห้าม commit เด็ดขาด
+
+Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm install -g firebase-tools`) และ login ไว้แล้วในเครื่องนี้ — ใช้ project ID **`lsh-nammon`** เท่านั้นสำหรับงาน Local Story Hub เสมอ บัญชีเดียวกันมีสิทธิ์เห็น Firebase project อื่นด้วย เช่น `lsh-nammon-sukhumalchan` — **project นั้นไม่มีความเกี่ยวข้องกับ Local Story Hub เลย ห้ามยุ่งหรืออ้างอิงถึงเวลาทำงานในโปรเจกต์นี้**
 
 ## Requirement intake → Spec → Product Backlog workflow
 
@@ -240,7 +265,8 @@ Data & API: Database Schema/API Spec) ห้ามลบ/แก้หัวข�
 - **บันทึกการตัดสินใจสำคัญทุกครั้ง** — เมื่อมีการเปลี่ยนแผน เปลี่ยน scope หรือตัดสินใจเชิงเทคนิคที่กระทบหลายหมวด ให้เพิ่มรายการใน `docs/05-log/index.md` พร้อมวันที่และเหตุผล
 - **ปรับสถานะงานให้ตรงความจริงเสมอ** — เอกสารใน `01-requirements/03-task` ต้องสะท้อนสถานะปัจจุบัน (ยังไม่เริ่ม/กำลังทำ/เสร็จแล้ว) ทุกครั้งที่มีความคืบหน้า
 - **ก่อนทำการเปลี่ยนแปลงเชิงโครงสร้าง** (ย้าย/ลบ/รีออร์แกไนซ์โฟลเดอร์ในระดับ `docs/`) ให้แจ้งและขอคำยืนยันจากผู้ใช้ก่อนเสมอ เนื่องจากกระทบ wikilink ที่เชื่อมโยงกันทั้งโปรเจกต์
-- ยังไม่มี build/lint/test เพราะไม่มีโค้ด — เมื่อเริ่มมีโค้ดจริง ให้เพิ่มเงื่อนไขเรื่อง commands ในไฟล์นี้ทันที
+- ยังไม่มี build/lint/test สำหรับตัวแพลตฟอร์ม Local Story Hub เพราะยังไม่มีโค้ดแอปจริง (มีแค่ Firestore seed script ตามหัวข้อด้านบน) — เมื่อเริ่มมีโค้ดแอปจริง ให้เพิ่มเงื่อนไขเรื่อง build/lint/test commands ในไฟล์นี้ทันที
+- **ห้ามใส่คีย์/ความลับ (service account key, API secret, token, password) ลงในไฟล์ใดๆ ที่จะถูก push ขึ้น GitHub เด็ดขาด** — repo นี้เป็น public แล้ว ใช้ `.gitignore` กันไว้เสมอ (ดูตัวอย่าง `LSH/serviceAccountKey.json`) ถ้าไม่แน่ใจว่าไฟล์/ค่าไหนเป็นความลับหรือไม่ **ให้หยุดถามผู้ใช้ก่อน commit/push เสมอ** ห้ามเดาเอง
 
 > เงื่อนไขข้างต้นเป็นค่าเริ่มต้นที่สรุปจากกฎที่มีอยู่แล้วในเอกสาร หากมีข้อกำหนดเฉพาะเจาะจงเพิ่มเติม (เช่น ผู้อนุมัติเอกสาร, deadline ของแต่ละ phase, เครื่องมือที่ต้องใช้) แจ้งได้เพื่อเพิ่มเข้าไปในส่วนนี้
 
