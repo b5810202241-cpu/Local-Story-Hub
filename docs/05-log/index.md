@@ -146,3 +146,23 @@
   - แก้ [[../02-design/02-technical/architecture|02-technical/architecture]] หัวข้อ "Mapping กับข้อมูลจริงใน Firestore" ให้ตรงกับความจริงใหม่ (ไม่ใช่ "ถูกลบ" อีกต่อไป แต่ยังคงหมายเหตุเดิมไว้ว่าไม่มีที่มาจาก requirement — แค่ยังไม่ลบเท่านั้น)
   - แก้ [[../../CLAUDE|CLAUDE.md]] (root) ให้ตรงกับสถานะใหม่เช่นกัน
 - Open Item เดิมยังคงอยู่เหมือนเดิม: `ContentTypes` ยังไม่มีที่มาจาก requirement/backlog ใดๆ เลย แค่ผู้ใช้เลือกคงไว้ในเชิงข้อมูลไปก่อน ไม่ใช่การตัดสินใจว่าฟีเจอร์นี้ผ่านการอนุมัติแล้ว
+
+### 2026-09-11 — เชื่อม student-publish.html เข้ากับ Firestore จริง (สร้าง prototype-v2)
+
+- ผู้ใช้ขอให้ฟอร์ม `student-publish.html` บันทึกลง Firestore จริงแทน `localStorage`, ตั้งสถานะเริ่มต้นเป็น `รอพิจารณา`, แล้วนำทางกลับไปหน้ารายการ — ขอดูแผนก่อนตามธรรมเนียม แล้วถามคำถามที่จำเป็นก่อนลงมือ:
+  1. **หน้ารายการปลายทาง** — เสนอ `admin-review-student-work.html` (หน้าเดียวที่มีอยู่ที่ตรงกับ `LSHRequests`) แต่พบว่าหน้านั้นยังอ่านจาก `localStorage` คนละ schema กับ `LSHRequests` เลย จึงถามต่อว่าจะแก้ให้อ่าน Firestore ด้วยหรือไม่ — ผู้ใช้เลือก **แก้ให้อ่านจาก Firestore ด้วย** เพื่อให้ flow ทำงานจริงครบวงจร
+  2. **Prototype version** — ตามกฎบังคับของ `prototype-builder` (มี version เดิมอยู่แล้วต้องถามเสมอ) ผู้ใช้เลือก **สร้าง `prototype-v2/` ใหม่** ไม่แก้ `prototype-v1` เดิม
+  3. **วิธีระบุตัวผู้ส่ง** — เสนอช่องกรอกชื่อ + generate id ชั่วคราว (ยังไม่มีระบบ login) ผู้ใช้ขอให้เปลี่ยนเป็น **เลือกจากรายชื่อผู้ใช้จริงใน Firestore แทน** (dropdown ดึงจาก `users` ที่ `role == student`)
+- สร้าง [[../02-design/01-prototypes/prototype-v2/README|02-design/01-prototypes/prototype-v2]] พร้อม 2 หน้าจอใหม่:
+  - `student-publish.html` — เพิ่ม Firebase JS SDK (CDN, modular), dropdown เลือกผู้ส่งจาก `users` แบบสด, เขียนเอกสารใหม่ลง `LSHRequests` (`title`, `Content`, `community`, `status: 'รอพิจารณา'`, `requesterId`, `requesterName`, `approverId/approverName: null`, `createdAt: serverTimestamp()`) แล้ว redirect ไป `admin-review-student-work.html` ทันทีเมื่อสำเร็จ (ไม่ค้าง success panel เหมือน v1)
+  - `admin-review-student-work.html` — อ่าน `LSHRequests` แบบ real-time (`onSnapshot`), ปุ่มอนุมัติ/ไม่อนุมัติ update สถานะ Firestore จริง (`อนุมัติ`/`ไม่อนุมัติ`) พร้อม `approverId/approverName` hardcode เป็นบัญชีตัวอย่าง `u004` (ยังไม่มีระบบ login), ไม่อนุมัติบันทึก `rejectionReason` ด้วย
+  - เพิ่ม field ใหม่ 2 ตัวเข้า `LSHRequests` ที่ไม่มีในเอกสารเดิม: `community` (มีที่มาจากฟอร์ม/FR-3.1 อยู่แล้ว แค่ schema เดิมไม่มี field นี้) และ `rejectionReason` (มีอยู่แล้วใน UI ของ v1 แต่ไม่เคยเก็บลง Firestore) — บันทึกไว้ใน [[../02-design/02-technical/architecture|02-technical/architecture]] ตาราง Mapping และใน [[../../CLAUDE|CLAUDE.md]] ด้วย
+- **ทดสอบจริงผ่าน Browser** ก่อนสรุปงาน: รัน static server ชี้ไปที่ `prototype-v2/`, กรอกฟอร์มจริง 1 รายการ → เห็นขึ้นในหน้า admin แบบ real-time ทันที → กดอนุมัติสำเร็จ → ทดสอบกดไม่อนุมัติกับอีกรายการ (คืนสถานะกลับเป็นเดิมหลังทดสอบเสร็จผ่านสคริปต์ one-off ที่ลบทิ้งแล้ว ไม่ commit เข้า repo) — Firestore กลับสู่สถานะ 3 รอพิจารณา/1 อนุมัติ/1 ไม่อนุมัติเหมือนก่อนทดสอบทุกประการ
+- Open Item ที่ยังไม่ปิด: ยืนยันด้วยตนเองว่า Firestore security rules ของ `lsh-nammon` ตอนนี้เป็นโหมดทดสอบ เปิด read/write ให้ทุกคนจนถึง 2026-10-04 — ยังไม่ได้แก้ในรอบนี้ (แจ้งผู้ใช้ไว้แล้วว่าเป็นความเสี่ยงถ้าจะใช้งานต่อหลังจากนั้น)
+
+### 2026-09-11 — เพิ่ม ACL.md: ตารางสิทธิ์บทบาทนิสิต/อาจารย์
+
+- ผู้ใช้ขอตารางสิทธิ์ (บทบาท/ทำได้/ทำไม่ได้) สำหรับ 2 บทบาท: อาจารย์ (พิจารณา/อนุมัติ/ไม่อนุมัติ) และนิสิต (ลงผลงานคอนเทนต์)
+- สร้าง [[../02-design/02-technical/ACL|02-technical/ACL]] อ้างอิงจาก FR-3.1, BL-018, และ entity `StudentWork`/`UserAccount` ใน [[../02-design/02-technical/architecture|02-technical/architecture]] — ระบุชัดว่าครอบคลุมเฉพาะ flow ตรวจสอบผลงานนิสิต ไม่รวมบทบาทชุมชน/นักท่องเที่ยว (ยังติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
+- เพิ่มหัวข้อ "ข้อสันนิษฐาน" (จำนวนครั้งส่งผลงานใหม่ไม่จำกัด) และ "คำถามที่ยังไม่มีคำตอบ" (แก้ไข/ลบผลงานก่อนอนุมัติ, อาจารย์แก้เนื้อหาแทนนิสิตได้ไหม) แทนการเดา ตามธรรมเนียมโปรเจกต์
+- เพิ่ม wikilink สองทางกับ [[../02-design/02-technical/index|02-technical/index]] และ [[../02-design/02-technical/architecture|architecture.md]] (หัวข้อประเด็นข้ามระบบ)

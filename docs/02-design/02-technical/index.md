@@ -15,3 +15,4 @@
 
 - [[architecture|architecture]] — ภาพรวมระบบไฟล์เดียว: High-Level Architecture (component + data flow), Database Schema (ER Diagram + entity), และ API Spec รวมไว้ในไฟล์เดียวกัน
 - [[detailed-design|detailed-design]] — Sequence Flow ของการทำงานสำคัญที่ข้าม component
+- [[ACL|ACL]] — ตารางสิทธิ์การเข้าถึง (บทบาท/ทำได้/ทำไม่ได้) ของระบบตรวจสอบผลงานนิสิต (อาจารย์ · นิสิต)

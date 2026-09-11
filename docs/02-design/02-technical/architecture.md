@@ -208,6 +208,8 @@ erDiagram
 | `LSHRequests.requesterId` + `requesterName` (denormalized) | `StudentWork.user_account_id` (reference อย่างเดียว ไป join เอาชื่อจาก UserAccount) | Firestore เก็บชื่อซ้ำไว้ตรงๆ (denormalized) ต่างจาก convention ของ entity อื่นในไฟล์นี้ |
 | `LSHRequests.approverId` + `approverName` (denormalized) | `StudentWork.reviewer_id` (reference ไปยัง UserAccount role=admin) | เหมือนแถวบน — denormalized vs reference |
 | `LSHRequests.createdAt` | `StudentWork.created_at` | ตรงกัน |
+| `LSHRequests.community` *(เพิ่ม 2026-09-11 โดย [[../01-prototypes/prototype-v2/README\|prototype-v2]] เท่านั้น — เอกสารเก่า req001-005 ไม่มี field นี้)* | `StudentWork.community_id` | มีที่มาจากฟอร์มเดิมใน prototype-v1 อยู่แล้ว (FR-3.1) แต่ schema `LSHRequests` เดิมไม่มี field นี้จนกว่าจะเพิ่มใน v2 — v2 เก็บเป็นข้อความ (ชื่อชุมชนตรงๆ) ต่างจาก conceptual ที่เก็บเป็น reference id |
+| `LSHRequests.rejectionReason` *(เพิ่ม 2026-09-11 โดย prototype-v2 เท่านั้น)* | `StudentWork.rejection_reason` | ตรงกันตามแนวคิด — มีอยู่แล้วใน UI ของ prototype-v1 แต่เดิมเก็บใน `localStorage` เท่านั้น ไม่เคยมีใน Firestore จนกว่าจะเพิ่มใน v2 |
 | `ContentTypes` (`ct001` VOD / `ct002` album photo / `ct003` Storytelling) + `LSHRequests.LSHTypeId`/`LSHTypeName` | *(ไม่มี entity ที่ตรงกัน)* | **ไม่มีที่มาจาก requirement/backlog/journey ใดๆ เลย** — เป็นข้อมูลเฉพาะกิจที่ยังอยู่ใน Firestore จริงตามที่ผู้ใช้ยืนยัน (2026-09-11: ทดลองลบแล้วเปลี่ยนใจให้คงไว้) แต่**ยังไม่นำเข้าสคีมาเชิงแนวคิดนี้** จนกว่าจะมี requirement/backlog รองรับจริง — ห้ามเพิ่ม entity ให้ตรงกับสิ่งนี้เองโดยไม่ถาม |
 
 **ยังไม่ตัดสินใจว่าจะยึด schema ฝั่งไหนตอน implement จริง** — ห้ามเดาว่าอันไหนถูกต้องกว่า ให้ถามผู้ใช้ก่อนเสมอถ้ามีงานถัดไปที่ต้องเลือกใช้ field/collection name จริงจัง
@@ -270,6 +272,7 @@ erDiagram
 - **Consent & Logging** ต้องเกิดกับทุกคำขอที่ Client ส่งเข้ามา ไม่ใช่แค่หน้าแรก — แนวคิดคือ Consent & Log Service ทำงานคู่ขนานกับทุก request ผ่าน API layer
 - **การเข้าถึงง่ายสำหรับผู้สูงอายุ** (FR-1.7) เป็นความรับผิดชอบของ Client ตาม [[../01-prototypes/DESIGN|DESIGN.md]] ไม่ใช่ประเด็นสถาปัตยกรรม backend
 - **ขอบเขตของ "ระบบจัดการข้อมูลชุมชน"** (Open Question) จะกระทบรายละเอียดภายในของ API/Database layer แต่ไม่กระทบ component ระดับสูงที่ระบุไว้ในเอกสารนี้
+- **สิทธิ์การเข้าถึง (Access Control)** ของบทบาทนิสิต/อาจารย์ในระบบตรวจสอบผลงาน แยกไว้เป็นเอกสารเฉพาะที่ [[ACL|ACL.md]] — บทบาทชุมชน/นักท่องเที่ยวยังไม่ครอบคลุม (ติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
 - **Non-functional requirements** (performance, จำนวนผู้ใช้, ความปลอดภัย) ยังไม่ถูกระบุในสเปค — ออกแบบไว้สำหรับสเกลระดับชุมชน/มหาวิทยาลัย (ผู้ใช้พร้อมกันไม่มาก) ยังไม่ได้ optimize สำหรับ traffic สูง ควรทบทวนเมื่อมีข้อมูลเพิ่ม
 
 ## Decision Log

@@ -18,3 +18,4 @@
 - [[community-content-journey|community-content-journey]] — ชุมชน: สร้างและเผยแพร่คอนเทนต์ด้วย AI
 - [[student-content-journey|student-content-journey]] — นิสิตนิเทศศาสตร์: สร้างและเผยแพร่ผลงานสนับสนุนชุมชน (มี Open Question เชิงโครงสร้างเรื่องขั้นตอนอนุมัติ)
 - [[prototype-v1/README|prototype-v1]] — Prototype HTML ทั้งระบบ (6 หน้าจอ, 3 persona) สร้างจาก DESIGN.md + journey ทั้งหมดข้างต้น
+- [[prototype-v2/README|prototype-v2]] — ต่อยอดจาก v1 เฉพาะ 2 หน้าจอฝั่งนิสิต/อาจารย์ (`student-publish.html`, `admin-review-student-work.html`) เปลี่ยนจาก `localStorage` เป็นเชื่อม Firestore project `lsh-nammon` จริง

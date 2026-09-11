@@ -26,6 +26,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
 - **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
+  - **`community`, `rejectionReason`** — field เสริมที่ `docs/02-design/01-prototypes/prototype-v2/` เพิ่มเข้ามา (2026-09-11) มีเฉพาะเอกสารที่สร้างผ่านฟอร์มเวอร์ชันนั้นเท่านั้น — เอกสาร req001-005 ที่ seed ไว้เดิมไม่มี field นี้
 
 ℹ️ **`LSHRequests`/`ContentTypes` เป็นข้อมูลตัวอย่างเฉพาะกิจ ไม่ใช่ schema ที่ตัดสินใจแล้ว** — schema เชิงแนวคิดที่แท้จริงอยู่ที่ entity `StudentWork`/`UserAccount` ใน `docs/02-design/02-technical/architecture.md` (field/ภาษา/status คนละชุดกัน และไม่มี entity ที่ตรงกับ `ContentTypes` เลย เพราะ "ประเภทผลงาน" ไม่มีที่มาจาก requirement ใดๆ) ผู้ใช้ตัดสินใจแล้ว (2026-09-11) ว่า**ยังไม่รวมสอง schema นี้เข้าด้วยกัน คง `ContentTypes` ไว้ตามเดิม** — ดูตาราง mapping ระหว่างสองฝั่งได้ในหัวข้อ "Database Schema" ของไฟล์นั้น — **ห้ามเดาว่าอันไหนควรใช้จริงตอน implement ให้ถามผู้ใช้ก่อนเสมอ**
 
