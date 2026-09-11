@@ -4,3 +4,6 @@
 .obsidian/cache
 .obsidian/appearance.json
 .obsidian/core-plugins.json
+
+# Firebase CLI local deploy cache (not shared, regenerated automatically)
+.firebase/

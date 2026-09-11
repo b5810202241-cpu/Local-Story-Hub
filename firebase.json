@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "public": "docs/02-design/01-prototypes/prototype-v2",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "firestore": {
+    "rules": "LSH/firestore.rules"
+  }
+}
