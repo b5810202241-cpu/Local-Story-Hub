@@ -166,3 +166,19 @@
 - สร้าง [[../02-design/02-technical/ACL|02-technical/ACL]] อ้างอิงจาก FR-3.1, BL-018, และ entity `StudentWork`/`UserAccount` ใน [[../02-design/02-technical/architecture|02-technical/architecture]] — ระบุชัดว่าครอบคลุมเฉพาะ flow ตรวจสอบผลงานนิสิต ไม่รวมบทบาทชุมชน/นักท่องเที่ยว (ยังติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
 - เพิ่มหัวข้อ "ข้อสันนิษฐาน" (จำนวนครั้งส่งผลงานใหม่ไม่จำกัด) และ "คำถามที่ยังไม่มีคำตอบ" (แก้ไข/ลบผลงานก่อนอนุมัติ, อาจารย์แก้เนื้อหาแทนนิสิตได้ไหม) แทนการเดา ตามธรรมเนียมโปรเจกต์
 - เพิ่ม wikilink สองทางกับ [[../02-design/02-technical/index|02-technical/index]] และ [[../02-design/02-technical/architecture|architecture.md]] (หัวข้อประเด็นข้ามระบบ)
+
+### 2026-09-11 — เพิ่ม Firebase Authentication จริง + บังคับ ACL.md ด้วย Security Rules
+
+- ผู้ใช้ขอให้อ่าน `ACL.md` แล้วจำกัดปุ่ม/เมนูบนหน้าจอตามตาราง โดยอ่าน role ของคนที่ login อยู่ — ขอดูแผนก่อนตามธรรมเนียม แล้วถามคำถามที่จำเป็นก่อนลงมือ (ยังไม่มีระบบ login ใดๆ ในระบบเลยตอนนั้น):
+  1. **วิธีจำลอง "คนที่ login อยู่"** — เสนอ 2 ทาง (จำลอง login เฉยๆ ด้วย dropgin เดิม vs ทำ Firebase Authentication จริง) ผู้ใช้เลือก **ทำ Firebase Authentication จริง** (แม้ขอบเขตใหญ่กว่า)
+  2. **Prototype version** — ตามกฎบังคับ ผู้ใช้เลือก **แก้ prototype-v2 เดิม** ไม่สร้าง v3
+  3. **Firestore Security Rules บังคับจริงด้วยไหม** (ไม่ใช่แค่ซ่อนปุ่ม) — ผู้ใช้เห็นด้วยให้ทำ
+- ดำเนินการ:
+  1. เปิด **Email/Password sign-in provider** ให้ `lsh-nammon` ผ่าน Identity Toolkit Admin API (ใช้ service account, ไม่ต้องเข้า Console เอง)
+  2. สร้างบัญชี Firebase Auth จริงให้ 4 user ที่ seed ไว้ (u001-u004) โดยตั้ง `uid` ให้ตรงกับ doc id ใน `users` collection พอดี เพื่อ lookup role ง่าย — รหัสผ่านสาธิตกลาง (ไม่บันทึกค่าไว้ในไฟล์นี้ เพราะจะถูก push ขึ้น public repo)
+  3. เพิ่มหน้า login (email+password) ในทั้ง `student-publish.html` และ `admin-review-student-work.html` (v2) — หลัง login อ่าน role จาก `users/{uid}` แล้วซ่อนฟอร์ม/ปุ่ม/เมนูตาม `ACL.md`: นิสิตไม่เห็นปุ่มอนุมัติ/ไม่อนุมัติ, อาจารย์ไม่เห็นฟอร์มส่งผลงาน, ลิงก์ข้ามหน้าซ่อนเมื่อ role ไม่ตรง — เอา dropdown "เลือกผู้ส่ง" เดิมออก ใช้ตัวตนจาก login แทน
+  4. เขียน `LSH/firestore.rules` ใหม่ (แทนโหมดทดสอบเดิมที่เปิดทุกอย่างถึง 2026-10-04) บังคับ role-based access จริง แล้ว deploy ผ่าน `admin.securityRules().releaseFirestoreRulesetFromSource()` (ไม่มี `firebase.json` ในโปรเจกต์ เลยไม่ใช้ `firebase deploy`)
+  5. **เจอบั๊กระหว่างทดสอบ**: seed data จริงใช้ `role: "teacher"` สำหรับอาจารย์ แต่โค้ด/rules ที่เขียนครั้งแรกเช็คกับ `role: "admin"` (ตามชื่อ entity เชิงแนวคิด) ทำให้อาจารย์ login แล้วเจอ deny-view ผิด — แก้ทั้งโค้ด client และ rules ให้เช็ค `teacher` ตามของจริง แล้ว redeploy rules ใหม่
+  6. **เจอข้อมูลทดสอบเพี้ยนระหว่างทดสอบ**: พบว่ามีแท็บเบราว์เซอร์ค้าง (auto-preview จากการแก้ไฟล์ก่อนหน้า) รันโค้ดเวอร์ชันเก่า (ก่อนมี login, hardcode ผู้อนุมัติ) อยู่เบื้องหลัง ทำให้มีการอนุมัติผลงานเกิดขึ้นเองโดยไม่ได้ตั้งใจ 2 ครั้ง (req003 และ test doc อีก 1 รายการ) — ปิดแท็บที่ค้าง แก้ข้อมูลกลับให้ถูกต้อง แล้วตรวจสอบซ้ำจนแน่ใจว่า Firestore กลับสู่สถานะเดิม (3 รอพิจารณา/1 อนุมัติ/1 ไม่อนุมัติ)
+- **ทดสอบยืนยันการบังคับใช้จริงผ่าน browser console** (ข้าม UI ไปเลย ไม่ใช่แค่เช็คว่าปุ่มถูกซ่อน): (1) นิสิตพยายามอนุมัติงานตรงๆ → `permission-denied`, (2) นิสิตพยายามส่งงานสวมรอยเป็นคนอื่น (`requesterId` ไม่ตรง `uid`) → `permission-denied`, (3) ไม่ login แล้วพยายามอ่าน `LSHRequests` → `permission-denied` — ครบทั้ง 3 กรณีตามที่ออกแบบไว้
+- อัปเดตเอกสาร: [[../02-design/01-prototypes/prototype-v2/README|02-design/01-prototypes/prototype-v2/README]] (รายละเอียด login + รหัสผ่านสาธิต + rules), [[../02-design/02-technical/ACL|02-technical/ACL]] (ระบุว่าบังคับใช้จริงแล้วทั้ง UI และ backend, แก้ label role อาจารย์เป็น `teacher`), [[../../CLAUDE|CLAUDE.md]] (หัวข้อใหม่ Firebase Authentication + Security Rules)

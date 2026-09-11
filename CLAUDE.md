@@ -34,6 +34,16 @@ npm run seed   # รัน scripts/seed-firestore.js
 
 Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm install -g firebase-tools`) และ login ไว้แล้วในเครื่องนี้ — ใช้ project ID **`lsh-nammon`** เท่านั้นสำหรับงาน Local Story Hub เสมอ บัญชีเดียวกันมีสิทธิ์เห็น Firebase project อื่นด้วย เช่น `lsh-nammon-sukhumalchan` — **project นั้นไม่มีความเกี่ยวข้องกับ Local Story Hub เลย ห้ามยุ่งหรืออ้างอิงถึงเวลาทำงานในโปรเจกต์นี้**
 
+## Firebase Authentication + Security Rules (เพิ่ม 2026-09-11)
+
+`lsh-nammon` เปิดใช้ **Email/Password sign-in** จริงแล้ว พร้อมสร้างบัญชี Auth ให้ 4 user ที่ seed ไว้ — **`uid` ของบัญชี Auth ตรงกับ doc id ใน `users` collection พอดี** (u001-u004) เพื่อให้ client lookup role ได้ตรงๆ ด้วย `doc(db,'users', auth.currentUser.uid)` **รหัสผ่านสาธิตทุกบัญชีเหมือนกัน — ดูจากผู้ดูแลระบบ ไม่ได้เก็บไว้ในเอกสารนี้ด้วยเหตุผลด้านความปลอดภัย (ไฟล์นี้ถูก push ขึ้น public repo)**
+
+**สำคัญ — role ของอาจารย์ใน Firestore คือ `teacher` ไม่ใช่ `admin`**: ต่างจาก entity `UserAccount` เชิงแนวคิดที่ใช้ `role: admin` (ดูหัวข้อก่อนหน้า) โค้ด client-side และ security rules ทั้งหมดเช็คเทียบกับ `teacher` เพราะต้องทำงานกับข้อมูลจริง — ถ้าจะเพิ่ม role อื่นในอนาคต ตรวจให้ตรงกับค่าจริงใน Firestore เสมอ อย่าเดาจาก entity เชิงแนวคิด
+
+**Security Rules จริงอยู่ที่ `LSH/firestore.rules`** (deploy แล้วด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account — ไม่ได้ผ่าน `firebase deploy` เพราะไม่มี `firebase.json` ในโปรเจกต์) บังคับ: `create` บน `LSHRequests` ต้อง login + role=`student` + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของ — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำด้วยวิธีเดียวกัน (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11)
+
+ดูรายละเอียดการบังคับใช้สิทธิ์ตามบทบาทที่ `docs/02-design/02-technical/ACL.md` และการ implement ที่ `docs/02-design/01-prototypes/prototype-v2/README.md`
+
 ## Requirement intake → Spec → Product Backlog workflow
 
 เมื่อผู้ใช้ให้ **requirement ดิบ** มา (ข้อความไม่มีโครงสร้าง, ไฟล์แนบ, บทสนทนา) ที่ยังไม่มี
