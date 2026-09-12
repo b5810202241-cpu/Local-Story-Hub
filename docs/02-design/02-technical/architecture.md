@@ -282,7 +282,7 @@ erDiagram
 | ดูรายการผลงานรออนุมัติ | user_account (role=admin) | รายการ student_work (pending_approval) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
 | อนุมัติผลงาน | student_work_id, user_account (role=admin) | student_work (published) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
 | ไม่อนุมัติผลงาน | student_work_id, user_account (role=admin), rejection_reason | student_work (rejected) | FR-3.1, BL-018 · เพิ่ม 2026-09-04 |
-| ดูผลงานนิสิตที่เกี่ยวข้องกับชุมชน | community_id | รายการ student_work (เฉพาะ published) | FR-3.1 |
+| ดู/ค้นหาผลงานนิสิตที่เผยแพร่แล้ว | community_id (ไม่บังคับ — ใช้กรองผลลัพธ์เมื่อค้นหาตามชุมชนที่สนใจ) | รายการ student_work (เฉพาะ published) | FR-3.1 · **ไม่ต้อง login** (public) — ยืนยันชัดเจนแล้วโดย [[../../01-requirements/01-spec/20260912-02-public-view-search-published-works|20260912-02-public-view-search-published-works]] (เพิ่ม 2026-09-12), BL-021 |
 
 ### Consent / Log
 
@@ -303,7 +303,8 @@ erDiagram
 - **Consent & Logging** ต้องเกิดกับทุกคำขอที่ Client ส่งเข้ามา ไม่ใช่แค่หน้าแรก — แนวคิดคือ Consent & Log Service ทำงานคู่ขนานกับทุก request ผ่าน API layer
 - **การเข้าถึงง่ายสำหรับผู้สูงอายุ** (FR-1.7) เป็นความรับผิดชอบของ Client ตาม [[../01-prototypes/DESIGN|DESIGN.md]] ไม่ใช่ประเด็นสถาปัตยกรรม backend
 - **ขอบเขตของ "ระบบจัดการข้อมูลชุมชน"** (Open Question) จะกระทบรายละเอียดภายในของ API/Database layer แต่ไม่กระทบ component ระดับสูงที่ระบุไว้ในเอกสารนี้
-- **สิทธิ์การเข้าถึง (Access Control)** ของบทบาทนิสิต/อาจารย์ในระบบตรวจสอบผลงาน **และการสมัคร/อนุมัติบัญชีผู้ใช้ใหม่** แยกไว้เป็นเอกสารเฉพาะที่ [[ACL|ACL.md]] — บทบาทชุมชน/นักท่องเที่ยวยังไม่ครอบคลุม (ติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
+- **สิทธิ์การเข้าถึง (Access Control)** ของบทบาทนิสิต/อาจารย์ในระบบตรวจสอบผลงาน, การสมัคร/อนุมัติบัญชีผู้ใช้ใหม่, **และการดู/ค้นหาผลงานที่เผยแพร่แล้วแบบไม่ login (เพิ่ม 2026-09-12)** แยกไว้เป็นเอกสารเฉพาะที่ [[ACL|ACL.md]] — บทบาทชุมชน/นักท่องเที่ยว (เวลาเข้าสู่ระบบแบบมีบัญชี) ยังไม่ครอบคลุม (ติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
+- **ต้องแยก endpoint/rule แบบ public (ไม่ login) ออกจากแบบต้อง login ให้ชัดเจน** (เพิ่ม 2026-09-12) — การอ่านผลงานนิสิตที่ published แล้วเป็น public read แต่ต้องกรองที่ backend/rules ให้เห็นเฉพาะ status=published เท่านั้น ไม่ใช่กรองที่ UI ฝั่งเดียว (เดิม `LSHRequests` ทุก operation บังคับ login หมด นี่คือ public read operation แรกของระบบ)
 - **การส่งอีเมลจริง** (แจ้งเตือนอาจารย์เมื่อมีบัญชีใหม่รออนุมัติ) เป็น dependency ภายนอกใหม่ที่เพิ่มเข้ามา (เพิ่ม 2026-09-12) — ผู้ให้บริการ/วิธีส่งจริงเป็นเรื่อง technical stack ไม่ระบุที่นี่
 - **Non-functional requirements** (performance, จำนวนผู้ใช้, ความปลอดภัย) ยังไม่ถูกระบุในสเปค — ออกแบบไว้สำหรับสเกลระดับชุมชน/มหาวิทยาลัย (ผู้ใช้พร้อมกันไม่มาก) ยังไม่ได้ optimize สำหรับ traffic สูง ควรทบทวนเมื่อมีข้อมูลเพิ่ม
 
@@ -316,6 +317,7 @@ erDiagram
 - **2026-08-28** — รวม High-Level Architecture + Database Schema + API Spec เป็นไฟล์เดียว (ไฟล์นี้) ตามที่ผู้ใช้ขอ เพื่อให้เป็นภาพรวมระบบไฟล์เดียวเรียกใช้งานง่าย — เดิมเคยแยกเป็น `architecture.md` และ `data-api-spec.md`
 - **2026-09-04** — **กลับคำตัดสินใจเดิม**: ผลงานนิสิต (StudentWork) ต้องผ่านการอนุมัติจากอาจารย์ (UserAccount role=admin) ก่อนเผยแพร่เสมอ เดิมเคยยืนยันเมื่อ 2026-08-22 ว่าเผยแพร่ได้ทันทีไม่ต้องอนุมัติ — ผู้ใช้แก้ไข Business Rule ในสเปคโดยตรง จึงตามแก้ Data Flow, StudentWork.status (เพิ่ม pending_approval/rejected), เพิ่ม field reviewer_id/rejection_reason, เพิ่ม role=admin ใน UserAccount, และ API Spec (เพิ่ม operation อนุมัติ/ไม่อนุมัติ) ให้สอดคล้องกัน
 - **2026-09-12** — เพิ่ม flow สมัคร/อนุมัติบัญชีผู้ใช้ใหม่ (self-registration เฉพาะ role=student + อนุมัติโดยอาจารย์) ตามสเปคใหม่ [[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]] (BL-019, BL-020) — เพิ่ม component Notification Service, เพิ่ม field `status`/`rejection_reason`/`reviewed_by` ใน UserAccount (รูปแบบเดียวกับที่ทำกับ StudentWork เมื่อ 2026-09-04), เพิ่ม Data Flow diagram และ API operation ที่เกี่ยวข้อง ตอบ Open Item #9 บางส่วน — เฉพาะวิธี login ของนิสิตเท่านั้น บัญชีอาจารย์ยัง provision โดย admin เหมือนเดิม
+- **2026-09-12** — เปิดให้ operation "ดู/ค้นหาผลงานนิสิตที่เผยแพร่แล้ว" เป็น **public (ไม่ต้อง login)** ตามสเปคใหม่ [[../../01-requirements/01-spec/20260912-02-public-view-search-published-works|20260912-02-public-view-search-published-works]] (BL-021) — ผู้ใช้ยืนยันเองหลังผมแนะนำว่าควรมี (สอดคล้องกับ decision 2026-08-28 ที่นักท่องเที่ยวไม่ต้องมีบัญชีตอนดู/อ่าน) เป็น public read operation แรกของระบบ ต้องบังคับกรอง `status=published` ที่ระดับ backend/rules ไม่ใช่แค่ UI — operation อื่นทั้งหมดของ `LSHRequests` ยังต้อง login เหมือนเดิม ไม่เปลี่ยนแปลง
 
 ## Open Items ที่กระทบเอกสารนี้
 

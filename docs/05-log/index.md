@@ -236,3 +236,9 @@
 - **Phase 2**: เพิ่ม **BL-021** ใน Epic เดิม "พื้นที่คอนเทนต์สำหรับนิสิตนิเทศศาสตร์" ที่ [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] (ต่อจาก BL-018) Priority Must — เพิ่มเหตุผลไว้ในหัวข้อ "ข้อสันนิษฐาน"
 - Open Questions ที่พบ (ไม่กระทบ scope หลัก ไปต่อ design ได้เลย): (1) ขอบเขตการค้นหา — สมมติว่ากรองตามชื่อชุมชนเท่านั้น (2) หน้าใหม่แยกหรือรวมกับ `tourist-search-results.html` เดิม — ยังไม่ตัดสินใจ
 - ยังไม่ได้ลงมือ design/implement ในรอบนี้ — รอผู้ใช้สั่งต่อ
+
+### 2026-09-12 — Design: เปิด operation ดูผลงานนิสิตแบบ public (BL-021)
+
+- ผู้ใช้ขอ commit เอกสาร requirement ก่อน (ทำแล้ว) แล้วแนะนำให้ไปต่อ design — อัปเดต [[../02-design/02-technical/architecture|02-technical/architecture]]: แก้ operation "ดูผลงานนิสิตที่เกี่ยวข้องกับชุมชน" เดิมให้ระบุชัดว่าเป็น **public ไม่ต้อง login** พร้อมอ้างอิงสเปคใหม่, เพิ่มหมายเหตุ cross-cutting concern เรื่องต้องแยก public/authenticated endpoint ที่ backend ไม่ใช่แค่ UI, เพิ่ม Decision Log entry
+- อัปเดต [[../02-design/02-technical/ACL|02-technical/ACL]]: ขยายชื่อ/ขอบเขตเป็น 3 flow, เพิ่มบทบาท **"บุคคลทั่วไป" (ไม่ login)** เป็นแถวใหม่ในตารางสิทธิ์ (ทำได้แค่ดู+ค้นหาผลงานที่อนุมัติแล้ว) ระบุชัดว่าคนละอันกับบทบาท "นักท่องเที่ยว" เต็มรูปแบบที่ยังเป็น Open Question อยู่ ทำเครื่องหมายว่า flow นี้ยังไม่ได้ implement
+- ยังไม่ได้ลงมือเขียนโค้ด — รอถามคำถามบังคับ (แก้หน้าเดิม/สร้างใหม่, จะรวมกับ tourist-search-results.html หรือแยก) ก่อน implement ต่อไป
