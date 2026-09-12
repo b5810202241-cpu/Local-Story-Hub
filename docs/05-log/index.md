@@ -210,3 +210,10 @@
 - อัปเดต [[../01-requirements/01-spec/20260912-01-account-registration-approval|01-spec/20260912-01-account-registration-approval]]: เอา `รหัสนิสิต` ออกจาก FR-1, ระบุ FR-3 ว่าแจ้งเตือนทางอีเมล, ปิดหัวข้อ Open Questions ทั้งหมด (ไม่เหลือค้างแล้ว)
 - อัปเดต **BL-019** (เอา field รหัสนิสิตออกจาก Acceptance Criteria) และ **BL-020** (ระบุว่าแจ้งเตือนทางอีเมล) ใน [[../01-requirements/03-task/product-backlog|03-task/product-backlog]]
 - สเปคนี้ปิด Open Question ครบทุกข้อแล้ว พร้อมไปขั้น design/implement ได้เต็มที่ — ยังไม่ได้ลงมือในรอบนี้ รอผู้ใช้สั่ง
+
+### 2026-09-12 — อัปเดต architecture.md และ ACL.md ให้ครอบคลุมการสมัคร/อนุมัติบัญชีผู้ใช้ใหม่
+
+- ผู้ใช้ขอให้อัปเดต [[../02-design/02-technical/architecture|02-technical/architecture]] และ [[../02-design/02-technical/ACL|02-technical/ACL]] ให้ตรงกับสเปค/backlog ที่ปิด Open Question ไปแล้ว (BL-019, BL-020)
+- **architecture.md**: เพิ่ม component `Notification Service` (ส่งอีเมล), เพิ่ม Data Flow diagram ใหม่ "สมัคร/อนุมัติบัญชีผู้ใช้ใหม่", เพิ่ม field `status`/`rejection_reason`/`reviewed_by` ใน entity `UserAccount` (รูปแบบเดียวกับที่ทำกับ StudentWork เมื่อ 2026-09-04 — ระบุชัดว่าใช้เฉพาะ role=student เท่านั้น ไม่ครอบคลุม tourist/community), เพิ่ม self-referencing relationship ใน ER diagram, เพิ่ม API operation (สมัครบัญชี/ดูรายการรออนุมัติ/อนุมัติ/ไม่อนุมัติ) และ operation ส่งอีเมลแจ้งเตือน, อัปเดต Decision Log และปิด Open Item #9 บางส่วน (วิธี login ของนิสิตตัดสินใจแล้ว ส่วนการลบบัญชี demo ยังไม่ได้ทำ)
+- **ACL.md**: ขยายขอบเขตชื่อ/คำอธิบายให้ครอบคลุม 2 flow แทน 1, เพิ่มรายการ "ทำได้"/"ทำไม่ได้" ใหม่ในตารางสิทธิ์เดิมสำหรับทั้งนิสิตและอาจารย์, เพิ่มหัวข้อใหม่ "สถานะบัญชี (Account Status)" อธิบาย gate แบบ pending/approved/rejected ที่แยกจาก role, ระบุชัดว่า flow นี้ **ยังไม่ได้ implement** (ต่างจาก flow ตรวจสอบผลงานที่บังคับใช้จริงแล้ว)
+- ยังไม่ได้ลงมือเขียนโค้ด/prototype ใดๆ สำหรับ flow นี้ในรอบนี้ — เป็นแค่การอัปเดตเอกสาร design

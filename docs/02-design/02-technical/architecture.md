@@ -19,6 +19,7 @@
 | **AI Content Service** | ปรับภาพ (FR-1.1), คิดแคปชัน (FR-1.2), แปลภาษา (FR-1.3), แนะนำ SEO (FR-1.4), แนะนำวิธีเล่าเรื่อง (FR-1.5) — ทำงานแบบ **Synchronous** (ดู Decision Log) |
 | **Consent & Log Service** | แสดง/บันทึก Consent (BL-015, BL-016), บันทึก access log ของผู้ใช้งานทุกคนอย่างน้อย 90 วัน (BL-014), เก็บหลักฐาน consent (BL-017) |
 | **Database** | เก็บข้อมูลหลักของระบบทั้งหมด — ดูรายละเอียด entity ในหัวข้อ "Database Schema" ด้านล่าง |
+| **Notification Service** | ส่งอีเมลแจ้งเตือนอาจารย์ที่ปรึกษาเมื่อมีบัญชีผู้ใช้ใหม่สมัครเข้ามารออนุมัติ (เพิ่ม 2026-09-12 ตาม [[../../01-requirements/01-spec/20260912-01-account-registration-approval\|20260912-01-account-registration-approval]]) |
 | **External: Web Analytics** | เชื่อมต่อ Google Analytics เฉพาะเมื่อผู้ใช้ยินยอม (ผูกกับ Consent & Log Service) |
 
 ## Data Flow ตาม User Journey
@@ -68,6 +69,22 @@ flowchart LR
 
 อ้างอิง: FR-3.1 ([[../../01-requirements/01-spec/local-story-hub|local-story-hub]]) — **แก้ไข 2026-09-04**: กลับคำตัดสินใจเดิม ตอนนี้ผลงานนิสิตต้องผ่านการอนุมัติจากอาจารย์ (ผู้ดูแลระบบ) ก่อนเผยแพร่เสมอ (ดู Business Rules ในสเปค และ Decision Log ด้านล่าง)
 
+### สมัคร/อนุมัติบัญชีผู้ใช้ใหม่ (นิสิต → อาจารย์)
+
+```mermaid
+flowchart LR
+  Client -->|กรอกชื่อ-นามสกุล/อีเมล/รหัสผ่าน สมัครบัญชี| API[API / Application Layer]
+  API -->|สร้าง UserAccount status=pending_approval| DB[(Database)]
+  API -->|ขอส่งอีเมลแจ้งเตือน| Notify[Notification Service]
+  Notify -->|อีเมลแจ้งมีบัญชีใหม่รออนุมัติ| Admin[Client: อาจารย์ที่ปรึกษา]
+  Admin -->|ดูรายการบัญชีรออนุมัติ| API
+  API -->|อนุมัติ: status=approved / ไม่อนุมัติ: status=rejected + rejection_reason| DB
+  DB -->|ผลลัพธ์| API --> Admin
+  DB -->|แจ้งผล/เหตุผล (ถ้าไม่อนุมัติ) — login ไม่ได้ ต้องสมัครใหม่| API --> Client
+```
+
+อ้างอิง: FR-1–FR-6 ([[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]]) — เพิ่ม 2026-09-12 เฉพาะบทบาทนิสิต (self-registration) บัญชีอาจารย์ยัง provision โดย admin เหมือนเดิม ไม่ผ่าน flow นี้ · ยังไม่มี User Journey diagram แยกสำหรับ flow นี้ (ดู Open Items ด้านล่าง)
+
 ## Database Schema
 
 ### ภาพรวม ER Diagram
@@ -86,6 +103,7 @@ erDiagram
   USER_ACCOUNT ||--o{ CONSENT_RECORD : gives
   USER_ACCOUNT ||--o{ ACCESS_LOG : generates
   USER_ACCOUNT ||--o{ STUDENT_WORK : "reviews (role=admin)"
+  USER_ACCOUNT ||--o{ USER_ACCOUNT : "reviews new accounts (role=admin)"
 ```
 
 ### UserAccount
@@ -99,6 +117,9 @@ erDiagram
 | community_id | อ้างอิงไปยัง Community | เฉพาะ role=community | บัญชีนี้เป็นผู้จัดการชุมชนไหน — รายละเอียดสิทธิ์ยังเป็น Open Question |
 | display_name | ข้อความ | ใช่ | |
 | email / credential | ข้อความ | ใช่ | ใช้สำหรับ login — วิธีจริง (email/password, OAuth ฯลฯ) เป็นเรื่อง technical stack ไม่ระบุที่นี่ |
+| status | ตัวเลือก (pending_approval / approved / rejected) | ใช่ (เฉพาะ role=student) | เพิ่ม 2026-09-12 ตาม BL-019/BL-020 — ใช้เฉพาะบัญชี role=student ที่สมัครเอง เริ่มต้นเป็น pending_approval จนกว่าอาจารย์ (role=admin) จะอนุมัติ; login สำเร็จได้เฉพาะ status=approved เท่านั้น บัญชีที่ admin provision ให้โดยตรง (เช่น role=admin) ถือเป็น approved ทันทีไม่ผ่าน flow นี้ — ยังไม่ครอบคลุม role=tourist/community (Open Question อื่นเรื่องสิทธิ์การเข้าถึงยังไม่ปิด) |
+| rejection_reason | ข้อความ | ไม่ | บังคับกรอกเมื่อ status=rejected เท่านั้น — อาจารย์ระบุเหตุผล ระบบแจ้งกลับไปยังผู้สมัคร |
+| reviewed_by | อ้างอิงไปยัง UserAccount (role=admin) | ไม่ | อาจารย์ผู้อนุมัติ/ไม่อนุมัติบัญชีนี้ — ว่างจนกว่าจะถูกตรวจสอบ |
 | created_at | วันที่-เวลา | ใช่ | |
 
 ### Community
@@ -222,8 +243,11 @@ erDiagram
 
 | Operation | Input | Output | อ้างอิง |
 |---|---|---|---|
-| สมัครบัญชี | role, display_name, email/credential | user_account | ผลจาก Decision Log (ยังไม่มี FR ต้นฉบับระบุตรง ๆ) |
-| เข้าสู่ระบบ | email/credential | session/token (แนวคิด) | เช่นเดียวกับข้างต้น |
+| สมัครบัญชี (นิสิต) | display_name, email, credential | user_account (role=student, status=pending_approval) | FR-1, FR-2 ([[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]]) · เพิ่ม 2026-09-12 |
+| เข้าสู่ระบบ | email/credential | session/token (แนวคิด) — สำเร็จเฉพาะบัญชี status=approved | Decision Log 2026-08-28, FR-2/FR-5 |
+| ดูรายการบัญชีผู้ใช้ใหม่ที่รออนุมัติ | user_account (role=admin) | รายการ user_account (status=pending_approval) | FR-4 · เพิ่ม 2026-09-12 |
+| อนุมัติบัญชีผู้ใช้ | user_account_id, user_account (role=admin) | user_account (status=approved) | FR-4, FR-5 · เพิ่ม 2026-09-12 |
+| ไม่อนุมัติบัญชีผู้ใช้ | user_account_id, user_account (role=admin), rejection_reason | user_account (status=rejected) | FR-4, FR-6 · เพิ่ม 2026-09-12 |
 
 ### Community / Content
 
@@ -267,12 +291,19 @@ erDiagram
 | บันทึกการยินยอม/ปฏิเสธ | analytics_consent, marketing_consent | consent_record | BL-015, BL-016, BL-017 |
 | บันทึก access log | (อัตโนมัติทุกคำขอ ไม่มี public API) | access_log | BL-014 |
 
+### Notification
+
+| Operation | Input | Output | อ้างอิง |
+|---|---|---|---|
+| ส่งอีเมลแจ้งเตือนอาจารย์เมื่อมีบัญชีใหม่รออนุมัติ | user_account_id (บัญชีใหม่) | อีเมลถึงอาจารย์ที่ปรึกษา | FR-3 ([[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]]) · เพิ่ม 2026-09-12 |
+
 ## ประเด็นข้ามระบบ (Cross-cutting concerns)
 
 - **Consent & Logging** ต้องเกิดกับทุกคำขอที่ Client ส่งเข้ามา ไม่ใช่แค่หน้าแรก — แนวคิดคือ Consent & Log Service ทำงานคู่ขนานกับทุก request ผ่าน API layer
 - **การเข้าถึงง่ายสำหรับผู้สูงอายุ** (FR-1.7) เป็นความรับผิดชอบของ Client ตาม [[../01-prototypes/DESIGN|DESIGN.md]] ไม่ใช่ประเด็นสถาปัตยกรรม backend
 - **ขอบเขตของ "ระบบจัดการข้อมูลชุมชน"** (Open Question) จะกระทบรายละเอียดภายในของ API/Database layer แต่ไม่กระทบ component ระดับสูงที่ระบุไว้ในเอกสารนี้
-- **สิทธิ์การเข้าถึง (Access Control)** ของบทบาทนิสิต/อาจารย์ในระบบตรวจสอบผลงาน แยกไว้เป็นเอกสารเฉพาะที่ [[ACL|ACL.md]] — บทบาทชุมชน/นักท่องเที่ยวยังไม่ครอบคลุม (ติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
+- **สิทธิ์การเข้าถึง (Access Control)** ของบทบาทนิสิต/อาจารย์ในระบบตรวจสอบผลงาน **และการสมัคร/อนุมัติบัญชีผู้ใช้ใหม่** แยกไว้เป็นเอกสารเฉพาะที่ [[ACL|ACL.md]] — บทบาทชุมชน/นักท่องเที่ยวยังไม่ครอบคลุม (ติด Open Question เรื่องสิทธิ์การเข้าถึงของแต่ละชุมชน)
+- **การส่งอีเมลจริง** (แจ้งเตือนอาจารย์เมื่อมีบัญชีใหม่รออนุมัติ) เป็น dependency ภายนอกใหม่ที่เพิ่มเข้ามา (เพิ่ม 2026-09-12) — ผู้ให้บริการ/วิธีส่งจริงเป็นเรื่อง technical stack ไม่ระบุที่นี่
 - **Non-functional requirements** (performance, จำนวนผู้ใช้, ความปลอดภัย) ยังไม่ถูกระบุในสเปค — ออกแบบไว้สำหรับสเกลระดับชุมชน/มหาวิทยาลัย (ผู้ใช้พร้อมกันไม่มาก) ยังไม่ได้ optimize สำหรับ traffic สูง ควรทบทวนเมื่อมีข้อมูลเพิ่ม
 
 ## Decision Log
@@ -283,6 +314,7 @@ erDiagram
 - **2026-08-28** — รวม UserAccount เป็น entity เดียว (มี field `role`) แทนการแยก 3 entity ตามกลุ่มผู้ใช้ เพื่อลดความซ้ำซ้อนของ schema — เป็นการเลือกรูปแบบ normalization ไม่ใช่การตัดสินใจเชิง requirement จึงไม่ได้ถามผู้ใช้ก่อน
 - **2026-08-28** — รวม High-Level Architecture + Database Schema + API Spec เป็นไฟล์เดียว (ไฟล์นี้) ตามที่ผู้ใช้ขอ เพื่อให้เป็นภาพรวมระบบไฟล์เดียวเรียกใช้งานง่าย — เดิมเคยแยกเป็น `architecture.md` และ `data-api-spec.md`
 - **2026-09-04** — **กลับคำตัดสินใจเดิม**: ผลงานนิสิต (StudentWork) ต้องผ่านการอนุมัติจากอาจารย์ (UserAccount role=admin) ก่อนเผยแพร่เสมอ เดิมเคยยืนยันเมื่อ 2026-08-22 ว่าเผยแพร่ได้ทันทีไม่ต้องอนุมัติ — ผู้ใช้แก้ไข Business Rule ในสเปคโดยตรง จึงตามแก้ Data Flow, StudentWork.status (เพิ่ม pending_approval/rejected), เพิ่ม field reviewer_id/rejection_reason, เพิ่ม role=admin ใน UserAccount, และ API Spec (เพิ่ม operation อนุมัติ/ไม่อนุมัติ) ให้สอดคล้องกัน
+- **2026-09-12** — เพิ่ม flow สมัคร/อนุมัติบัญชีผู้ใช้ใหม่ (self-registration เฉพาะ role=student + อนุมัติโดยอาจารย์) ตามสเปคใหม่ [[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]] (BL-019, BL-020) — เพิ่ม component Notification Service, เพิ่ม field `status`/`rejection_reason`/`reviewed_by` ใน UserAccount (รูปแบบเดียวกับที่ทำกับ StudentWork เมื่อ 2026-09-04), เพิ่ม Data Flow diagram และ API operation ที่เกี่ยวข้อง ตอบ Open Item #9 บางส่วน — เฉพาะวิธี login ของนิสิตเท่านั้น บัญชีอาจารย์ยัง provision โดย admin เหมือนเดิม
 
 ## Open Items ที่กระทบเอกสารนี้
 
@@ -296,4 +328,4 @@ erDiagram
 6. **รายละเอียด Log ที่ต้องเก็บ** — กระทบ field ของ AccessLog
 7. **เชื่อมโยงผลงานนิสิตกับชุมชน** — ตอนนี้จำลองเป็น FK ตรง ๆ ตาม prototype-v1 อาจต้องปรับถ้าคำตอบจริงซับซ้อนกว่านี้
 8. **จำนวนครั้งที่นิสิตส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติ** — ตอนนี้สมมติว่าไม่จำกัดครั้ง (เพิ่ม 2026-09-04 พร้อมการอนุมัติผลงานนิสิต) ยังไม่ได้ยืนยันกับอาจารย์ที่ปรึกษา
-9. **⚠️ ต้องยกเลิกระบบ login แบบ demo ก่อนขึ้นระบบจริง** (เพิ่ม 2026-09-11) — [[../01-prototypes/prototype-v2/README|prototype-v2]] ใช้ Firebase Authentication จริงแต่เป็นบัญชีสาธิต 4 บัญชี (u001-u004) ใช้รหัสผ่านเดียวกันทุกบัญชี ก่อนมีผู้ใช้จริงต้อง: (ก) ลบบัญชี Auth สาธิตทั้งหมดทิ้ง ไม่ใช่แค่เปลี่ยนรหัสผ่าน (ข) ตัดสินใจวิธี login จริงที่จะใช้ (สมัครด้วยอีเมลมหาวิทยาลัย/SSO/อื่นๆ — ยังไม่มีในสเปค) ยังไม่ได้ยืนยันกับผู้มีส่วนได้ส่วนเสียฝ่ายใด
+9. **⚠️ ต้องยกเลิกระบบ login แบบ demo ก่อนขึ้นระบบจริง** (เพิ่ม 2026-09-11) — [[../01-prototypes/prototype-v2/README|prototype-v2]] ใช้ Firebase Authentication จริงแต่เป็นบัญชีสาธิต 4 บัญชี (u001-u004) ใช้รหัสผ่านเดียวกันทุกบัญชี ก่อนมีผู้ใช้จริงต้อง: (ก) ลบบัญชี Auth สาธิตทั้งหมดทิ้ง ไม่ใช่แค่เปลี่ยนรหัสผ่าน — **ยังไม่ได้ทำ** (ข) ~~ตัดสินใจวิธี login จริงที่จะใช้~~ **ตัดสินใจแล้วสำหรับนิสิต (2026-09-12)**: self-registration + อนุมัติโดยอาจารย์ ดู [[../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]] (BL-019, BL-020) — ส่วนวิธี login ของอาจารย์ที่ปรึกษาเองยังเป็น provision โดย admin เหมือนเดิม ไม่มีการเปลี่ยนแปลง
