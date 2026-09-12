@@ -7,7 +7,7 @@
 **สถานะการบังคับใช้:**
 - **flow ตรวจสอบผลงานนิสิต (อัปเดต 2026-09-11):** บังคับใช้จริงแล้วทั้งสองระดับใน [[../01-prototypes/prototype-v2/README|prototype-v2]] — (1) UI ซ่อนปุ่ม/เมนูที่ไม่ตรงสิทธิ์ หลัง login ด้วย Firebase Authentication จริง และ (2) `LSH/firestore.rules` บังคับที่ backend ด้วย (ทดสอบยิง request ตรงข้าม UI แล้วว่าบล็อกจริง)
 - **flow สมัคร/อนุมัติบัญชีผู้ใช้ใหม่ (อัปเดต 2026-09-12):** บังคับใช้จริงแล้วเช่นกัน — implement ใน [[../01-prototypes/prototype-v2/README|prototype-v2]] ทั้ง UI (หน้าสมัครสมาชิก + รายการรออนุมัติของอาจารย์ + แบนเนอร์แจ้งเตือนจำลอง) และ backend (`LSH/firestore.rules` บังคับ role/status ตอนสมัคร, จำกัด field ที่แก้ไขได้ตอนอนุมัติ) — ทดสอบยิง request ตรงข้าม UI แล้วว่าบล็อกจริง (ส่งผลงานทั้งที่บัญชียังไม่อนุมัติ, self-approve ตัวเอง, อ่านข้อมูล user คนอื่น)
-- **flow ดูผลงานแบบ public (เพิ่ม 2026-09-12):** ยังเป็นแค่ spec/backlog เท่านั้น **ยังไม่ได้ implement**
+- **flow ดูผลงานแบบ public (อัปเดต 2026-09-12):** บังคับใช้จริงแล้ว — หน้าใหม่ [[../01-prototypes/prototype-v2/README|prototype-v2/published-works.html]] อ่าน `LSHRequests` แบบไม่ login ได้ (ค้นหาตามชุมชนแบบ live) `LSH/firestore.rules` บังคับที่ backend ให้เห็นเฉพาะ `status='อนุมัติ'` เท่านั้น — ทดสอบยิง request ตรงข้าม UI แล้วว่าบล็อกจริงทั้งการอ่านเอกสารที่ยังไม่อนุมัติโดยตรง และการ list ทั้ง collection แบบไม่กรอง
 
 ## ตารางสิทธิ์
 

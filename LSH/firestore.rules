@@ -27,7 +27,7 @@ service cloud.firestore {
     }
 
     match /LSHRequests/{requestId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null || resource.data.status == 'อนุมัติ';
       allow create: if request.auth != null
                     && isApprovedStudent()
                     && request.resource.data.requesterId == request.auth.uid

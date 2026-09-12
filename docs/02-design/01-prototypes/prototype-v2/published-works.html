@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ผลงานนิสิตที่เผยแพร่แล้ว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:900px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-sm);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-xl);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-lg);}
+.search-bar{margin-bottom:var(--space-xl);}
+label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);}
+select{width:100%;max-width:360px;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;}
+.card{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-md);}
+.card h3{margin:0 0 4px;font-size:19px;}
+.card .meta{color:var(--color-bark);font-size:15px;margin-bottom:var(--space-sm);}
+.empty-state{color:var(--color-bark);padding:var(--space-lg);text-align:center;}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site">
+    <a href="student-publish.html">มุมมองนิสิต</a>
+    <a href="admin-review-student-work.html">มุมมองอาจารย์</a>
+  </nav>
+</header>
+
+<main>
+  <h1>ผลงานนิสิตที่เผยแพร่แล้ว</h1>
+  <p class="hint">ดูและค้นหาผลงานนิสิตนิเทศศาสตร์ที่ได้รับการอนุมัติแล้ว — ไม่ต้องเข้าสู่ระบบ</p>
+  <div class="draft-note">DRAFT — เวอร์ชันนี้อ่านข้อมูลจาก Firestore จริง (project `lsh-nammon`, collection `LSHRequests`) แบบ real-time โดยไม่ต้อง login (public read เฉพาะสถานะ "อนุมัติ" เท่านั้น)</div>
+
+  <div class="search-bar">
+    <label for="community-filter">ค้นหาตามสถานที่/ชุมชนที่สนใจ</label>
+    <select id="community-filter">
+      <option value="">ทั้งหมด</option>
+      <option value="ชุมชนบ้านผาบ่อง">ชุมชนบ้านผาบ่อง</option>
+      <option value="ชุมชนริมน้ำแม่กลอง">ชุมชนริมน้ำแม่กลอง</option>
+      <option value="ชุมชนดอยสูง">ชุมชนดอยสูง</option>
+    </select>
+  </div>
+
+  <div id="works-list"></div>
+  <div class="empty-state" id="works-empty" style="display:none;">ยังไม่มีผลงานที่เผยแพร่แล้วตรงกับตัวกรองนี้</div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU",
+  authDomain: "lsh-nammon.firebaseapp.com",
+  projectId: "lsh-nammon",
+  storageBucket: "lsh-nammon.firebasestorage.app",
+  messagingSenderId: "939312631889",
+  appId: "1:939312631889:web:47159770d49bfbcad3a870",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let allWorks = [];
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+function render(){
+  const filter = document.getElementById('community-filter').value;
+  const filtered = filter ? allWorks.filter(function(w){ return w.community === filter; }) : allWorks;
+
+  const container = document.getElementById('works-list');
+  const emptyEl = document.getElementById('works-empty');
+
+  if(filtered.length === 0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  container.innerHTML = filtered.map(function(w){
+    return (
+      '<div class="card">' +
+        '<h3>' + escapeHtml(w.title) + '</h3>' +
+        '<div class="meta">โดย: ' + escapeHtml(w.requesterName) + (w.community ? ' · ชุมชน: ' + escapeHtml(w.community) : ' · ไม่ระบุชุมชน') + '</div>' +
+        '<div>' + escapeHtml(w.Content) + '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+const q = query(collection(db, 'LSHRequests'), where('status', '==', 'อนุมัติ'));
+onSnapshot(q, function(snapshot){
+  allWorks = [];
+  snapshot.forEach(function(docSnap){
+    allWorks.push(Object.assign({ id: docSnap.id }, docSnap.data()));
+  });
+  render();
+}, function(err){
+  console.error('อ่านผลงานที่เผยแพร่แล้วไม่สำเร็จ', err);
+});
+
+document.getElementById('community-filter').addEventListener('change', render);
+</script>
+
+</body>
+</html>
