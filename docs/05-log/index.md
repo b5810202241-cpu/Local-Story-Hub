@@ -228,3 +228,11 @@
 - **ทดสอบจริงผ่าน browser** (ปิดแท็บ auto-preview ที่ค้างก่อนทุกครั้งตามบทเรียนจากรอบก่อน แต่ก็ยังเจอปัญหาเดิมอีกระหว่างแก้ไฟล์ — แก้ไขข้อมูล req001 และลบ test doc ที่หลุดออกมาหลังตรวจพบ): สมัครบัญชีทดสอบ 2 บัญชี → บัญชีแรกอนุมัติสำเร็จแล้ว login กลับมาส่งผลงานได้ปกติ → บัญชีที่สอง**ทดสอบยิง request ตรงข้าม UI 3 กรณี (ส่งผลงานทั้งที่ยังไม่อนุมัติ, self-approve, อ่านข้อมูล user อื่น) rules บล็อกจริงทุกกรณี** แล้วทดสอบไม่อนุมัติผ่าน UI จริง เห็นเหตุผลถูกต้องตอน login กลับมา — ลบบัญชีทดสอบทั้งสอง (Auth + Firestore) หลังทดสอบเสร็จ ตรวจสอบซ้ำว่าข้อมูลเดิมทั้งหมด (`users` u001-u004, `LSHRequests` req001-005) กลับสู่สถานะที่ถูกต้อง
 - อัปเดตเอกสาร: [[../02-design/01-prototypes/prototype-v2/README|02-design/01-prototypes/prototype-v2/README]] (รายละเอียด implementation + ผลทดสอบ), [[../02-design/02-technical/ACL|02-technical/ACL]] (ระบุว่า flow นี้บังคับใช้จริงแล้ว), [[../02-design/02-technical/architecture|02-technical/architecture]] (ปิด Open Item #9 บางส่วน, เพิ่มแถว mapping ใหม่), [[../../CLAUDE|CLAUDE.md]] (field ใหม่ของ `users`, รายละเอียด rules ใหม่, เพิ่มหัวข้อ Firebase Hosting ที่ขาดหายไปจากรอบก่อน)
 - Redeploy ทั้ง Hosting และ Firestore rules ให้เว็บจริง (`https://lsh-nammon.web.app`) ตรงกับโค้ดล่าสุด
+
+### 2026-09-12 — เพิ่ม requirement เรื่องดูผลงานนิสิตแบบไม่ต้อง login (requirement-intake)
+
+- ผู้ใช้ถามว่าควรมีหน้าดูผลงานเผยแพร่แบบไม่ต้อง login ไหม — แนะนำว่าควรมี (อ้างอิง Decision Log 2026-08-28 เรื่องนักท่องเที่ยวไม่ต้องมีบัญชีตอนดู/อ่าน และ API Spec เดิมใน architecture.md ที่มี operation นี้อยู่แล้วแต่ยังไม่ implement) ผู้ใช้ยืนยันให้ทำ พร้อมระบุขอบเขต: ดู+ค้นหาตามชุมชนที่สนใจได้เท่านั้น ทำอย่างอื่นไม่ได้
+- **Phase 1**: สร้าง [[../01-requirements/01-spec/20260912-02-public-view-search-published-works|01-spec/20260912-02-public-view-search-published-works]] เพิ่ม wikilink เข้า `01-spec/index.md`
+- **Phase 2**: เพิ่ม **BL-021** ใน Epic เดิม "พื้นที่คอนเทนต์สำหรับนิสิตนิเทศศาสตร์" ที่ [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] (ต่อจาก BL-018) Priority Must — เพิ่มเหตุผลไว้ในหัวข้อ "ข้อสันนิษฐาน"
+- Open Questions ที่พบ (ไม่กระทบ scope หลัก ไปต่อ design ได้เลย): (1) ขอบเขตการค้นหา — สมมติว่ากรองตามชื่อชุมชนเท่านั้น (2) หน้าใหม่แยกหรือรวมกับ `tourist-search-results.html` เดิม — ยังไม่ตัดสินใจ
+- ยังไม่ได้ลงมือ design/implement ในรอบนี้ — รอผู้ใช้สั่งต่อ
