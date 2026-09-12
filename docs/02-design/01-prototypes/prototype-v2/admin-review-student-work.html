@@ -52,6 +52,7 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
 input[type=email], input[type=password]{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;}
 .step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
 .publish-bar{display:flex;justify-content:flex-end;align-items:center;gap:var(--space-md);margin-top:var(--space-xl);}
+.notify-banner{background:var(--color-ochre);color:#fff;border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-weight:600;margin-bottom:var(--space-lg);}
 [hidden]{display:none !important;}
 </style>
 </head>
@@ -91,6 +92,13 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
     <p class="hint">ผลงานที่นิสิตส่งเข้ามาจะเผยแพร่ได้ก็ต่อเมื่อได้รับอนุมัติจากอาจารย์ที่นี่เท่านั้น</p>
     <div class="draft-note">DRAFT — เวอร์ชันนี้อ่าน/เขียนข้อมูลจาก Firestore จริง (project `lsh-nammon`, collection `LSHRequests`) แบบ real-time ผ่านบัญชี Firebase Authentication จริง — ปุ่มอนุมัติ/ไม่อนุมัติแสดงเฉพาะเมื่อ login ด้วยบทบาทอาจารย์เท่านั้น</div>
 
+    <div class="notify-banner" id="notify-banner" hidden></div>
+
+    <h2>บัญชีผู้ใช้ใหม่ที่รออนุมัติ</h2>
+    <div class="draft-note">DRAFT — เวอร์ชันนี้จำลองการแจ้งเตือน (ยังไม่ได้ส่งอีเมลจริงถึงอาจารย์) ด้วยแบนเนอร์ด้านบนแทน</div>
+    <div id="pending-accounts-list"></div>
+    <div class="empty-state" id="pending-accounts-empty" style="display:none;">ยังไม่มีบัญชีผู้ใช้ใหม่รอการอนุมัติในขณะนี้</div>
+
     <h2>รอการอนุมัติ</h2>
     <div id="pending-list"></div>
     <div class="empty-state" id="pending-empty" style="display:none;">ยังไม่มีผลงานรอการอนุมัติในขณะนี้</div>
@@ -108,7 +116,7 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -126,6 +134,7 @@ const auth = getAuth(app);
 
 let currentProfile = null;
 let unsubscribeSnapshot = null;
+let unsubscribeAccounts = null;
 
 window.doLogin = async function(){
   const email = document.getElementById('login-email').value.trim();
@@ -154,6 +163,7 @@ onAuthStateChanged(auth, async function(user){
   document.getElementById('logout-btn').hidden = true;
 
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if(unsubscribeAccounts){ unsubscribeAccounts(); unsubscribeAccounts = null; }
 
   if(!user){
     currentProfile = null;
@@ -182,6 +192,7 @@ onAuthStateChanged(auth, async function(user){
   if(profile && profile.role === 'teacher'){
     document.getElementById('page-view').hidden = false;
     startListening();
+    startListeningAccounts();
   }else{
     document.getElementById('deny-view').hidden = false;
   }
@@ -247,6 +258,99 @@ function renderReviewed(works){
     );
   }).join('');
 }
+
+function renderPendingAccounts(accounts){
+  const container = document.getElementById('pending-accounts-list');
+  const emptyEl = document.getElementById('pending-accounts-empty');
+  const banner = document.getElementById('notify-banner');
+
+  if(accounts.length === 0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    banner.hidden = true;
+    return;
+  }
+  emptyEl.style.display = 'none';
+  banner.hidden = false;
+  banner.textContent = '🔔 มีบัญชีนิสิตใหม่ ' + accounts.length + ' รายการรออนุมัติ (จำลองการแจ้งเตือน — ยังไม่ได้ส่งอีเมลจริง)';
+
+  container.innerHTML = accounts.map(function(a){
+    return (
+      '<div class="card">' +
+        '<h3>' + escapeHtml(a.name) + '</h3>' +
+        '<div class="meta">อีเมล: ' + escapeHtml(a.email) + '</div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-primary" onclick="approveAccount(\'' + a.id + '\')">อนุมัติ</button>' +
+          '<button class="btn btn-danger" onclick="toggleRejectAccountForm(\'' + a.id + '\')">ไม่อนุมัติ</button>' +
+        '</div>' +
+        '<div class="reject-form" id="reject-account-form-' + a.id + '">' +
+          '<label for="account-reason-' + a.id + '">เหตุผลที่ไม่อนุมัติ (จะแจ้งกลับไปยังผู้สมัคร)</label>' +
+          '<textarea id="account-reason-' + a.id + '"></textarea>' +
+          '<div class="field-error" id="account-reason-error-' + a.id + '">กรุณาระบุเหตุผลก่อนไม่อนุมัติ</div>' +
+          '<div class="actions" style="margin-top:8px;">' +
+            '<button class="btn btn-danger" onclick="rejectAccount(\'' + a.id + '\')">ยืนยันไม่อนุมัติ</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function startListeningAccounts(){
+  const q = query(collection(db, 'users'), where('role', '==', 'student'), where('status', '==', 'รออนุมัติ'));
+  unsubscribeAccounts = onSnapshot(q, function(snapshot){
+    const accounts = [];
+    snapshot.forEach(function(docSnap){
+      accounts.push(Object.assign({ id: docSnap.id }, docSnap.data()));
+    });
+    renderPendingAccounts(accounts);
+  }, function(err){
+    console.error('อ่านรายชื่อบัญชีรออนุมัติไม่สำเร็จ', err);
+  });
+}
+
+window.toggleRejectAccountForm = function(id){
+  var el = document.getElementById('reject-account-form-' + id);
+  el.classList.toggle('show');
+};
+
+window.approveAccount = async function(id){
+  if(!currentProfile || currentProfile.role !== 'teacher') return;
+  try{
+    await updateDoc(doc(db, 'users', id), {
+      status: 'อนุมัติแล้ว',
+      approverId: currentProfile.id,
+      approverName: currentProfile.name,
+    });
+  }catch(e){
+    console.error('อนุมัติบัญชีไม่สำเร็จ', e);
+    alert('อนุมัติบัญชีไม่สำเร็จ: ' + e.message);
+  }
+};
+
+window.rejectAccount = async function(id){
+  if(!currentProfile || currentProfile.role !== 'teacher') return;
+  var reasonEl = document.getElementById('account-reason-' + id);
+  var reason = reasonEl.value.trim();
+  var errorEl = document.getElementById('account-reason-error-' + id);
+  if(!reason){
+    errorEl.style.display = 'block';
+    reasonEl.focus();
+    return;
+  }
+  errorEl.style.display = 'none';
+  try{
+    await updateDoc(doc(db, 'users', id), {
+      status: 'ไม่อนุมัติ',
+      approverId: currentProfile.id,
+      approverName: currentProfile.name,
+      rejectionReason: reason,
+    });
+  }catch(e){
+    console.error('ไม่อนุมัติบัญชีไม่สำเร็จ', e);
+    alert('ไม่อนุมัติบัญชีไม่สำเร็จ: ' + e.message);
+  }
+};
 
 function startListening(){
   unsubscribeSnapshot = onSnapshot(collection(db, 'LSHRequests'), function(snapshot){

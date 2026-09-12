@@ -34,12 +34,15 @@ textarea{min-height:80px;}
 .btn-primary{background:var(--color-clay);color:var(--color-paper);}
 .btn-primary:disabled{opacity:.6;cursor:default;}
 .btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.btn-link{background:none;border:none;color:var(--color-clay);font-family:inherit;font-size:15px;cursor:pointer;padding:0;text-decoration:underline;}
 .draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-top:var(--space-sm);}
 .info-note{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);font-size:15px;color:var(--color-bark);margin-top:var(--space-lg);}
 .deny-note{background:#F7E0DA;color:#A13D2C;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+.pending-note{background:#F4E9D3;color:#8A6A22;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
 .publish-bar{display:flex;justify-content:flex-end;align-items:center;gap:var(--space-md);margin-top:var(--space-xl);}
 .field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
 .submit-error{color:#A13D2C;font-size:15px;margin-top:var(--space-sm);display:none;}
+.switch-row{text-align:center;margin-top:var(--space-md);font-size:15px;color:var(--color-bark);}
 [hidden]{display:none !important;}
 </style>
 </head>
@@ -66,6 +69,36 @@ textarea{min-height:80px;}
     <div class="field-error" id="login-error">เข้าสู่ระบบไม่สำเร็จ ตรวจสอบอีเมล/รหัสผ่านอีกครั้ง</div>
     <div class="publish-bar">
       <button class="btn btn-primary" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    </div>
+    <div class="switch-row">ยังไม่มีบัญชี? <button class="btn-link" onclick="showRegister()">สมัครสมาชิก (นิสิต)</button></div>
+  </div>
+
+  <div id="register-view" class="step" hidden>
+    <h1>สมัครสมาชิก (นิสิต)</h1>
+    <p class="hint">บัญชีที่สมัครใหม่ต้องรอการอนุมัติจากอาจารย์ที่ปรึกษาก่อน จึงจะเข้าใช้งานได้</p>
+    <label for="reg-name">ชื่อ-นามสกุล</label>
+    <input type="text" id="reg-name" placeholder="เช่น แสนสวย ร่ำรวยเสน่ห์">
+    <label for="reg-email" style="margin-top:var(--space-md)">อีเมล</label>
+    <input type="email" id="reg-email">
+    <label for="reg-password" style="margin-top:var(--space-md)">รหัสผ่าน</label>
+    <input type="password" id="reg-password">
+    <div class="field-error" id="register-error">สมัครไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง</div>
+    <div class="publish-bar">
+      <button class="btn btn-primary" id="register-btn" onclick="doRegister()">สมัครสมาชิก</button>
+    </div>
+    <div class="switch-row">มีบัญชีอยู่แล้ว? <button class="btn-link" onclick="showLogin()">เข้าสู่ระบบ</button></div>
+  </div>
+
+  <div id="pending-view" hidden>
+    <h1>บัญชีของคุณกำลังรอการอนุมัติ</h1>
+    <div class="pending-note">สมัครสมาชิกสำเร็จแล้ว แต่ต้องรอให้อาจารย์ที่ปรึกษาอนุมัติก่อน จึงจะส่งผลงานได้ — ลองเข้าสู่ระบบใหม่ภายหลัง</div>
+  </div>
+
+  <div id="rejected-view" hidden>
+    <h1>บัญชีนี้ไม่ได้รับการอนุมัติ</h1>
+    <div class="deny-note">
+      <div id="rejected-reason-text">อาจารย์ที่ปรึกษาไม่อนุมัติบัญชีนี้</div>
+      <p style="margin-top:var(--space-md)">บัญชีนี้ใช้งานต่อไม่ได้ — หากต้องการเข้าใช้งานต้อง<strong>สมัครสมาชิกใหม่</strong>เท่านั้น</p>
     </div>
   </div>
 
@@ -111,8 +144,8 @@ textarea{min-height:80px;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU",
@@ -127,10 +160,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let currentProfile = null; // { id, name, role }
+let currentProfile = null; // { id, name, role, status }
+let justRegistered = false;
 
 function show(id){ document.getElementById(id).hidden = false; }
 function hide(id){ document.getElementById(id).hidden = true; }
+function hideAllViews(){
+  ['login-view','register-view','pending-view','rejected-view','deny-view','form-view'].forEach(hide);
+}
+
+window.showRegister = function(){
+  document.getElementById('register-error').style.display = 'none';
+  hide('login-view');
+  show('register-view');
+};
+window.showLogin = function(){
+  document.getElementById('login-error').style.display = 'none';
+  hide('register-view');
+  show('login-view');
+};
 
 window.doLogin = async function(){
   const email = document.getElementById('login-email').value.trim();
@@ -146,12 +194,49 @@ window.doLogin = async function(){
   }
 };
 
+window.doRegister = async function(){
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const errorEl = document.getElementById('register-error');
+  errorEl.style.display = 'none';
+
+  if(!name || !email || !password){
+    errorEl.textContent = 'กรุณากรอกชื่อ-นามสกุล, อีเมล และรหัสผ่านให้ครบ';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const registerBtn = document.getElementById('register-btn');
+  registerBtn.disabled = true;
+  registerBtn.textContent = 'กำลังสมัคร...';
+
+  try{
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    justRegistered = true;
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      name: name,
+      email: email,
+      role: 'student',
+      status: 'รออนุมัติ',
+    });
+    // เวอร์ชันนี้จำลองการแจ้งเตือนอาจารย์ (ไม่ได้ส่งอีเมลจริง) — อาจารย์เห็นบัญชีนี้ในหน้า admin-review-student-work.html แบบ real-time แทน
+  }catch(e){
+    console.error('สมัครสมาชิกไม่สำเร็จ', e);
+    errorEl.textContent = 'สมัครไม่สำเร็จ: ' + e.message;
+    errorEl.style.display = 'block';
+    justRegistered = false;
+    registerBtn.disabled = false;
+    registerBtn.textContent = 'สมัครสมาชิก';
+  }
+};
+
 window.doLogout = async function(){
   await signOut(auth);
 };
 
 onAuthStateChanged(auth, async function(user){
-  hide('login-view'); hide('deny-view'); hide('form-view');
+  hideAllViews();
   hide('nav-admin'); hide('session-info'); hide('logout-btn');
 
   if(!user){
@@ -169,8 +254,14 @@ onAuthStateChanged(auth, async function(user){
   }
   currentProfile = profile;
 
+  if(justRegistered){
+    justRegistered = false;
+    show('pending-view');
+    return;
+  }
+
   const sessionInfo = document.getElementById('session-info');
-  sessionInfo.textContent = profile ? (profile.name + ' (' + profile.role + ')') : (user.email + ' (ไม่พบข้อมูลใน users)');
+  sessionInfo.textContent = profile ? (profile.name + ' (' + profile.role + (profile.status ? ', ' + profile.status : '') + ')') : (user.email + ' (ไม่พบข้อมูลใน users)');
   show('session-info');
   show('logout-btn');
 
@@ -178,7 +269,16 @@ onAuthStateChanged(auth, async function(user){
     show('nav-admin');
   }
 
-  if(profile && profile.role === 'student'){
+  if(!profile){
+    show('deny-view');
+  }else if(profile.role === 'student' && profile.status === 'รออนุมัติ'){
+    show('pending-view');
+  }else if(profile.role === 'student' && profile.status === 'ไม่อนุมัติ'){
+    document.getElementById('rejected-reason-text').textContent = profile.rejectionReason
+      ? ('อาจารย์ที่ปรึกษาไม่อนุมัติบัญชีนี้ — เหตุผล: ' + profile.rejectionReason)
+      : 'อาจารย์ที่ปรึกษาไม่อนุมัติบัญชีนี้';
+    show('rejected-view');
+  }else if(profile.role === 'student' && profile.status === 'อนุมัติแล้ว'){
     show('form-view');
   }else{
     show('deny-view');
@@ -191,7 +291,7 @@ function selectFile(){
 window.selectFile = selectFile;
 
 window.publishWork = async function(){
-  if(!currentProfile || currentProfile.role !== 'student') return;
+  if(!currentProfile || currentProfile.role !== 'student' || currentProfile.status !== 'อนุมัติแล้ว') return;
 
   const titleEl = document.getElementById('title');
   const title = titleEl.value.trim();

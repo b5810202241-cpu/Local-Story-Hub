@@ -23,6 +23,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 **Collections ทั้งหมดที่มีจริงใน Firestore ตอนนี้** (สร้างโดยสคริปต์นี้ ดู `scripts/seed-firestore.js` สำหรับ field ทั้งหมด):
 
 - **`users`** — field: `name`, `email`, `role`
+  - **`status`, `approverId`, `approverName`, `rejectionReason`** — เพิ่ม 2026-09-12 (BL-019/BL-020) เฉพาะบัญชี `role: student` เท่านั้น — `status` มี 3 ค่า: `รออนุมัติ` / `อนุมัติแล้ว` / `ไม่อนุมัติ` บัญชีที่สมัครเองต้องรอ `อนุมัติแล้ว` ก่อนถึงจะส่งผลงานได้ (`LSHRequests.create` เช็คเงื่อนไขนี้ใน `firestore.rules` ด้วย) บัญชี `role: teacher` (u004) ไม่มี field เหล่านี้ (provision โดย admin ถือว่า approved ทันที)
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
 - **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
@@ -40,9 +41,19 @@ Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm i
 
 **สำคัญ — role ของอาจารย์ใน Firestore คือ `teacher` ไม่ใช่ `admin`**: ต่างจาก entity `UserAccount` เชิงแนวคิดที่ใช้ `role: admin` (ดูหัวข้อก่อนหน้า) โค้ด client-side และ security rules ทั้งหมดเช็คเทียบกับ `teacher` เพราะต้องทำงานกับข้อมูลจริง — ถ้าจะเพิ่ม role อื่นในอนาคต ตรวจให้ตรงกับค่าจริงใน Firestore เสมอ อย่าเดาจาก entity เชิงแนวคิด
 
-**Security Rules จริงอยู่ที่ `LSH/firestore.rules`** (deploy แล้วด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account — ไม่ได้ผ่าน `firebase deploy` เพราะไม่มี `firebase.json` ในโปรเจกต์) บังคับ: `create` บน `LSHRequests` ต้อง login + role=`student` + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของ — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำด้วยวิธีเดียวกัน (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11)
+**Security Rules จริงอยู่ที่ `LSH/firestore.rules`** — เดิม deploy ด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account (ตอนนั้นยังไม่มี `firebase.json`) ตอนนี้มี `firebase.json` แล้ว (ดูหัวข้อ Firebase Hosting ด้านล่าง) จึงใช้ `firebase deploy --only firestore:rules` ได้ปกติเช่นกัน — ทั้งสองวิธี deploy ไปที่ ruleset เดียวกัน บังคับ: `create` บน `LSHRequests` ต้อง login + เป็นนิสิตที่บัญชี `status='อนุมัติแล้ว'` เท่านั้น + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของหรือ role=`teacher`, `create` บน `users/{uid}` ทำได้เฉพาะเจ้าของ (สมัครบัญชีเอง) และบังคับ `role='student'`+`status='รออนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-019/BL-020), `update` บน `users` จำกัดเฉพาะ role=`teacher` และแก้ได้แค่ field `status`/`approverId`/`approverName`/`rejectionReason` — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำ (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11 และ 2026-09-12)
 
 ดูรายละเอียดการบังคับใช้สิทธิ์ตามบทบาทที่ `docs/02-design/02-technical/ACL.md` และการ implement ที่ `docs/02-design/01-prototypes/prototype-v2/README.md`
+
+## Firebase Hosting (เพิ่ม 2026-09-11)
+
+`firebase.json` และ `.firebaserc` อยู่ที่ **root ของ repo** (ไม่ใช่ใน `LSH/`) เพราะ Firebase Hosting ห้ามชี้ `public` ไปนอกโฟลเดอร์ที่มี `firebase.json` — `public` ชี้ไปที่ `docs/02-design/01-prototypes/prototype-v2` ตรงๆ deploy ด้วย:
+
+```bash
+firebase deploy --only hosting,firestore:rules
+```
+
+รันจาก root ของ repo เท่านั้น (ไม่ใช่จาก `LSH/`) — เว็บที่ deploy แล้วอยู่ที่ `https://lsh-nammon.web.app/student-publish.html` และ `https://lsh-nammon.web.app/admin-review-student-work.html` (ลิงก์อยู่ใน `README.md` ที่ root ด้วย)
 
 ## Requirement intake → Spec → Product Backlog workflow
 

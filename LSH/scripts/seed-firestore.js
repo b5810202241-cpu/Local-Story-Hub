@@ -23,9 +23,9 @@ const daysAgo = (n) =>
   admin.firestore.Timestamp.fromDate(new Date(Date.now() - n * 24 * 60 * 60 * 1000));
 
 const users = [
-  { id: 'u001', name: 'แสนสวย ร่ำรวยเสน่ห์', email: 'u001@example.com', role: 'student' },
-  { id: 'u002', name: 'มิลเลียน น่ารัก', email: 'u002@example.com', role: 'student' },
-  { id: 'u003', name: 'แซมมี่ จัง', email: 'u003@example.com', role: 'student' },
+  { id: 'u001', name: 'แสนสวย ร่ำรวยเสน่ห์', email: 'u001@example.com', role: 'student', status: 'อนุมัติแล้ว' },
+  { id: 'u002', name: 'มิลเลียน น่ารัก', email: 'u002@example.com', role: 'student', status: 'อนุมัติแล้ว' },
+  { id: 'u003', name: 'แซมมี่ จัง', email: 'u003@example.com', role: 'student', status: 'อนุมัติแล้ว' },
   { id: 'u004', name: 'อ.ที่ปรึกษา LSH', email: 'u004@example.com', role: 'teacher' },
 ];
 
