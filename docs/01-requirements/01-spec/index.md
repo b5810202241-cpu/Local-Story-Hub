@@ -13,4 +13,5 @@
 
 - [[local-story-hub|Local Story Hub — Product Spec]] — สเปคของโปรเจกต์ Local Story Hub สรุปจากไฟล์ requirement ที่ผู้ใช้แนบมา
 - [[20260822-01-it-log-pdpa-consent|IT Log Retention (90 วัน) และ PDPA Consent]] — ครอบคลุมผู้ใช้งานทุกกลุ่ม ไม่ใช่กลุ่มเป้าหมายกลุ่มใดกลุ่มหนึ่ง
+- [[20260912-01-account-registration-approval|การอนุมัติบัญชีผู้ใช้ใหม่โดยอาจารย์ที่ปรึกษา]] — บัญชีที่สมัครใหม่ต้องรออนุมัติจากอาจารย์ที่ปรึกษาก่อนจึง login เข้าใช้งานได้
 
