@@ -39,6 +39,7 @@ textarea{min-height:80px;}
 .info-note{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);font-size:15px;color:var(--color-bark);margin-top:var(--space-lg);}
 .deny-note{background:#F7E0DA;color:#A13D2C;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
 .pending-note{background:#F4E9D3;color:#8A6A22;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+.ai-badge{display:inline-block;background:var(--color-indigo);color:#fff;font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-xs);}
 .publish-bar{display:flex;justify-content:flex-end;align-items:center;gap:var(--space-md);margin-top:var(--space-xl);}
 .field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
 .submit-error{color:#A13D2C;font-size:15px;margin-top:var(--space-sm);display:none;}
@@ -132,6 +133,13 @@ textarea{min-height:80px;}
 
       <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
       <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
+      <button type="button" class="btn btn-secondary" id="ai-assist-btn" style="margin-top:var(--space-sm)" onclick="aiAssistDesc()">✨ AI ช่วยปรับปรุงคำอธิบายผลงาน</button>
+      <div class="draft-note" id="ai-assist-unavailable" hidden>DRAFT — ฟีเจอร์นี้เป็น local demo เท่านั้น ยังไม่ได้ตั้งค่าคีย์จริงใน <code>ai-assist-config.js</code> (ดู README ของ prototype-v2)</div>
+      <div id="ai-assist-box" hidden style="margin-top:var(--space-sm)">
+        <span class="ai-badge" id="ai-assist-label">🤖 ข้อเสนอจาก AI — โปรดตรวจสอบก่อนยืนยัน</span>
+        <div class="info-note" id="ai-assist-result"></div>
+        <button type="button" class="btn-link" id="ai-assist-use-btn" style="margin-top:var(--space-xs)" onclick="useAiAssistText()">ใช้ข้อความนี้แทนคำอธิบายเดิม</button>
+      </div>
     </div>
 
     <div class="info-note">ℹ️ ผลงานนี้จะยังไม่เผยแพร่ให้บุคคลอื่นเห็น จนกว่าอาจารย์จะกดอนุมัติ — เวอร์ชันนี้บันทึกลง Firestore จริง (project `lsh-nammon`, collection `LSHRequests`) ตัวตนผู้ส่งมาจากบัญชีที่ login อยู่โดยตรง</div>
@@ -143,26 +151,20 @@ textarea{min-height:80px;}
   </div>
 </main>
 
+<script src="firebase-config.js"></script>
+<script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU",
-  authDomain: "lsh-nammon.firebaseapp.com",
-  projectId: "lsh-nammon",
-  storageBucket: "lsh-nammon.firebasestorage.app",
-  messagingSenderId: "939312631889",
-  appId: "1:939312631889:web:47159770d49bfbcad3a870",
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 let currentProfile = null; // { id, name, role, status }
 let justRegistered = false;
+let lastAiSuggestionText = null; // ข้อความล่าสุดที่ AI เสนอและนิสิตกด "ใช้ข้อความนี้" — แปะลง LSHRequests ตอนส่งจริง
 
 function show(id){ document.getElementById(id).hidden = false; }
 function hide(id){ document.getElementById(id).hidden = true; }
@@ -324,6 +326,8 @@ window.publishWork = async function(){
       requesterName: currentProfile.name,
       approverId: null,
       approverName: null,
+      aiAssisted: lastAiSuggestionText !== null,
+      aiSuggestionText: lastAiSuggestionText,
       createdAt: serverTimestamp(),
     });
     window.location.href = 'admin-review-student-work.html';
@@ -334,6 +338,108 @@ window.publishWork = async function(){
     submitBtn.disabled = false;
     submitBtn.textContent = 'ส่งขออนุมัติเพื่อเผยแพร่';
   }
+};
+
+(function(){
+  var hasRealKey = typeof window.OPENROUTER_CONFIG !== 'undefined'
+    && window.OPENROUTER_CONFIG.apiKey
+    && window.OPENROUTER_CONFIG.apiKey.indexOf('YOUR_') === -1;
+  if(!hasRealKey){
+    document.getElementById('ai-assist-btn').disabled = true;
+    document.getElementById('ai-assist-unavailable').hidden = false;
+  }
+})();
+
+async function logAiAssistUse(logData){
+  try{
+    await addDoc(collection(db, 'AiAssistLogs'), Object.assign({}, logData, {
+      requesterId: currentProfile ? currentProfile.id : null,
+      requesterName: currentProfile ? currentProfile.name : null,
+      createdAt: serverTimestamp(),
+    }));
+  }catch(logErr){
+    // ไม่ให้การบันทึก log ล้มเหลวไปกระทบผลลัพธ์ที่แสดงให้นิสิตเห็น
+    console.error('บันทึก log การใช้ AI ไม่สำเร็จ', logErr);
+  }
+}
+
+window.aiAssistDesc = async function(){
+  var btn = document.getElementById('ai-assist-btn');
+  var box = document.getElementById('ai-assist-box');
+  var labelEl = document.getElementById('ai-assist-label');
+  var resultEl = document.getElementById('ai-assist-result');
+  var useBtn = document.getElementById('ai-assist-use-btn');
+  var titleVal = document.getElementById('title').value.trim();
+  var communityVal = document.getElementById('community').value;
+  var descVal = document.getElementById('desc').value.trim();
+
+  var originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'กำลังให้ AI ช่วย...';
+  box.hidden = true;
+
+  var prompt = 'ช่วยเรียบเรียงคำอธิบายผลงานสั้น ๆ (ไม่เกิน 3-4 ประโยค) สำหรับเผยแพร่บนเว็บ Local Story Hub\n'
+    + 'ชื่อผลงาน: ' + (titleVal || '(ไม่ระบุ)') + '\n'
+    + 'ชุมชนที่เกี่ยวข้อง: ' + (communityVal || '(ไม่ระบุ)') + '\n'
+    + 'คำอธิบายฉบับร่างจากนิสิต: ' + (descVal || '(ยังไม่มี ให้ช่วยแต่งตัวอย่างจากชื่อผลงานและชุมชนแทน)') + '\n'
+    + 'ตอบเป็นภาษาไทย เฉพาะข้อความคำอธิบายเท่านั้น ห้ามมีคำนำหรือคำอธิบายเพิ่มเติม';
+
+  var timeoutController = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; timeoutController.abort(); }, 15000);
+
+  try{
+    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: timeoutController.signal,
+      headers: {
+        'Authorization': 'Bearer ' + window.OPENROUTER_CONFIG.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: window.OPENROUTER_CONFIG.model,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    var data = await res.json();
+    if(!res.ok){
+      throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
+    }
+    var resultText = data.choices[0].message.content.trim();
+    resultEl.style.color = '';
+    resultEl.textContent = resultText;
+    labelEl.hidden = false;
+    useBtn.hidden = false;
+    logAiAssistUse({ // ไม่ await — การบันทึก log ต้องไม่ทำให้ปุ่มค้างถ้า Firestore ช้า/ไม่ตอบสนอง
+      level: 1, action: 'rewrite-description',
+      title: titleVal, community: communityVal, draftDesc: descVal,
+      model: window.OPENROUTER_CONFIG.model,
+      success: true, resultText: resultText, errorMessage: null,
+    });
+  }catch(e){
+    var message = timedOut ? 'หมดเวลารอคำตอบจาก AI (เกิน 15 วินาที) ลองใหม่อีกครั้ง' : e.message;
+    console.error('AI assist failed', e);
+    resultEl.style.color = '#A13D2C';
+    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + message;
+    labelEl.hidden = true;
+    useBtn.hidden = true;
+    logAiAssistUse({
+      level: 1, action: 'rewrite-description',
+      title: titleVal, community: communityVal, draftDesc: descVal,
+      model: window.OPENROUTER_CONFIG.model,
+      success: false, resultText: null, errorMessage: message,
+    });
+  }finally{
+    clearTimeout(timeoutId);
+    box.hidden = false;
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+};
+
+window.useAiAssistText = function(){
+  lastAiSuggestionText = document.getElementById('ai-assist-result').textContent;
+  document.getElementById('desc').value = lastAiSuggestionText;
 };
 </script>
 

@@ -36,6 +36,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /AiAssistLogs/{logId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.requesterId || getRole() == 'teacher');
+      allow create: if request.auth != null
+                    && request.resource.data.requesterId == request.auth.uid
+                    && (isApprovedStudent() || getRole() == 'teacher');
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /AiSummaries/{summaryId} {
+      allow read: if request.auth != null && getRole() == 'teacher';
+      allow create: if request.auth != null
+                    && getRole() == 'teacher'
+                    && request.resource.data.generatedBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

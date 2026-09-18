@@ -55,6 +55,8 @@ firebase deploy --only hosting,firestore:rules
 
 รันจาก root ของ repo เท่านั้น (ไม่ใช่จาก `LSH/`) — เว็บที่ deploy แล้วอยู่ที่ `https://lsh-nammon.web.app/student-publish.html`, `https://lsh-nammon.web.app/admin-review-student-work.html`, และ `https://lsh-nammon.web.app/published-works.html` (หน้าสาธารณะ ไม่ต้อง login — เพิ่ม 2026-09-12) (ลิงก์อยู่ใน `README.md` ที่ root ด้วย)
 
+**Firebase web config แยกไฟล์แล้ว (เพิ่ม 2026-09-18):** `docs/02-design/01-prototypes/prototype-v2/firebase-config.js` เก็บค่า `firebaseConfig` (รวม `apiKey`) จริง — ไฟล์นี้ถูก `.gitignore` ไว้ที่ root ของ repo ไม่ขึ้น GitHub ทั้ง 3 หน้าจอ (`student-publish.html`, `admin-review-student-work.html`, `published-works.html`) โหลดไฟล์นี้ผ่าน `<script src="firebase-config.js">` ก่อน `initializeApp` เสมอ — มี `firebase-config.example.js` (มีค่า placeholder, commit เข้า repo) เป็น template ให้คัดลอก **`firebase deploy --only hosting` ยังทำงานได้ปกติ** เพราะ deploy อ่านจาก local filesystem ไม่ใช่จาก git ไฟล์นี้จึงถูก deploy ขึ้น Hosting จริงแม้จะไม่ถูก commit — ถ้า clone repo ใหม่ต้องสร้างไฟล์นี้เองก่อน deploy/รัน local ครั้งแรก
+
 ## Requirement intake → Spec → Product Backlog workflow
 
 เมื่อผู้ใช้ให้ **requirement ดิบ** มา (ข้อความไม่มีโครงสร้าง, ไฟล์แนบ, บทสนทนา) ที่ยังไม่มี

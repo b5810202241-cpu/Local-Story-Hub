@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทดสอบ AI ผ่าน OpenRouter</title>
+<style>
+body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:0 16px;line-height:1.6;}
+button{font-size:16px;padding:10px 20px;cursor:pointer;}
+button:disabled{opacity:.6;cursor:default;}
+pre{background:#f3f3f3;padding:16px;border-radius:8px;white-space:pre-wrap;min-height:24px;}
+.note{color:#a13d2c;font-size:14px;}
+</style>
+</head>
+<body>
+
+<h1>ทดสอบเรียก AI ผ่าน OpenRouter</h1>
+<p>ไฟล์นี้อยู่ใน <code>LSH/</code> เท่านั้น — <strong>ไม่ถูก deploy ขึ้นเว็บสาธารณะ</strong> เปิดทดสอบได้เฉพาะในเครื่องนี้</p>
+
+<button id="send-btn">ส่งข้อความ "สวัสดี"</button>
+<h3>คำตอบจาก AI:</h3>
+<pre id="result">(ยังไม่ได้ส่ง)</pre>
+<p class="note" id="config-warning" hidden>⚠️ ไม่พบ <code>ai-test-config.js</code> หรือยังไม่ได้ใส่คีย์จริง — ดูวิธีตั้งค่าใน README</p>
+
+<script src="ai-test-config.js"></script>
+<script>
+const btn = document.getElementById('send-btn');
+const resultEl = document.getElementById('result');
+const warningEl = document.getElementById('config-warning');
+
+if (typeof window.OPENROUTER_CONFIG === 'undefined' || !window.OPENROUTER_CONFIG.apiKey || window.OPENROUTER_CONFIG.apiKey.includes('YOUR_')) {
+  warningEl.hidden = false;
+  btn.disabled = true;
+}
+
+btn.addEventListener('click', async () => {
+  btn.disabled = true;
+  resultEl.textContent = 'กำลังส่ง...';
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + window.OPENROUTER_CONFIG.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: window.OPENROUTER_CONFIG.model,
+        messages: [{ role: 'user', content: 'สวัสดี' }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
+    }
+    resultEl.textContent = data.choices[0].message.content;
+  } catch (e) {
+    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>

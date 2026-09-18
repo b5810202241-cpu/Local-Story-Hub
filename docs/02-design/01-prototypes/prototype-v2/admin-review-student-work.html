@@ -53,6 +53,7 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
 .step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
 .publish-bar{display:flex;justify-content:flex-end;align-items:center;gap:var(--space-md);margin-top:var(--space-xl);}
 .notify-banner{background:var(--color-ochre);color:#fff;border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-weight:600;margin-bottom:var(--space-lg);}
+.ai-badge{display:inline-block;background:var(--color-indigo);color:#fff;font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-xs);}
 [hidden]{display:none !important;}
 </style>
 </head>
@@ -100,6 +101,15 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
     <div id="pending-accounts-list"></div>
     <div class="empty-state" id="pending-accounts-empty" style="display:none;">ยังไม่มีบัญชีผู้ใช้ใหม่รอการอนุมัติในขณะนี้</div>
 
+    <h2>AI สรุปภาพรวมผลงานที่รอพิจารณา</h2>
+    <p class="hint" style="margin:0 0 var(--space-md)">อ่านผลงานที่รอพิจารณาทั้งหมด สรุปภาพรวมให้อ่านง่ายก่อนตรวจทีละชิ้น แล้วบันทึกสรุปนี้ลง Firestore (collection <code>AiSummaries</code>) พร้อมจด log การทำงานไว้</p>
+    <button type="button" class="btn btn-primary" id="ai-summary-btn" onclick="aiSummarizePending()">🤖 ให้ AI สรุปภาพรวมผลงานที่รอพิจารณา</button>
+    <div class="draft-note" id="ai-summary-unavailable" hidden>DRAFT — ฟีเจอร์นี้เป็น local demo เท่านั้น ยังไม่ได้ตั้งค่าคีย์จริงใน <code>ai-assist-config.js</code> (ดู README ของ prototype-v2)</div>
+    <div id="ai-summary-box" hidden style="margin:var(--space-md) 0">
+      <span class="ai-badge" id="ai-summary-label">🤖 สรุปโดย AI — โปรดตรวจสอบก่อนใช้งาน (บันทึกลง Firestore แล้ว)</span>
+      <div class="card" id="ai-summary-result" style="white-space:pre-wrap"></div>
+    </div>
+
     <h2>รอการอนุมัติ</h2>
     <div id="pending-list"></div>
     <div class="empty-state" id="pending-empty" style="display:none;">ยังไม่มีผลงานรอการอนุมัติในขณะนี้</div>
@@ -115,27 +125,31 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
   </div>
 </main>
 
+<script src="firebase-config.js"></script>
+<script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU",
-  authDomain: "lsh-nammon.firebaseapp.com",
-  projectId: "lsh-nammon",
-  storageBucket: "lsh-nammon.firebasestorage.app",
-  messagingSenderId: "939312631889",
-  appId: "1:939312631889:web:47159770d49bfbcad3a870",
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 let currentProfile = null;
 let unsubscribeSnapshot = null;
 let unsubscribeAccounts = null;
+let latestPendingWorks = [];
+
+(function(){
+  var hasRealKey = typeof window.OPENROUTER_CONFIG !== 'undefined'
+    && window.OPENROUTER_CONFIG.apiKey
+    && window.OPENROUTER_CONFIG.apiKey.indexOf('YOUR_') === -1;
+  if(!hasRealKey){
+    document.getElementById('ai-summary-btn').disabled = true;
+    document.getElementById('ai-summary-unavailable').hidden = false;
+  }
+})();
 
 window.doLogin = async function(){
   const email = document.getElementById('login-email').value.trim();
@@ -217,7 +231,7 @@ function renderPending(works){
   container.innerHTML = works.map(function(w){
     return (
       '<div class="card">' +
-        '<h3>' + escapeHtml(w.title) + '</h3>' +
+        '<h3>' + escapeHtml(w.title) + (w.aiAssisted ? ' <span class="ai-badge" style="margin-bottom:0">🤖 มี AI ช่วยร่าง</span>' : '') + '</h3>' +
         '<div class="meta">ผู้ส่ง: ' + escapeHtml(w.requesterName) + (w.community ? ' · ชุมชน: ' + escapeHtml(w.community) : '') + '</div>' +
         '<div class="desc">' + escapeHtml(w.Content) + '</div>' +
         '<div class="actions">' +
@@ -361,6 +375,7 @@ function startListening(){
     });
     var pending = all.filter(function(w){ return w.status === 'รอพิจารณา'; });
     var reviewed = all.filter(function(w){ return w.status === 'อนุมัติ' || w.status === 'ไม่อนุมัติ'; });
+    latestPendingWorks = pending;
     renderPending(pending);
     renderReviewed(reviewed);
   }, function(err){
@@ -408,6 +423,125 @@ window.rejectWork = async function(id){
   }catch(e){
     console.error('ไม่อนุมัติไม่สำเร็จ', e);
     alert('ไม่อนุมัติไม่สำเร็จ: ' + e.message);
+  }
+};
+
+function withTimeout(promise, ms, timeoutMessage){
+  return Promise.race([
+    promise,
+    new Promise(function(_, reject){ setTimeout(function(){ reject(new Error(timeoutMessage)); }, ms); }),
+  ]);
+}
+
+function logAiAction(logData){
+  // ไม่ await — การบันทึก log ต้องไม่ทำให้ปุ่มค้างถ้า Firestore ช้า/ไม่ตอบสนอง
+  addDoc(collection(db, 'AiAssistLogs'), Object.assign({
+    requesterId: currentProfile ? currentProfile.id : null,
+    requesterName: currentProfile ? currentProfile.name : null,
+    createdAt: serverTimestamp(),
+  }, logData)).catch(function(logErr){
+    console.error('บันทึก log การใช้ AI ไม่สำเร็จ', logErr);
+  });
+}
+
+window.aiSummarizePending = async function(){
+  if(!currentProfile || currentProfile.role !== 'teacher') return;
+
+  var btn = document.getElementById('ai-summary-btn');
+  var box = document.getElementById('ai-summary-box');
+  var labelEl = document.getElementById('ai-summary-label');
+  var resultEl = document.getElementById('ai-summary-result');
+  var works = latestPendingWorks.slice();
+
+  if(works.length === 0){
+    alert('ไม่มีผลงานรอพิจารณาให้สรุปในขณะนี้');
+    return;
+  }
+
+  var originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'กำลังให้ AI สรุป...';
+  box.hidden = true;
+
+  var listText = works.map(function(w, i){
+    return (i + 1) + '. ชื่อผลงาน: ' + (w.title || '(ไม่ระบุ)')
+      + ' | ผู้ส่ง: ' + (w.requesterName || '(ไม่ระบุ)')
+      + ' | ชุมชน: ' + (w.community || '(ไม่ระบุ)')
+      + ' | คำอธิบาย: ' + (w.Content || '(ไม่มี)');
+  }).join('\n');
+
+  var prompt = 'ต่อไปนี้คือรายการผลงานของนิสิตที่รอการพิจารณาจากอาจารย์ทั้งหมด ' + works.length + ' รายการ:\n\n'
+    + listText + '\n\n'
+    + 'ช่วยสรุปภาพรวมสั้นๆ เป็นภาษาไทย (ไม่เกิน 6-8 บรรทัด) ให้อาจารย์อ่านก่อนตรวจทีละชิ้น '
+    + 'เช่น มีกี่รายการ กระจายไปชุมชนไหนบ้าง มีธีม/ประเด็นร่วมอะไรที่น่าสนใจ ตอบเฉพาะเนื้อหาสรุปเท่านั้น ห้ามมีคำนำ';
+
+  var timeoutController = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; timeoutController.abort(); }, 15000);
+
+  try{
+    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: timeoutController.signal,
+      headers: {
+        'Authorization': 'Bearer ' + window.OPENROUTER_CONFIG.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: window.OPENROUTER_CONFIG.model,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    var data = await res.json();
+    if(!res.ok){
+      throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
+    }
+    var summaryText = data.choices[0].message.content.trim();
+    var sourceRequestIds = works.map(function(w){ return w.id; });
+
+    resultEl.style.color = '';
+    resultEl.textContent = summaryText;
+    labelEl.hidden = false;
+
+    // เขียนผลกลับลงฐาน: บันทึกสรุปเป็นเอกสารใหม่เสมอ (ไม่ทับของเดิม — เก็บประวัติไว้)
+    // มี timeout กันไว้ด้วย เพราะเคยเจอบั๊กจริงตอน log ค้างเมื่อ Firestore ตอบช้า
+    await withTimeout(
+      addDoc(collection(db, 'AiSummaries'), {
+        summaryText: summaryText,
+        sourceCount: works.length,
+        sourceRequestIds: sourceRequestIds,
+        model: window.OPENROUTER_CONFIG.model,
+        generatedBy: currentProfile.id,
+        generatedByName: currentProfile.name,
+        createdAt: serverTimestamp(),
+      }),
+      10000,
+      'บันทึกสรุปลง Firestore ไม่สำเร็จ (หมดเวลารอเกิน 10 วินาที)'
+    );
+
+    logAiAction({
+      level: 2, action: 'summarize-pending',
+      model: window.OPENROUTER_CONFIG.model,
+      sourceCount: works.length, sourceRequestIds: sourceRequestIds,
+      success: true, resultText: summaryText, errorMessage: null,
+    });
+  }catch(e){
+    var message = timedOut ? 'หมดเวลารอคำตอบจาก AI (เกิน 15 วินาที) ลองใหม่อีกครั้ง' : e.message;
+    console.error('AI summarize failed', e);
+    resultEl.style.color = '#A13D2C';
+    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + message + ' (ยังไม่ได้บันทึกอะไรลงฐานข้อมูล)';
+    labelEl.hidden = true;
+    logAiAction({
+      level: 2, action: 'summarize-pending',
+      model: window.OPENROUTER_CONFIG.model,
+      sourceCount: works.length, sourceRequestIds: works.map(function(w){ return w.id; }),
+      success: false, resultText: null, errorMessage: message,
+    });
+  }finally{
+    clearTimeout(timeoutId);
+    box.hidden = false;
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 };
 </script>

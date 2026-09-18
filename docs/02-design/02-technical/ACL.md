@@ -9,6 +9,17 @@
 - **flow สมัคร/อนุมัติบัญชีผู้ใช้ใหม่ (อัปเดต 2026-09-12):** บังคับใช้จริงแล้วเช่นกัน — implement ใน [[../01-prototypes/prototype-v2/README|prototype-v2]] ทั้ง UI (หน้าสมัครสมาชิก + รายการรออนุมัติของอาจารย์ + แบนเนอร์แจ้งเตือนจำลอง) และ backend (`LSH/firestore.rules` บังคับ role/status ตอนสมัคร, จำกัด field ที่แก้ไขได้ตอนอนุมัติ) — ทดสอบยิง request ตรงข้าม UI แล้วว่าบล็อกจริง (ส่งผลงานทั้งที่บัญชียังไม่อนุมัติ, self-approve ตัวเอง, อ่านข้อมูล user คนอื่น)
 - **flow ดูผลงานแบบ public (อัปเดต 2026-09-12):** บังคับใช้จริงแล้ว — หน้าใหม่ [[../01-prototypes/prototype-v2/README|prototype-v2/published-works.html]] อ่าน `LSHRequests` แบบไม่ login ได้ (ค้นหาตามชุมชนแบบ live) `LSH/firestore.rules` บังคับที่ backend ให้เห็นเฉพาะ `status='อนุมัติ'` เท่านั้น — ทดสอบยิง request ตรงข้าม UI แล้วว่าบล็อกจริงทั้งการอ่านเอกสารที่ยังไม่อนุมัติโดยตรง และการ list ทั้ง collection แบบไม่กรอง
 
+## AI ช่วยงาน (เพิ่ม 2026-09-19) — สรุปให้อ่าน ไม่ตัดสินแทน
+
+[[../01-prototypes/prototype-v2/README|prototype-v2]] มีปุ่ม AI ช่วย 2 จุด (ระดับ 1: ช่วยปรับปรุงคำอธิบายผลงานใน
+`student-publish.html`, ระดับ 2: สรุปภาพรวมผลงานที่รอพิจารณาใน `admin-review-student-work.html`) — ทั้งสอง
+จุดยึดกฎเดียวกัน: **AI มีหน้าที่แค่สรุป/ช่วยร่างให้คนอ่านหรือแก้ต่อเท่านั้น ไม่มีสิทธิ์เปลี่ยนสถานะจริงใดๆ**
+(`LSHRequests.status`, `users.status`) — การเปลี่ยนสถานะจริง (อนุมัติ/ไม่อนุมัติผลงานหรือบัญชี) ต้องเกิดจาก
+การกดปุ่มของอาจารย์เอง (role=`teacher`) เท่านั้น ทั้ง UI (ปุ่ม AI ไม่มี path ใดที่ไปเรียก `updateDoc` กับ field
+`status`) และ backend (`LSH/firestore.rules` — `AiSummaries` เป็นคนละ collection จาก `LSHRequests`/`users`
+เขียนได้แต่ไม่มีผลต่อ workflow อนุมัติ, ส่วน `LSHRequests`/`users` ยังคง `allow update: if ... getRole() ==
+'teacher'` เหมือนเดิม ไม่มีข้อยกเว้นให้ AI หรือ service account อื่นใดเขียนสถานะแทนได้)
+
 ## ตารางสิทธิ์
 
 | บทบาท | ทำได้ | ทำไม่ได้ |

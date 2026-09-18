@@ -62,20 +62,12 @@ select{width:100%;max-width:360px;border:1px solid var(--color-stone);border-rad
   <div class="empty-state" id="works-empty" style="display:none;">ยังไม่มีผลงานที่เผยแพร่แล้วตรงกับตัวกรองนี้</div>
 </main>
 
+<script src="firebase-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU",
-  authDomain: "lsh-nammon.firebaseapp.com",
-  projectId: "lsh-nammon",
-  storageBucket: "lsh-nammon.firebasestorage.app",
-  messagingSenderId: "939312631889",
-  appId: "1:939312631889:web:47159770d49bfbcad3a870",
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
 const db = getFirestore(app);
 
 let allWorks = [];

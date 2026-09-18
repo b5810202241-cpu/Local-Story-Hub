@@ -7,3 +7,14 @@
 
 # Firebase CLI local deploy cache (not shared, regenerated automatically)
 .firebase/
+
+# Firebase web config with real apiKey — keep local, use firebase-config.example.js as template
+docs/02-design/01-prototypes/prototype-v2/firebase-config.js
+
+# OpenRouter API key (real secret, never commit) — keep local, use ai-test-config.example.js as template
+LSH/ai-test-config.js
+
+# OpenRouter key for student-publish.html AI-assist button — real secret, never commit.
+# Also excluded from `firebase deploy` via firebase.json hosting.ignore (this file lives
+# inside the Hosting public root, so gitignore alone would NOT stop it being deployed).
+docs/02-design/01-prototypes/prototype-v2/ai-assist-config.js
