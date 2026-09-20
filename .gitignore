@@ -8,6 +8,13 @@
 # Firebase CLI local deploy cache (not shared, regenerated automatically)
 .firebase/
 
+# Node dependencies + Playwright test output (regenerated, not shared)
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Firebase web config with real apiKey — keep local, use firebase-config.example.js as template
 docs/02-design/01-prototypes/prototype-v2/firebase-config.js
 
