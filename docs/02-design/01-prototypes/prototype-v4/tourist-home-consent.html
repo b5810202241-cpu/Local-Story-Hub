@@ -49,7 +49,6 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
   <a class="wordmark" href="#">Local Story Hub</a>
   <nav class="site">
     <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
-    <a href="community-dashboard.html">สำหรับชุมชน</a>
     <a href="tourist-login.html" id="tourist-login-link">เข้าสู่ระบบ</a>
     <span id="tourist-session-info" class="consent-badge" style="display:none;"></span>
     <span id="consent-badge" class="consent-badge">ยังไม่ตอบ Consent</span>
@@ -79,6 +78,10 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
   </section>
 </main>
 
+<!-- consent handled by compliance module — banner ด้านล่างนี้เป็นของเดิมจาก prototype-v1
+     (localStorage-only placeholder) คงไว้เพื่อไม่ให้ UI ขาดหาย แต่ ConsentRecord/AccessLog
+     backend จริงเป็นงานของ agent คนละคนที่ทำงานคู่ขนานใน prototype-v4/ นี้ — ไม่แตะ/ไม่ต่อ
+     Firestore ให้ส่วนนี้ -->
 <div class="consent" id="consent-banner" role="dialog" aria-label="แจ้งการเก็บข้อมูล">
   <div class="consent-inner">
     <p>
@@ -91,7 +94,17 @@ main{max-width:960px;margin:0 auto;padding:var(--space-3xl) var(--space-xl) var(
   </div>
 </div>
 
-<script>
+<script src="../prototype-v2/firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// consent handled by compliance module — โค้ด consent ด้านล่างเป็นของเดิม (localStorage) ไม่แตะ
 function readConsent(){
   try{ return JSON.parse(localStorage.getItem('lsh_consent')); }catch(e){ return null; }
 }
@@ -109,31 +122,40 @@ function renderConsentBadge(){
 function hideBanner(){
   document.getElementById('consent-banner').style.display = 'none';
 }
-function saveConsent(all){
+window.saveConsent = function(all){
   localStorage.setItem('lsh_consent', JSON.stringify({necessary:true, analytics:all, marketing:all}));
   renderConsentBadge();
   hideBanner();
-}
-function readTouristSession(){
-  try{ return JSON.parse(localStorage.getItem('lsh_tourist_session')); }catch(e){ return null; }
-}
-function renderTouristSession(){
-  var session = readTouristSession();
-  var link = document.getElementById('tourist-login-link');
-  var info = document.getElementById('tourist-session-info');
-  if(session){
-    link.textContent = 'ออกจากระบบ';
-    link.href = '#';
-    link.onclick = function(e){ e.preventDefault(); localStorage.removeItem('lsh_tourist_session'); window.location.reload(); };
-    info.textContent = session.name;
-    info.style.display = 'inline-block';
-  }
-}
-(function init(){
+};
+(function initConsent(){
   renderConsentBadge();
   if(readConsent()){ hideBanner(); }
-  renderTouristSession();
 })();
+
+// เซสชันนักท่องเที่ยว — real Firebase Auth (แทน localStorage เดิมของ prototype-v1)
+onAuthStateChanged(auth, async function(user){
+  var link = document.getElementById('tourist-login-link');
+  var info = document.getElementById('tourist-session-info');
+  if(!user){
+    link.textContent = 'เข้าสู่ระบบ';
+    link.href = 'tourist-login.html';
+    link.onclick = null;
+    info.style.display = 'none';
+    return;
+  }
+  let displayName = user.email;
+  try{
+    var snap = await getDoc(doc(db, 'touristAccounts', user.uid));
+    if(snap.exists()) displayName = snap.data().displayName;
+  }catch(e){
+    console.error('โหลดข้อมูล touristAccounts ไม่สำเร็จ', e);
+  }
+  link.textContent = 'ออกจากระบบ';
+  link.href = '#';
+  link.onclick = function(e){ e.preventDefault(); signOut(auth).then(function(){ window.location.reload(); }); };
+  info.textContent = displayName;
+  info.style.display = 'inline-block';
+});
 </script>
 
 </body>

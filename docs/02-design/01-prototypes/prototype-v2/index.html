@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);}
+main{max-width:680px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-sm);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-xl);}
+.card-link{display:block;background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-md);text-decoration:none;color:var(--color-ink);}
+.card-link h2{margin:0 0 4px;font-size:19px;color:var(--color-clay);}
+.card-link p{margin:0;font-size:15px;color:var(--color-bark);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-lg);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <span class="wordmark">Local Story Hub</span>
+</header>
+
+<main>
+  <h1>Local Story Hub</h1>
+  <p class="hint">แพลตฟอร์มรวบรวมและเผยแพร่เรื่องราวชุมชนโดยนิสิตนิเทศศาสตร์</p>
+  <div class="draft-note">DRAFT — prototype v2</div>
+
+  <a class="card-link" href="published-works.html">
+    <h2>ผลงานที่เผยแพร่แล้ว</h2>
+    <p>ดู/ค้นหาผลงานที่อนุมัติแล้ว เปิดดูได้เลยไม่ต้อง login</p>
+  </a>
+
+  <a class="card-link" href="student-publish.html">
+    <h2>สำหรับนิสิต — เผยแพร่ผลงาน</h2>
+    <p>เข้าสู่ระบบเพื่อส่งผลงานให้อาจารย์พิจารณา</p>
+  </a>
+
+  <a class="card-link" href="admin-review-student-work.html">
+    <h2>สำหรับอาจารย์ — ตรวจสอบผลงาน</h2>
+    <p>เข้าสู่ระบบเพื่อตรวจสอบและอนุมัติผลงานที่นิสิตส่งเข้ามา</p>
+  </a>
+</main>
+
+</body>
+</html>

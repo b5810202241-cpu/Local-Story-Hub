@@ -36,3 +36,5 @@
 ## Open Questions
 
 ไม่มี — Open Question ทั้งหมด (รวมช่องทางแจ้งเตือน = อีเมล) ได้รับคำตอบครบแล้วเมื่อ 2026-09-12 พร้อมไปต่อขั้น design ได้เต็มที่
+
+> ดู User Journey (Confirmed) ที่แตกจากสเปคนี้ได้ที่ [[../../02-design/01-prototypes/student-account-registration-journey|student-account-registration-journey]] (เพิ่ม 2026-09-22)

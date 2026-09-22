@@ -40,6 +40,9 @@ h1{font-size:32px;font-weight:600;margin:0;}
 .reviews h2{font-size:22px;}
 textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:16px;color:var(--color-ink);}
 .review-item{border-top:1px solid var(--color-stone);padding:var(--space-md) 0;font-size:16px;color:var(--color-bark);}
+.consent-badge{font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:3px 12px;margin-left:var(--space-lg);}
+.login-prompt{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-size:16px;margin-bottom:var(--space-md);}
+.login-prompt a{color:var(--color-clay);font-weight:600;}
 </style>
 </head>
 <body>
@@ -49,7 +52,8 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
   <nav class="site">
     <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
     <a href="community-dashboard.html">สำหรับชุมชน</a>
-    <a href="#">เข้าสู่ระบบ</a>
+    <a href="tourist-login.html?redirect=tourist-story-detail.html" id="tourist-login-link">เข้าสู่ระบบ</a>
+    <span id="tourist-session-info" class="consent-badge" style="display:none;"></span>
   </nav>
 </header>
 
@@ -63,7 +67,6 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
       <button onclick="setLang('en', this)">EN</button>
     </div>
   </div>
-  <div class="draft-note">DRAFT — ยืนยันเฉพาะไทย/อังกฤษหรือมีภาษาอื่น และมีเสียงพากย์ (TTS) หรือไม่ ยังเป็น Open Question</div>
 
   <p class="story-text" lang="th">หมู่บ้านผาบ่องตั้งอยู่ท่ามกลางหุบเขาแม่ฮ่องสอน ชาวบ้านสืบทอดภูมิปัญญาการทอผ้าจากรุ่นสู่รุ่นมากว่า 80 ปี ทุกลายผ้าเล่าเรื่องราวของธรรมชาติรอบตัว ตั้งแต่สายน้ำ ภูเขา จนถึงฤดูกาล นักท่องเที่ยวสามารถเดินป่าชมเส้นทางธรรมชาติ และเรียนรู้การทอผ้ากับชาวบ้านโดยตรง</p>
   <p class="story-text" lang="en">Ban Pha Bong sits among the valleys of Mae Hong Son, where villagers have carried on a weaving tradition for over 80 years. Every pattern tells a story of the surrounding nature. Visitors can hike community trails and learn weaving directly from local artisans.</p>
@@ -80,8 +83,13 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
 
   <section class="reviews" id="review-form">
     <h2>รีวิวจากนักท่องเที่ยว</h2>
-    <textarea id="review-text" placeholder="แบ่งปันประสบการณ์ของคุณที่ชุมชนบ้านผาบ่อง..."></textarea>
-    <div style="margin-top:var(--space-md)"><button class="btn btn-primary" onclick="postReview()">โพสต์รีวิว</button></div>
+    <div class="login-prompt" id="review-guest-prompt" style="display:none;">
+      ต้อง<a href="tourist-login.html?redirect=tourist-story-detail.html">เข้าสู่ระบบ/สมัครบัญชี</a>ก่อน จึงจะเขียนรีวิวได้ (ตัดสินใจ 2026-08-28)
+    </div>
+    <div id="review-form-inner">
+      <textarea id="review-text" placeholder="แบ่งปันประสบการณ์ของคุณที่ชุมชนบ้านผาบ่อง..."></textarea>
+      <div style="margin-top:var(--space-md)"><button class="btn btn-primary" onclick="postReview()">โพสต์รีวิว</button></div>
+    </div>
 
     <div id="review-list">
       <div class="review-item">"ได้เรียนทอผ้าจริงกับคุณป้าในหมู่บ้าน อบอุ่นมากค่ะ" — นักท่องเที่ยว, ก.ค. 2569</div>
@@ -100,6 +108,9 @@ function setLang(lang, btn){
   btn.classList.add('active');
 }
 
+function readTouristSession(){
+  try{ return JSON.parse(localStorage.getItem('lsh_tourist_session')); }catch(e){ return null; }
+}
 function readBookmarks(){
   try{ return JSON.parse(localStorage.getItem('lsh_bookmarks')) || []; }catch(e){ return []; }
 }
@@ -108,6 +119,10 @@ function renderBookmarkButton(){
   document.getElementById('bookmark-btn').textContent = saved ? 'บันทึกแล้ว ✓ (กดเพื่อยกเลิก)' : 'บันทึกสถานที่โปรด';
 }
 function toggleBookmark(){
+  if(!readTouristSession()){
+    window.location.href = 'tourist-login.html?redirect=tourist-story-detail.html';
+    return;
+  }
   var list = readBookmarks();
   var idx = list.indexOf(PLACE_ID);
   if(idx === -1){ list.push(PLACE_ID); } else { list.splice(idx, 1); }
@@ -117,15 +132,40 @@ function toggleBookmark(){
 renderBookmarkButton();
 
 function postReview(){
+  var session = readTouristSession();
+  if(!session){
+    window.location.href = 'tourist-login.html?redirect=tourist-story-detail.html';
+    return;
+  }
   var textEl = document.getElementById('review-text');
   var text = textEl.value.trim();
   if(!text){ textEl.focus(); return; }
   var item = document.createElement('div');
   item.className = 'review-item';
-  item.textContent = '"' + text + '" — คุณ, เพิ่งเมื่อสักครู่';
+  item.textContent = '"' + text + '" — ' + session.name + ', เพิ่งเมื่อสักครู่';
   document.getElementById('review-list').prepend(item);
   textEl.value = '';
 }
+
+(function renderTouristSession(){
+  var session = readTouristSession();
+  var link = document.getElementById('tourist-login-link');
+  var info = document.getElementById('tourist-session-info');
+  var guestPrompt = document.getElementById('review-guest-prompt');
+  var formInner = document.getElementById('review-form-inner');
+  if(session){
+    link.textContent = 'ออกจากระบบ';
+    link.href = '#';
+    link.onclick = function(e){ e.preventDefault(); localStorage.removeItem('lsh_tourist_session'); window.location.reload(); };
+    info.textContent = session.name;
+    info.style.display = 'inline-block';
+    guestPrompt.style.display = 'none';
+    formInner.style.display = 'block';
+  }else{
+    guestPrompt.style.display = 'block';
+    formInner.style.display = 'none';
+  }
+})();
 </script>
 
 </body>

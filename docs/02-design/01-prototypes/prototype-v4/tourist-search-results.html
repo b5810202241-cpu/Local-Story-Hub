@@ -45,7 +45,6 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
   <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
   <nav class="site">
     <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
-    <a href="community-dashboard.html">สำหรับชุมชน</a>
     <a href="tourist-login.html" id="tourist-login-link">เข้าสู่ระบบ</a>
     <span id="tourist-session-info" class="consent-badge" style="display:none;"></span>
     <span id="consent-badge" class="consent-badge">ยังไม่ตอบ Consent</span>
@@ -89,7 +88,16 @@ h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
   <div class="empty-state" id="empty-state" style="display:none;">ไม่พบชุมชนที่ตรงกับคำค้นหา ลองคำอื่นดูนะ</div>
 </main>
 
-<script>
+<script src="../prototype-v2/firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 function readConsent(){
   try{ return JSON.parse(localStorage.getItem('lsh_consent')); }catch(e){ return null; }
 }
@@ -104,22 +112,32 @@ function readConsent(){
   badge.classList.add('answered');
 })();
 
-function readTouristSession(){
-  try{ return JSON.parse(localStorage.getItem('lsh_tourist_session')); }catch(e){ return null; }
-}
-(function renderTouristSession(){
-  var session = readTouristSession();
-  if(!session) return;
+// เซสชันนักท่องเที่ยว — real Firebase Auth (แทน localStorage เดิมของ prototype-v1)
+onAuthStateChanged(auth, async function(user){
   var link = document.getElementById('tourist-login-link');
   var info = document.getElementById('tourist-session-info');
+  if(!user){
+    link.textContent = 'เข้าสู่ระบบ';
+    link.href = 'tourist-login.html';
+    link.onclick = null;
+    info.style.display = 'none';
+    return;
+  }
+  let displayName = user.email;
+  try{
+    var snap = await getDoc(doc(db, 'touristAccounts', user.uid));
+    if(snap.exists()) displayName = snap.data().displayName;
+  }catch(e){
+    console.error('โหลดข้อมูล touristAccounts ไม่สำเร็จ', e);
+  }
   link.textContent = 'ออกจากระบบ';
   link.href = '#';
-  link.onclick = function(e){ e.preventDefault(); localStorage.removeItem('lsh_tourist_session'); window.location.reload(); };
-  info.textContent = session.name;
+  link.onclick = function(e){ e.preventDefault(); signOut(auth).then(function(){ window.location.reload(); }); };
+  info.textContent = displayName;
   info.style.display = 'inline-block';
-})();
+});
 
-function filterResults(){
+window.filterResults = function(){
   var q = document.getElementById('search-input').value.trim().toLowerCase();
   var cards = document.querySelectorAll('#results .card');
   var visibleCount = 0;
@@ -129,7 +147,7 @@ function filterResults(){
     if(match) visibleCount++;
   });
   document.getElementById('empty-state').style.display = visibleCount === 0 ? '' : 'none';
-}
+};
 </script>
 
 </body>

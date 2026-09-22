@@ -1,15 +1,16 @@
 # Prototype v1
 
-- **สถานะ**: DRAFT — บางหน้าจอมีจุดที่ขึ้นกับ Open Question ยังไม่ปิด (ดูรายละเอียดที่ [[../../../01-requirements/03-task/open-questions|open-questions]])
+- **สถานะ**: ปิด Open Question ที่เคยกระทบทุกหน้าจอในเวอร์ชันนี้ครบแล้วเมื่อ 2026-09-22 ([[../../../01-requirements/03-task/open-questions|open-questions]] เหลือ 0 ข้อทั้งโปรเจกต์) — `community-dashboard.html`/`community-create-content.html`/`student-publish.html`/`admin-review-student-work.html` เป็น mockup รุ่นแรกที่ยังไม่ได้อัปเดตให้ตรงกับ Business Rules ล่าสุดทั้งหมด (ดูหมายเหตุรายไฟล์ด้านล่าง) — มีเวอร์ชันที่ทันสมัยกว่าที่ [[../prototype-v2/README|prototype-v2]] (นิสิต/อาจารย์ ต่อ Firestore จริง) และ [[../prototype-v3/README|prototype-v3]] (ชุมชน ตาม decision 2026-09-22)
 - **อ้างอิงจาก**: [[../DESIGN|DESIGN.md]] (design system), [[../../../01-requirements/03-task/product-backlog|product-backlog]], [[../../../01-requirements/03-task/feature-list|feature-list]]
 - **ขอบเขต**: ทั้งระบบ — ครอบคลุมทั้ง 3 persona
 
 เปิดไฟล์ HTML ตรงจากเบราว์เซอร์ได้เลย ไม่ต้อง build (self-contained, โหลดฟอนต์ Sarabun จาก Google Fonts เท่านั้น) — path เต็ม: `docs/02-design/01-prototypes/prototype-v1/`
 
 **Interactive**: ทุกหน้าจอมีพฤติกรรมจริง ไม่ใช่แค่ static mockup —
-- Consent (`tourist-home-consent.html`): ปุ่มยินยอม/ปฏิเสธ/ตั้งค่าแยกทีละประเภท บันทึกลง `localStorage` จริง แล้วสถานะแสดงเป็น badge ที่ header ของทุกหน้าฝั่งนักท่องเที่ยว
+- Consent (`tourist-home-consent.html`): ปุ่มยินยอมทั้งหมด/ปฏิเสธที่ไม่จำเป็น (แบบเดียว ไม่ใช่ granular — ปิด Open Question แล้ว 2026-09-22 ตัดปุ่ม "ตั้งค่า" แบบ granular เดิมออก) บันทึกลง `localStorage` จริง แล้วสถานะแสดงเป็น badge ที่ header ของทุกหน้าฝั่งนักท่องเที่ยว
 - ค้นหา (`tourist-search-results.html`): ช่องค้นหากรองการ์ดผลลัพธ์แบบ live พร้อม empty state
-- รายละเอียดสถานที่ (`tourist-story-detail.html`): สลับภาษาไทย/อังกฤษได้จริง, ปุ่มบันทึกสถานที่โปรด toggle และจำสถานะข้ามการโหลดหน้าใหม่ (`localStorage`), โพสต์รีวิวใหม่ขึ้นในรายการทันทีโดยไม่ reload
+- สมัคร/เข้าสู่ระบบ (`tourist-login.html` — **เพิ่ม 2026-09-22**): สมัครบัญชี + login แบบสาธิต (จำลองด้วย `localStorage`) รองรับ `?redirect=` เพื่อพากลับไปหน้าที่เรียกมาหลัง login สำเร็จ
+- รายละเอียดสถานที่ (`tourist-story-detail.html`): สลับภาษาไทย/อังกฤษได้จริง, ปุ่มบันทึกสถานที่โปรด toggle และจำสถานะข้ามการโหลดหน้าใหม่ (`localStorage`), โพสต์รีวิวใหม่ขึ้นในรายการทันทีโดยไม่ reload — **แก้ไข 2026-09-22**: ทั้งบันทึกสถานที่โปรดและเขียนรีวิวต้อง login ก่อนเสมอ (เดิมทำได้โดยไม่ต้อง login ไม่ตรงกับ decision 2026-08-28) ยังไม่ login จะถูกพาไปหน้า `tourist-login.html` ก่อน
 - สร้างคอนเทนต์ (`community-create-content.html`): ปุ่ม AI ทุกปุ่มมีผลลัพธ์จริง (ปรับภาพมี loading state, คิดแคปชันสลับข้อความจริง, แนะนำเรื่องเล่า/แปลภาษาแสดงผลลัพธ์), กดเผยแพร่/บันทึกร่างแล้ว**ไปโผล่ในตาราง `community-dashboard.html` จริง** (เชื่อมข้อมูลข้ามหน้าผ่าน `localStorage`)
 - เผยแพร่ผลงานนิสิต (`student-publish.html`): ตรวจสอบฟอร์ม (ต้องกรอกชื่อผลงานก่อน) แล้วแสดงหน้าจอสำเร็จจริงเมื่อ "ส่งขออนุมัติ" (ไม่ใช่เผยแพร่ทันที — แก้ไข 2026-09-04) — บันทึกผลงานลง `localStorage` จริง (`lsh_student_works`) ที่ `admin-review-student-work.html` อ่านต่อได้
 - ตรวจสอบผลงานนิสิต (`admin-review-student-work.html` — **เพิ่ม 2026-09-04**): อาจารย์เห็นรายการผลงานรออนุมัติจริง (รวมทั้งของที่นิสิตเพิ่งส่งจาก `student-publish.html`), กดอนุมัติแล้วย้ายไปช่อง "ประวัติการตรวจสอบ" ทันที, กดไม่อนุมัติต้องกรอกเหตุผลก่อนจึงยืนยันได้ — ทุกการเปลี่ยนสถานะบันทึกจริงผ่าน `localStorage` เดียวกับหน้าเผยแพร่
@@ -20,23 +21,24 @@
 
 | ไฟล์ | อ้างอิง | หมายเหตุ |
 |---|---|---|
-| `tourist-home-consent.html` | FR-2, FR-3 ([[../../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent\|20260822-01-it-log-pdpa-consent]]) | DRAFT — รูปแบบ Consent ยังไม่ปิด |
+| `tourist-home-consent.html` | FR-2, FR-3 ([[../../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent\|20260822-01-it-log-pdpa-consent]]) | ปิด Open Question แล้ว 2026-09-22 (Consent แบบเดียว) |
 | `tourist-search-results.html` | FR-2.1 ([[../../../01-requirements/01-spec/local-story-hub\|local-story-hub]]) | — |
-| `tourist-story-detail.html` | FR-2.2–2.5 | DRAFT — ภาษา/TTS ยังไม่ปิด |
+| `tourist-login.html` | FR-2.4, FR-2.5 (login เต็มรูปแบบตาม Decision Log 2026-08-28) | **เพิ่ม 2026-09-22** |
+| `tourist-story-detail.html` | FR-2.2–2.5 | ปิด Open Question ภาษา/TTS แล้ว 2026-09-22 (รองรับเฉพาะไทย-อังกฤษ, ข้อความแปลอย่างเดียวไม่มีเสียงพากย์) · **แก้ไข 2026-09-22**: รีวิว/บันทึกสถานที่ต้อง login ก่อนเสมอ |
 
 ### ชุมชน — อ้างอิงจาก [[../community-content-journey|community-content-journey]]
 
 | ไฟล์ | อ้างอิง | หมายเหตุ |
 |---|---|---|
-| `community-dashboard.html` | FR-1.6 | DRAFT — ขอบเขตระบบจัดการข้อมูลยังไม่ปิด |
-| `community-create-content.html` | FR-1.1–1.5, FR-1.7 | DRAFT — SEO และรูปแบบแปลภาษายังไม่ปิด |
+| `community-dashboard.html` | FR-1.6 | ปิด Open Question แล้ว 2026-09-22 (ขอบเขต = เฉพาะคอนเทนต์) — เป็น mockup รุ่นแรก **ไม่ได้อัปเดตให้ตรงกับ decision** เรื่อง shared data/สมัคร-อนุมัติบัญชีชุมชน/คำขอแก้ไข ดูเวอร์ชันที่ตรงกันที่ [[../prototype-v3/README|prototype-v3]] แทน |
+| `community-create-content.html` | FR-1.1–1.5, FR-1.7 | ปิด Open Question แล้ว 2026-09-22 (SEO = แนะนำ keyword ในระบบเท่านั้น, แปลภาษา = ข้อความอย่างเดียวไม่มี TTS) — ดูเวอร์ชันล่าสุดที่ตรงกับ decision ที่ [[../prototype-v3/README|prototype-v3]] |
 
 ### นิสิตนิเทศศาสตร์ — อ้างอิงจาก [[../student-content-journey|student-content-journey]]
 
 | ไฟล์ | อ้างอิง | หมายเหตุ |
 |---|---|---|
-| `student-publish.html` | FR-3.1 | DRAFT — วิธีเชื่อมโยงกับชุมชนยังไม่ปิด · **แก้ไข 2026-09-04**: ตอนนี้ต้องผ่านการอนุมัติจากอาจารย์ก่อนเผยแพร่ (กลับคำตัดสินใจเดิม) |
-| `admin-review-student-work.html` | FR-3.1, BL-018 | **เพิ่ม 2026-09-04** — DRAFT: จำนวนครั้งที่ส่งใหม่ได้หลังไม่ผ่านอนุมัติยังไม่ปิด |
+| `student-publish.html` | FR-3.1 | ปิด Open Question แล้ว 2026-09-22 (เชื่อมโยงชุมชน = เลือกจาก dropdown) · **แก้ไข 2026-09-04**: ตอนนี้ต้องผ่านการอนุมัติจากอาจารย์ก่อนเผยแพร่ (กลับคำตัดสินใจเดิม) — เวอร์ชันนี้ยังใช้ `localStorage` จำลอง ดูเวอร์ชันที่ต่อ Firestore จริงที่ [[../prototype-v2/README|prototype-v2]] |
+| `admin-review-student-work.html` | FR-3.1, BL-018 | **เพิ่ม 2026-09-04** — ปิด Open Question แล้ว 2026-09-22 (จำนวนครั้งส่งใหม่ = ไม่จำกัด) — เวอร์ชันนี้ยังใช้ `localStorage` จำลอง ดูเวอร์ชันที่ต่อ Firestore จริงที่ [[../prototype-v2/README|prototype-v2]] |
 
 ## Design tokens ที่ใช้
 

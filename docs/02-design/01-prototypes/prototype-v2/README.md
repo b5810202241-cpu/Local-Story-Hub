@@ -107,6 +107,8 @@ v1 ใช้ `localStorage` จำลองข้อมูลอย่างเ�
 
 ### สมัครสมาชิก + อนุมัติบัญชีผู้ใช้ใหม่ (เพิ่ม 2026-09-12)
 
+> ดู User Journey (Confirmed, เพิ่ม 2026-09-22) ที่แตกจาก flow นี้ที่ [[../student-account-registration-journey|student-account-registration-journey]]
+
 Implement ตาม [[../../../01-requirements/01-spec/20260912-01-account-registration-approval|20260912-01-account-registration-approval]] (BL-019, BL-020) — **เฉพาะบทบาทนิสิตเท่านั้นที่สมัครเองได้** บัญชีอาจารย์ยัง provision โดย admin เหมือนเดิม:
 
 - **`student-publish.html`**: เพิ่มลิงก์ "สมัครสมาชิก (นิสิต)" ที่หน้า login — กรอกชื่อ-นามสกุล/อีเมล/รหัสผ่าน แล้ว `createUserWithEmailAndPassword` + สร้างเอกสาร `users/{uid}` เอง ด้วย `role: 'student'`, `status: 'รออนุมัติ'` เสมอ (กำหนดจาก client แต่ rules บังคับค่านี้ซ้ำอีกชั้น กันแก้ไขค่าเอง) — หลังสมัครเสร็จเห็นข้อความ "รอการอนุมัติ" ทันที บัญชีที่สถานะ `รออนุมัติ`/`ไม่อนุมัติ` login เข้ามาจะเห็นข้อความสถานะนั้นๆ แทนฟอร์ม (บัญชี `ไม่อนุมัติ` แสดงเหตุผลที่อาจารย์ระบุ พร้อมข้อความว่าต้องสมัครใหม่เท่านั้น)
@@ -117,6 +119,8 @@ Implement ตาม [[../../../01-requirements/01-spec/20260912-01-account-regis
 **ทดสอบแล้ว (2026-09-12):** สมัครบัญชีทดสอบ 2 บัญชี → บัญชีแรก: เห็นสถานะรออนุมัติถูกต้อง, อาจารย์เห็นในรายการ+แบนเนอร์, กดอนุมัติสำเร็จด้วยตัวตนจริง, login กลับมาเห็นฟอร์มส่งผลงานได้ปกติ — บัญชีที่สอง: ทดสอบยิง request ตรงผ่าน browser console ข้าม UI 3 กรณี (ส่งผลงานทั้งที่ยังไม่อนุมัติ, self-approve ตัวเอง, อ่านข้อมูล user คนอื่น) **rules บล็อกจริงทุกกรณี** แล้วทดสอบกดไม่อนุมัติผ่าน UI จริง เห็นเหตุผลที่อาจารย์ระบุถูกต้องตอน login กลับมา — ลบบัญชีทดสอบทั้งสองออกหลังทดสอบเสร็จ (ทั้ง Firebase Auth และเอกสาร Firestore)
 
 ### ดู/ค้นหาผลงานที่เผยแพร่แล้วโดยไม่ต้อง Login (เพิ่ม 2026-09-12)
+
+> ดู User Journey (DRAFT บางส่วน, เพิ่ม 2026-09-22) ที่แตกจาก flow นี้ที่ [[../public-view-search-journey|public-view-search-journey]]
 
 Implement ตาม [[../../../01-requirements/01-spec/20260912-02-public-view-search-published-works|20260912-02-public-view-search-published-works]] (BL-021) — หน้าใหม่ **`published-works.html`**:
 

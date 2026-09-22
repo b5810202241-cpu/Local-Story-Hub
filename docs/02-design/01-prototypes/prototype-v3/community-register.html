@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — สมัคร/เข้าสู่ระบบชุมชน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:720px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
+h2{font-size:22px;font-weight:600;margin:0 0 var(--space-sm);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-md);}
+.step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
+label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);margin-top:var(--space-md);}
+label:first-child{margin-top:0;}
+input[type=text], input[type=email], textarea, select{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;height:48px;}
+textarea{min-height:90px;height:auto;}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;margin-top:var(--space-md);}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
+.success-note{background:#E4F1E6;color:var(--color-moss);border-radius:var(--radius-sm);padding:var(--space-md);margin-top:var(--space-md);display:none;}
+.info-note{background:var(--color-sand);color:var(--color-ink);border-radius:var(--radius-sm);padding:var(--space-md);margin-top:var(--space-md);display:none;font-size:16px;}
+.deny-note{background:#F7E0DA;color:#A13D2C;border-radius:var(--radius-sm);padding:var(--space-md);margin-top:var(--space-md);display:none;font-size:16px;}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-lg);}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;}
+.status.approved{background:#E4F1E6;color:var(--color-moss);}
+.status.pending{background:var(--color-sand);color:var(--color-bark);}
+.status.rejected{background:#F7E0DA;color:#A13D2C;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="community-register.html">Local Story Hub</a>
+  <nav class="site">
+    <a href="admin-review-community.html">มุมมองอาจารย์/แอดมิน (ตัวอย่าง)</a>
+  </nav>
+</header>
+
+<main>
+  <h1>สำหรับชุมชน</h1>
+  <div class="draft-note">เวอร์ชันนี้จำลองข้อมูลด้วย localStorage ในเบราว์เซอร์ (ยังไม่เชื่อมฐานข้อมูลจริง) — อ้างอิง BL-022</div>
+
+  <div class="step">
+    <h2>สมัครบัญชีชุมชนใหม่</h2>
+    <p class="hint">ต้องผ่านการอนุมัติจากอาจารย์ที่ปรึกษา/แอดมินก่อน จึงจะเข้าใช้งานได้ (กันมิจฉาชีพแอบอ้างเป็นไกด์ชุมชน)</p>
+
+    <label for="reg-name">ชื่อชุมชน</label>
+    <input type="text" id="reg-name" placeholder="เช่น ชุมชนบ้านผาบ่อง">
+    <div class="field-error" id="err-name">กรุณากรอกชื่อชุมชน</div>
+
+    <label for="reg-email">อีเมลติดต่อ</label>
+    <input type="email" id="reg-email" placeholder="community@example.com">
+    <div class="field-error" id="err-email">กรุณากรอกอีเมลให้ถูกต้อง</div>
+
+    <label for="reg-verify">ข้อมูลยืนยันตัวตน (ชื่อผู้ติดต่อ/ผู้นำชุมชน + เบอร์โทร)</label>
+    <textarea id="reg-verify" placeholder="เช่น นายสมชาย ใจดี (ผู้ใหญ่บ้าน), โทร. 08x-xxx-xxxx"></textarea>
+    <div class="field-error" id="err-verify">กรุณากรอกข้อมูลยืนยันตัวตน เช่น ชื่อผู้ติดต่อ/ผู้นำชุมชน, เบอร์โทร/อีเมล, และคำอธิบายชุมชนโดยย่อ (ไม่ต้องแนบเอกสาร — ตัดสินใจ 2026-09-22)</div>
+
+    <button class="btn btn-primary" onclick="submitRegistration()">สมัครบัญชี</button>
+    <div class="success-note" id="reg-success"></div>
+  </div>
+
+  <div class="step">
+    <h2>เข้าสู่ระบบ (ระบบสาธิต)</h2>
+    <p class="hint">เลือกบัญชีชุมชนที่เคยสมัครไว้ — เวอร์ชันสาธิตนี้ยังไม่มีรหัสผ่านจริง ใช้การเลือกบัญชีแทน</p>
+    <label for="login-select">บัญชีชุมชน</label>
+    <select id="login-select"></select>
+    <button class="btn btn-secondary" onclick="attemptLogin()">เข้าสู่ระบบ</button>
+    <div class="info-note" id="login-pending">บัญชีนี้อยู่ในสถานะ "รออนุมัติ" — ต้องรอให้อาจารย์/แอดมินอนุมัติก่อนจึงจะใช้งานฟีเจอร์หลักได้</div>
+    <div class="deny-note" id="login-rejected"></div>
+  </div>
+</main>
+
+<script>
+var COMM_KEY = 'lsh_v3_communities';
+var CONTENT_KEY = 'lsh_v3_content';
+var SESSION_KEY = 'lsh_v3_session';
+
+function readList(key){
+  try{ return JSON.parse(localStorage.getItem(key)) || []; }catch(e){ return []; }
+}
+function writeList(key, list){ localStorage.setItem(key, JSON.stringify(list)); }
+
+function seedIfEmpty(){
+  var communities = readList(COMM_KEY);
+  if(communities.length === 0){
+    communities = [
+      {id:'c001', name:'ชุมชนบ้านผาบ่อง', email:'phabong@example.com', verify:'นายสมชาย ใจดี (ผู้ใหญ่บ้าน) — มีหนังสือรับรองจาก อบต.', status:'อนุมัติแล้ว', rejectionReason:null, createdAt:'15/8/2569'},
+      {id:'c002', name:'ชุมชนบ้านไร่ไทรงาม', email:'saingam@example.com', verify:'นางสมศรี ทองดี (ประธานกลุ่มท่องเที่ยวชุมชน)', status:'อนุมัติแล้ว', rejectionReason:null, createdAt:'16/8/2569'}
+    ];
+    writeList(COMM_KEY, communities);
+  }
+  var content = readList(CONTENT_KEY);
+  if(content.length === 0){
+    content = [
+      {id:'ct001', communityId:'c001', communityName:'ชุมชนบ้านผาบ่อง', title:'เรื่องเล่าการทอผ้าบ้านผาบ่อง', bodyTh:'ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง สืบทอดจากรุ่นสู่รุ่นกว่า 80 ปี', caption:'ลายผ้าทุกเส้นคือเรื่องเล่าของบ้านผาบ่อง', status:'เผยแพร่แล้ว', createdAt:'20/8/2569'},
+      {id:'ct002', communityId:'c002', communityName:'ชุมชนบ้านไร่ไทรงาม', title:'สวนผลไม้อินทรีย์บ้านไร่ไทรงาม', bodyTh:'สวนผลไม้ปลอดสารพิษกลางหุบเขา เปิดให้เที่ยวชมและชิมผลไม้ตามฤดูกาล', caption:'สวนผลไม้อินทรีย์กลางหุบเขา', status:'เผยแพร่แล้ว', createdAt:'21/8/2569'}
+    ];
+    writeList(CONTENT_KEY, content);
+  }
+}
+seedIfEmpty();
+
+function genId(prefix){ return prefix + Math.floor(1000 + (Date.now() % 9000)); }
+
+function submitRegistration(){
+  var name = document.getElementById('reg-name').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var verify = document.getElementById('reg-verify').value.trim();
+  var okName = !!name;
+  var okEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  var okVerify = !!verify;
+  document.getElementById('err-name').style.display = okName ? 'none' : 'block';
+  document.getElementById('err-email').style.display = okEmail ? 'none' : 'block';
+  document.getElementById('err-verify').style.display = okVerify ? 'none' : 'block';
+  if(!okName || !okEmail || !okVerify) return;
+
+  var communities = readList(COMM_KEY);
+  var today = new Date();
+  var dateStr = today.getDate() + '/' + (today.getMonth()+1) + '/' + (today.getFullYear()+543);
+  communities.unshift({id: genId('c'), name: name, email: email, verify: verify, status: 'รออนุมัติ', rejectionReason: null, createdAt: dateStr});
+  writeList(COMM_KEY, communities);
+
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-verify').value = '';
+  var successEl = document.getElementById('reg-success');
+  successEl.style.display = 'block';
+  successEl.textContent = 'ส่งคำขอสมัครบัญชี "' + name + '" แล้ว — สถานะ "รออนุมัติ" รออาจารย์ที่ปรึกษา/แอดมินตรวจสอบข้อมูลยืนยันตัวตนก่อน';
+  renderLoginOptions();
+}
+
+function renderLoginOptions(){
+  var communities = readList(COMM_KEY);
+  var select = document.getElementById('login-select');
+  select.innerHTML = communities.map(function(c){
+    return '<option value="' + c.id + '">' + c.name + ' (' + c.status + ')</option>';
+  }).join('');
+}
+renderLoginOptions();
+
+function attemptLogin(){
+  var id = document.getElementById('login-select').value;
+  var communities = readList(COMM_KEY);
+  var found = communities.filter(function(c){ return c.id === id; })[0];
+  document.getElementById('login-pending').style.display = 'none';
+  document.getElementById('login-rejected').style.display = 'none';
+  if(!found) return;
+
+  if(found.status === 'อนุมัติแล้ว'){
+    localStorage.setItem(SESSION_KEY, JSON.stringify({id: found.id, name: found.name}));
+    window.location.href = 'community-dashboard.html';
+    return;
+  }
+  if(found.status === 'รออนุมัติ'){
+    document.getElementById('login-pending').style.display = 'block';
+    return;
+  }
+  var rejectedEl = document.getElementById('login-rejected');
+  rejectedEl.style.display = 'block';
+  rejectedEl.textContent = 'บัญชีนี้ไม่ผ่านการอนุมัติ — เหตุผล: ' + (found.rejectionReason || '(ไม่ระบุ)') + ' — สถานะสิ้นสุด ต้องสมัครบัญชีใหม่เท่านั้น';
+}
+</script>
+
+</body>
+</html>

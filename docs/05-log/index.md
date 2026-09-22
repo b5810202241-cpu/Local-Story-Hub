@@ -14,6 +14,326 @@
 
 ## บันทึก
 
+### 2026-09-22 — ปิด 2 คำถามค้างที่พบระหว่างงาน ACL.md (ชุมชนแก้ไขข้ามชุมชน + ข้อมูลยืนยันตัวตน)
+
+ผู้ใช้ขอให้จัดการต่อ 2 เรื่องสุดท้าย — เสนอตัวเลือกทั้งคู่:
+
+1. **ชุมชนขอแก้ไขคอนเทนต์ของชุมชนอื่นได้ไหม (BL-023)** — เสนอ 3 ทาง (ไม่ได้ เฉพาะของตนเอง ตรงกับของจริง / ได้ ขอแก้ไขข้ามชุมชนได้ / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ไม่ได้ เฉพาะของตนเอง**
+2. **ข้อมูลยืนยันตัวตนตอนชุมชนสมัครบัญชี (BL-022)** — เสนอ 3 ทาง (ข้อมูลพื้นฐาน ไม่ต้องแนบเอกสาร / ต้องแนบเอกสารทางการ / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ข้อมูลพื้นฐาน**
+
+ทั้งสองคำตอบตรงกับสิ่งที่ prototype-v3 implement ไว้อยู่แล้ว (ข้อสันนิษฐานที่ตั้งไว้ตอนสร้างถูกต้อง) — งานหลักคือทำให้เป็นทางการ (formal decision) ทั่วทั้งเอกสาร ไม่ใช่แก้โค้ดใหม่
+
+ไล่แก้ทุกไฟล์ที่เกี่ยวข้อง:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — เพิ่ม Business Rules 2 ข้อ (ชี้แจง "ใช้ร่วมกัน" = ดูได้อย่างเดียว, ข้อมูลยืนยันตัวตน = พื้นฐานเท่านั้น)
+2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด note ของ BL-022 และ BL-023
+3. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิด Open Items ข้อ 7-8, ปิด note ของ API operation "สมัครบัญชี (ชุมชน)"
+4. [[../02-design/02-technical/ACL|02-technical/ACL]] — ปิดข้อสันนิษฐานที่เหลืออยู่ข้อสุดท้าย, ลบ 2 ข้อจาก "คำถามที่ยังไม่มีคำตอบ"
+5. [[../02-design/01-prototypes/community-account-registration-journey|community-account-registration-journey]], [[../02-design/01-prototypes/community-content-edit-request-journey|community-content-edit-request-journey]] — ปิด note ในคำอธิบาย step ที่เกี่ยวข้อง
+6. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด note ของ TC-020
+7. [[../02-design/01-prototypes/prototype-v3/README|prototype-v3/README]] — ลบหัวข้อ "ข้อสันนิษฐานที่ยังไม่ยืนยัน" ทั้งหมด (ปิดครบแล้ว)
+8. **แก้ข้อความในหน้าจอจริง**: `community-request-edit.html` (ข้อความ deny ตอนขอแก้ไขข้ามชุมชน — จาก "ยังไม่ยืนยัน" เป็นยืนยันแล้วว่าไม่รองรับ) และ `community-register.html` (field-error + label + placeholder ของช่องข้อมูลยืนยันตัวตน ให้ระบุชัดว่าต้องการชื่อผู้ติดต่อ+เบอร์โทรเท่านั้น)
+9. [[../01-requirements/03-task/open-questions|open-questions]] — อัปเดตหมายเหตุท้ายไฟล์ว่างานค้างทั้งหมดที่เคยระบุไว้จัดการครบแล้ว เหลือแค่ BL-014/BL-017
+
+ทดสอบผ่าน browser จริงว่าฟอร์มสมัครชุมชนยังทำงานปกติหลังแก้ข้อความ (validate error แสดงข้อความใหม่ถูกต้อง ไม่มี JS error)
+
+### 2026-09-22 — ลบ badge "DRAFT/Open Question" ที่ล้าสมัยออกจากหน้าจอ prototype-v1 จริง
+
+ผู้ใช้ขอให้จัดการต่อจากการอัปเดต README — ตัว badge `<div class="draft-note">`/`<span class="draft-note">` ที่แสดงอยู่จริงในหน้าเว็บ (ไม่ใช่แค่เอกสาร) ยังอ้างอิง Open Question ที่ปิดไปหมดแล้ว ลบ/แก้ 6 จุดใน 5 ไฟล์:
+
+- `community-dashboard.html` — ลบ badge เรื่องขอบเขตระบบจัดการข้อมูล
+- `community-create-content.html` — ลบ badge เรื่อง SEO และเรื่องรูปแบบการแปล (2 จุด)
+- `student-publish.html` — ลบ badge เรื่องเชื่อมโยงชุมชน
+- `admin-review-student-work.html` — ลบ badge เรื่องจำนวนครั้งส่งใหม่
+- `tourist-story-detail.html` — ลบ badge เรื่องภาษา/TTS
+
+**พบเพิ่มเติมระหว่างตรวจ — ไม่ใช่แค่ badge แต่เป็นพฤติกรรม UI ที่ขัดกับ Business Rule จริง**: `tourist-home-consent.html` ยังมีปุ่ม "ตั้งค่า" ที่เปิด panel ให้เลือก consent แบบ granular (แยก analytics/tracking) ทั้งที่ปิด Open Question ไปแล้วว่า Consent เป็น**แบบเดียว**เท่านั้น (ยอมรับ/ปฏิเสธทั้งหมด) — ตัดปุ่ม "ตั้งค่า", panel `#consent-settings`, และฟังก์ชัน `saveGranularConsent()` ออกทั้งหมด เหลือแค่ 2 ปุ่มตามที่ตัดสินใจไว้ พร้อมอัปเดต [[../02-design/01-prototypes/DESIGN|DESIGN.md]] § Consent Banner pattern ให้ตรงกัน (เดิมเขียนไว้ว่า "รองรับได้ทั้งสองแบบ" ซึ่งล้าสมัยแล้ว)
+
+**ทดสอบผ่าน browser จริง** ทั้ง 5 หน้าที่แก้ (รวม `tourist-home-consent.html` ที่เปลี่ยนพฤติกรรมจริง): ไม่มี `.draft-note` เหลืออยู่เลย, ไม่มี JS error, ปุ่ม "ยินยอมทั้งหมด" ทำงานถูกต้อง (ปุ่ม "ตั้งค่า" หายไปแล้วจริง), ปุ่ม AI ใน `community-create-content.html` ยังทำงานปกติ, dropdown ชุมชนใน `student-publish.html` ยังครบ 3 ตัวเลือก — ไม่พบผลกระทบข้างเคียง
+
+อัปเดต [[../02-design/01-prototypes/prototype-v1/README|prototype-v1/README]] บรรทัด Consent ให้ตรงกับพฤติกรรมใหม่ (ตัดคำว่า "ตั้งค่าแยกทีละประเภท" ออก)
+
+### 2026-09-22 — อัปเดต prototype-v1/README.md ให้ตรงกับ Open Question ที่ปิดแล้ว
+
+ผู้ใช้ขอให้ปิดช่องว่างสุดท้ายที่ตัวเองพบไว้ก่อนหน้านี้ — `prototype-v1/README.md` มี DRAFT note เก่าหลายจุดที่อ้างอิง Open Question ซึ่งจริงๆ ปิดไปหมดแล้ว (0 ข้อทั้งโปรเจกต์ ณ วันนี้)
+
+แก้ [[../02-design/01-prototypes/prototype-v1/README|prototype-v1/README]]:
+- แก้ status บนสุด: จาก "DRAFT — บางหน้าจอขึ้นกับ Open Question" เป็นระบุชัดว่าปิดครบแล้ว พร้อม cross-link ไปยัง [[../02-design/01-prototypes/prototype-v2/README|prototype-v2]] และ [[../02-design/01-prototypes/prototype-v3/README|prototype-v3]] ที่เป็นเวอร์ชันทันสมัยกว่าของฝั่งนิสิต/ชุมชนตามลำดับ
+- `community-dashboard.html`, `community-create-content.html` — ปิด flag ขอบเขตข้อมูล/SEO/แปลภาษา พร้อมระบุชัดว่าเป็น mockup รุ่นแรกที่ไม่ได้อัปเดตตาม decision ล่าสุด ให้ดู prototype-v3 แทน
+- `student-publish.html`, `admin-review-student-work.html` — ปิด flag เชื่อมโยงชุมชน/จำนวนครั้งส่งใหม่ พร้อม cross-link ไป prototype-v2 (เวอร์ชันที่ต่อ Firestore จริง)
+- `tourist-story-detail.html` — แก้ข้อความที่เขียนผิด/ล้าสมัยไปแล้ว ("TTS ยังเป็น Open Question แยก" ทั้งที่ปิดไปแล้วจริง)
+
+**หมายเหตุที่ยังไม่ได้แก้ (นอกขอบเขตที่ขอ)**: badge "DRAFT" ที่แสดงอยู่จริงในตัวหน้า HTML เอง (เช่น `<div class="draft-note">` ใน `tourist-story-detail.html`, `community-create-content.html`, `community-dashboard.html`) ยังไม่ได้ลบ/แก้ข้อความให้ตรงกับ Open Question ที่ปิดแล้ว — ผู้ใช้ขอเฉพาะไฟล์ README เท่านั้นในรอบนี้
+
+### 2026-09-22 — ขยาย ACL.md ให้ครอบคลุมนักท่องเที่ยวแบบมีบัญชี
+
+ผู้ใช้ขอให้ปิดช่องว่างสุดท้ายที่ระบุไว้ใน [[../02-design/02-technical/ACL|ACL.md]] — บทบาท "นักท่องเที่ยวแบบมีบัญชี" ที่ยังไม่เคยวิเคราะห์สิทธิ์เลย (ต่างจาก "บุคคลทั่วไป" ที่มีอยู่แล้วซึ่งแคบกว่า)
+
+แก้ [[../02-design/02-technical/ACL|ACL.md]]:
+- อัปเดต header ให้ครอบคลุม 6 flow (เพิ่ม flow บัญชีนักท่องเที่ยว), ปรับหมายเหตุจุดเริ่มไฟล์ที่เคยระบุว่ายังไม่ครอบคลุมให้ตรงกับสถานะใหม่
+- เพิ่มบรรทัด "สถานะการบังคับใช้" ของ flow นี้ — ระบุชัดว่าบังคับที่ **UI ผ่าน `localStorage` เท่านั้น** ไม่มี backend/security rules จริง (ต่างจาก flow นิสิต/อาจารย์ที่ต่อ Firestore + rules จริงแล้ว) เพราะนักท่องเที่ยวยังไม่มี collection จริง
+- เพิ่มแถว **"นักท่องเที่ยว (มีบัญชี)"** ในตารางสิทธิ์: ดู/สืบค้นไม่ต้อง login, สมัครบัญชีแล้ว**ใช้งานได้ทันทีไม่ต้องรออนุมัติ** (จุดที่ต่างจากนิสิต/ชุมชนอย่างมีนัยสำคัญ), เขียนรีวิว/บันทึกสถานที่ได้เฉพาะมีบัญชี — ปรับแถว "บุคคลทั่วไป" เดิมให้ระบุชัดว่าแคบกว่าแถวใหม่นี้อย่างไร
+- อัปเดตหัวข้อ "สถานะบัญชี (Account Status)" ให้ระบุชัดว่า**บัญชีนักท่องเที่ยวไม่มีสถานะ pending/approved/rejected เลย** ต่างจากนิสิต/ชุมชน
+
+ไม่ได้แก้ architecture.md เพิ่มเติม เพราะ entity `Review`/`Bookmark` มีเงื่อนไข "ต้องมี UserAccount role=tourist" ระบุไว้ถูกต้องอยู่แล้วตั้งแต่ Decision Log 2026-08-28 — ช่องว่างมีแค่ใน ACL.md ไฟล์เดียว
+
+### 2026-09-22 — แก้ login inconsistency ของนักท่องเที่ยว (ค้างมาตั้งแต่ 2026-08-28)
+
+ผู้ใช้ขอให้จัดการงานค้างที่ไม่ใช่ Open Question แล้ว — ความไม่สอดคล้องที่บันทึกไว้ตั้งแต่ decision 2026-08-28 ว่านักท่องเที่ยวต้องมีบัญชี (login เต็มรูปแบบ) ก่อนเขียนรีวิว/บันทึกสถานที่โปรดได้ แต่ [[../02-design/01-prototypes/tourist-journey|tourist-journey]] และ [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]] เดิมยังทำได้โดยไม่ต้อง login เลย (ปุ่ม "เข้าสู่ระบบ" ใน nav เป็น `href="#"` กดไม่ได้จริง)
+
+ถามผู้ใช้ตามกฎบังคับของ `prototype-builder` (มี version เดิมอยู่แล้วต้องถามเสมอ): แก้ prototype-v1 เดิม หรือสร้าง v4 ใหม่ — ผู้ใช้เลือก **แก้ prototype-v1 เดิม** (เป็นการแก้ inconsistency ของหน้าที่มีอยู่แล้ว ไม่ใช่ฟีเจอร์ใหม่)
+
+**เพิ่ม/แก้ไขใน [[../02-design/01-prototypes/prototype-v1/README|prototype-v1]]**:
+- สร้าง `tourist-login.html` ใหม่ — สมัครบัญชี + login แบบสาธิต (จำลองด้วย `localStorage` เพราะนักท่องเที่ยวไม่มี backend จริง เหมือนแนวทางเดียวกับ `community-register.html` ใน prototype-v3) รองรับ `?redirect=` พากลับไปหน้าที่เรียกมา
+- แก้ nav ของทั้ง 3 หน้าเดิม (`tourist-home-consent.html`, `tourist-search-results.html`, `tourist-story-detail.html`) ให้ลิงก์ "เข้าสู่ระบบ" ใช้งานได้จริง + แสดงชื่อ/ปุ่มออกจากระบบเมื่อ login แล้ว
+- แก้ `tourist-story-detail.html`: ปุ่ม "บันทึกสถานที่โปรด" และฟอร์มเขียนรีวิว เช็ค session ก่อนเสมอ — ยังไม่ login จะถูกพาไปหน้า `tourist-login.html?redirect=...` แทนที่จะทำงานได้ทันที (ตรงกับ Decision Log 2026-08-28), รีวิวที่โพสต์แนบชื่อจริงจาก session แทนคำว่า "คุณ"
+
+**ทดสอบผ่าน browser จริง** (รัน `npx http-server` local ชี้ที่ prototype-v1): guest เห็น prompt "ต้องเข้าสู่ระบบก่อน" ถูกต้อง → กดบันทึกสถานที่ตอนยังไม่ login ถูกพาไป `tourist-login.html` ถูกต้อง → สมัครบัญชีสำเร็จ พากลับมาหน้าเดิมพร้อม session ถูกต้อง → บันทึกสถานที่/โพสต์รีวิวสำเร็จพร้อมชื่อถูกต้อง → logout ถูกต้อง กลับเป็น guest state ทุกหน้า → login ด้วยบัญชีเดิม (ไม่ใช่สมัครใหม่) สำเร็จ — ผ่านทุก flow ไม่พบบั๊ก
+
+อัปเดตเอกสารตามให้ตรงกัน: [[../02-design/01-prototypes/tourist-journey|tourist-journey]] (เพิ่ม step login ในไดอะแกรม), [[../02-design/02-technical/architecture|architecture.md]] (ปิด "ผลกระทบที่ต้องตามแก้" ใน Decision Log 2026-08-28), [[../02-design/02-technical/detailed-design|detailed-design.md]] (ลบ ⚠️ warning, ปิด Open Item #1, เพิ่ม Decision Log entry), [[../01-requirements/03-task/product-backlog|product-backlog]] (เพิ่มหมายเหตุ login ใน BL-011/BL-012), [[../03-testing/01-test-plan/test-plan|test-plan]] (ปรับ Given clause ของ TC-007/TC-008 ให้ระบุเงื่อนไข login)
+
+**หมายเหตุ**: `prototype-v1/README.md` ส่วนของฝั่งชุมชน/นิสิตยังมี DRAFT note เก่าที่อ้างอิง Open Question ที่จริงๆ ปิดไปแล้วในรอบก่อนหน้า (เช่น ขอบเขตระบบจัดการข้อมูล, SEO) — ไม่ได้แก้ในรอบนี้เพราะนอกขอบเขตงานที่ขอ (เฉพาะ login inconsistency ของนักท่องเที่ยว) ควรพิจารณาอัปเดตแยกทีหลัง
+
+### 2026-09-22 — ปิด Open Questions ที่เหลือทั้งหมด (6 ข้อในรอบเดียว) 🎉
+
+ผู้ใช้ขอให้ปิดทั้งหมดที่เหลือ พร้อมให้แนะนำตัวเลือก — ถามเป็น 2 ชุด (4 ข้อ + 2 ข้อ) พร้อมตัวเลือกทุกข้อ:
+
+1. **Out of scope** — เสนอ 3 ทาง (สิ่งที่ยังไม่ implement = เวอร์ชันถัดไป / ทุกอย่างยังอยู่ใน scope v1 / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **สิ่งที่ยังไม่ implement = เวอร์ชันถัดไป**
+2. **NFR** — เสนอ 3 ทาง (ระดับชุมชน/มหาวิทยาลัย ตรงกับ architecture.md เดิม / ระดับประเทศ / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ระดับชุมชน/มหาวิทยาลัย**
+3. **จำนวนครั้งส่งผลงานใหม่ (BL-018)** — เสนอ 3 ทาง (ไม่จำกัด / จำกัดจำนวนครั้ง / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ไม่จำกัด**
+4. **Tracking tools อื่น** — เสนอ 3 ทาง (ไม่มี เฉพาะ GA+IP / มีเพิ่ม เช่น FB Pixel/Hotjar / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ไม่มี**
+5. **สิทธิ์เจ้าของข้อมูล** — เสนอ 3 ทาง (ขั้นพื้นฐาน ติดต่อ Data Controller เอง / self-service เต็มรูปแบบ / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ขั้นพื้นฐาน**
+6. **ตำแหน่งหน้า public-view** — เสนอ 3 ทาง (แยกหน้าต่างหาก ตรงกับของจริง / รวมกับ tourist-search-results / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **แยกหน้าต่างหาก**
+
+ไล่แก้ทุกไฟล์ที่เกี่ยวข้องทั้งหมด:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — เพิ่ม Business Rules 3 ข้อ (out of scope, NFR, จำนวนครั้งส่งใหม่) **ปิด Open Questions ครบทุกข้อในไฟล์นี้แล้ว**
+2. [[../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|01-spec/20260822-01-it-log-pdpa-consent]] — เพิ่ม Business Rules 2 ข้อ (tracking tools, สิทธิ์เจ้าของข้อมูล — รวมถึงปิด "สิทธิ์ถอน Consent" ในข้อเสนอแนะเดิมไปด้วยเพราะคำตอบเดียวกันครอบคลุม) **ปิด Open Questions ครบทุกข้อในไฟล์นี้แล้ว**
+3. [[../01-requirements/01-spec/20260912-02-public-view-search-published-works|01-spec/20260912-02-public-view-search-published-works]] — เพิ่ม Business Rule ตำแหน่งหน้าจอ **ปิด Open Questions ครบทุกข้อในไฟล์นี้แล้ว**
+4. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด note ของ BL-018, แก้ note บนสุดของไฟล์ให้สะท้อนว่าไม่มี backlog item ใดเป็น provisional จาก Open Question ของสเปคหลักแล้ว
+5. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิด flag ของ NFR ใน cross-cutting concerns, ปิด Open Items ข้อ 1 (NFR) และข้อ 5 (จำนวนครั้งส่งใหม่), เพิ่ม Decision Log entry สรุป
+6. [[../02-design/02-technical/ACL|02-technical/ACL]] — ปิดข้อสันนิษฐานเรื่องจำนวนครั้งส่งใหม่ (ไม่ใช่ข้อสันนิษฐานแล้ว)
+7. [[../02-design/01-prototypes/student-content-journey|student-content-journey]] — ปิด step 5 (จำนวนครั้งส่งใหม่), ปรับสถานะให้ชัดว่าปิดครบทุกจุดแล้ว (ไม่มีข้อยกเว้นเหลือ)
+8. [[../02-design/01-prototypes/public-view-search-journey|public-view-search-journey]] — ปิด step 2 (ตำแหน่งหน้าจอ — จุดสุดท้ายที่ค้าง) **เปลี่ยนสถานะเป็น Confirmed**
+9. [[../02-design/02-technical/detailed-design|02-technical/detailed-design]] — ปิด note ของ Sequence #6 (จำนวนครั้งส่งใหม่)
+10. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด note ของ TC-026
+11. [[../02-design/01-prototypes/index|01-prototypes/index]] — อัปเดตสถานะ journey ทั้งหมดให้ตรงกัน
+
+**🎉 ผลลัพธ์**: [[../01-requirements/03-task/open-questions|open-questions]] regenerate เหลือ **0 ข้อ** — ปิด Open Question ครบทุกข้อในทั้งโปรเจกต์เป็นครั้งแรก **User Journey ทุกไฟล์ (7 ไฟล์) เป็น Confirmed หมดแล้ว** ไม่มี journey ไหนเป็น DRAFT อีกต่อไป
+
+**สิ่งที่ยังไม่ใช่ Open Question แต่เป็นงานค้างที่ควรทำต่อ** (บันทึกไว้ให้ชัดเจน ไม่ปนกับ Open Question): ความไม่สอดคล้องเรื่อง login ของนักท่องเที่ยว (tourist-journey/prototype-v1 ยังไม่อัปเดต), บทบาทนักท่องเที่ยวแบบมีบัญชียังไม่มีใน ACL.md, ชุมชนขอแก้ไขคอนเทนต์ของชุมชนอื่นได้หรือไม่ (ความคลุมเครือที่ ACL.md เจอเอง ไม่ได้มาจากสเปค), ข้อมูลยืนยันตัวตนที่ต้องใช้ตอนชุมชนสมัครบัญชี, และ BL-014/BL-017 ที่ต้องรอโค้ดจริงถึงจะมี test case ได้
+
+### 2026-09-22 — ปิด Open Question เรื่องขอบเขตการค้นหาใน public-view
+
+ผู้ใช้ขอให้ปิดต่อโดยให้แนะนำ — เสนอ "ขอบเขตของค้นหาสถานที่ที่สนใจ (BL-021)" เพราะจะทำให้ DRAFT test case เหลือ 0 ข้อพอดี (เป็นข้อสุดท้าย) และเป็นข้อเดียวที่เหลือที่แนะนำถามตัวแทนชุมชน เสนอ 2 ทาง (เฉพาะชื่อชุมชน ตรงกับของจริง / เพิ่มค้นหาจากชื่อผลงาน/เนื้อหาด้วย) ผู้ใช้เลือก **เฉพาะชื่อชุมชน**
+
+ไล่แก้:
+1. [[../01-requirements/01-spec/20260912-02-public-view-search-published-works|01-spec/20260912-02-public-view-search-published-works]] — เพิ่ม Business Rule, ปิด Open Question ข้อนี้ (เหลือแค่ข้อ "ตำแหน่งหน้าจอ")
+2. [[../02-design/01-prototypes/public-view-search-journey|public-view-search-journey]] — ปิด step 4 (เหลือแค่ step 2 เรื่องตำแหน่งหน้าจอที่ยัง DRAFT)
+3. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด DRAFT ของ TC-034 **ทำให้ DRAFT test case เหลือ 0/36 ข้อ** — ปิดครบทุก test case ที่เคยเป็น DRAFT ในระบบทั้งหมดแล้ว
+4. [[../01-requirements/03-task/open-questions|open-questions]] — regenerate: เหลือ **6 ข้อ** (จาก 7) — ไม่มีข้อไหนแนะนำถามตัวแทนชุมชนเป็นการเฉพาะแล้ว (เหมือนที่เคยปิดฝั่งอาจารย์ที่ปรึกษาไปก่อนหน้า) เหลือแต่ข้อที่ต้องถามทั้งสองฝ่ายร่วมกันทั้งหมด
+
+**สรุปความคืบหน้าสะสมของวันนี้**: จาก 16 Open Questions ตอนเริ่มวัน เหลือ 6 ข้อ (ปิดไป 11 ข้อ, พบใหม่ 1 ข้อ) — ไม่มี gate-blocking, ไม่มีข้อที่ต้องถามอาจารย์ที่ปรึกษาหรือตัวแทนชุมชนเป็นการเฉพาะเหลืออยู่แล้ว, DRAFT test case เหลือ 0/36, journey ที่เป็น DRAFT เหลือแค่ 2 ไฟล์บางส่วน (community-content-journey ปิดครบ, tourist-journey ปิดครบ, student-content-journey ปิดครบ — เหลือ public-view-search-journey บางส่วน)
+
+### 2026-09-22 — ปิด Open Question เรื่องการเชื่อมโยงผลงานนิสิตกับชุมชน
+
+ผู้ใช้ขอให้ปิดต่อโดยให้แนะนำ — เสนอ "เชื่อมโยงผลงานนิสิตกับชุมชน (FR-3.1)" เพราะกระทบหลายจุด (TC-024, student-content-journey, BL-013, field `community_id`) เสนอ 3 ทาง (เลือกจาก dropdown ตอนอัปโหลด ตรงกับของจริง / ระบบจับคู่อัตโนมัติ / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **เลือกจาก dropdown ตอนอัปโหลด**
+
+ไล่แก้:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — เพิ่ม Business Rule, renumber Open Questions (3→2 ข้อ: Out of scope, NFR)
+2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด note ของ BL-013
+3. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิด flag ของ field `community_id` (StudentWork), ปิด Open Items ข้อ 4
+4. [[../02-design/01-prototypes/student-content-journey|student-content-journey]] — ปิด step 6 **ทำให้ journey นี้ปิด Open Question ครบแล้ว เปลี่ยนสถานะเป็น Confirmed** อัปเดต [[../02-design/01-prototypes/index|01-prototypes/index]] ให้ตรงกัน
+5. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด DRAFT ของ TC-024 — DRAFT รวมลดเหลือ **1/36 ข้อ** (TC-034 เท่านั้น)
+
+**พบข้อค้นพบระหว่างปิดคำถามนี้**: "จำนวนครั้งที่นิสิตส่งผลงานใหม่ได้หลังไม่ผ่านอนุมัติ" มีแค่ข้อสันนิษฐานกระจายอยู่หลายที่ (BL-018, ACL.md, architecture.md, journey) แต่ไม่เคยถูกติดตามเป็น Open Question อย่างเป็นทางการใน [[../01-requirements/03-task/open-questions|open-questions]] เลย (เกิดจาก log การกลับคำตัดสินใจ 2026-09-04 ไม่ได้มาจาก "## Open Questions" ของสเปคต้นทาง) — เพิ่มเข้าไปในไฟล์ tracker พร้อมหมายเหตุอธิบายที่มา ทำให้ยอดรวม Open Questions คงที่ 7 ข้อ (ปิด 1 เพิ่ม 1)
+
+6. [[../01-requirements/03-task/open-questions|open-questions]] — regenerate ตามด้านบน
+
+### 2026-09-22 — ปิด Open Questions เรื่อง Consent granular และ Log detail
+
+ผู้ใช้ขอให้ปิดทั้งสองข้อพร้อมกัน — เสนอตัวเลือกทีละข้อ:
+
+1. **Consent granular หรือแบบเดียว** — เสนอ 3 ทาง (แบบเดียว ยอมรับ/ปฏิเสธทั้งหมด / แบบ granular แยก toggle รายประเภท / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **แบบเดียว**
+2. **Log เก็บ field อะไรบ้าง ใครเข้าถึงได้** — เสนอ 3 ทาง (timestamp+ip+user-agent+action เข้าถึงเฉพาะ Data Controller / เก็บละเอียดกว่านี้+แยกเป็น log store ต่างหาก+ให้ทีมพัฒนาเข้าถึงได้ด้วย / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **แบบแรก**
+
+ไล่แก้ทุกจุดที่มี DRAFT flag ค้างจาก 2 คำถามนี้:
+1. [[../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|01-spec/20260822-01-it-log-pdpa-consent]] — เพิ่ม Business Rules 2 ข้อ, ลบ "Consent แบบ granular" ออกจากข้อเสนอแนะที่ค้าง (ไม่ใช่ข้อเสนอแนะรอตัดสินใจอีกต่อไป), ปิด Open Questions ทั้งสองข้อ (renumber 4→2 ข้อ)
+2. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิดหมายเหตุของ field `analytics_consent`/`marketing_consent` (ConsentRecord), **เพิ่ม field `user_agent` ใหม่เข้า AccessLog entity** (field ที่ขาดไปตาม Open Question เดิม) พร้อมปิดหมายเหตุระบุสิทธิ์เข้าถึงเฉพาะ Data Controller, ปิด Open Items ข้อ 2-3 (strikethrough)
+3. [[../02-design/02-technical/detailed-design|02-technical/detailed-design]] — ปิดหมายเหตุของ Sequence #7 (Access Log) ส่วน field/สิทธิ์เข้าถึง (เหลือแค่ความถี่ retention job ที่ยังเป็นรายละเอียด technical stack)
+4. [[../02-design/01-prototypes/tourist-journey|tourist-journey]] — ปิด step 1-2 (จุดสุดท้ายที่ค้างของ journey นี้) **ทำให้ tourist-journey ปิด Open Question ครบทุกจุดแล้ว เปลี่ยนสถานะเป็น Confirmed** (ความไม่สอดคล้องเรื่อง login ของนักท่องเที่ยวยังคงค้างแยกต่างหาก ไม่ใช่ Open Question) อัปเดต [[../02-design/01-prototypes/index|01-prototypes/index]] ให้ตรงกัน
+5. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด DRAFT ของ TC-001, TC-002, TC-003 — DRAFT รวมลดจาก 5/36 เหลือ **2/36 ข้อ** (ต่ำสุดเท่าที่เคยมีมา)
+6. [[../01-requirements/03-task/open-questions|open-questions]] — regenerate: เหลือ 7 ข้อ (จาก 9)
+
+### 2026-09-22 — ปิด Open Question เรื่องรูปแบบการแปลภาษา/TTS
+
+ผู้ใช้ขอให้ปิด Open Question นี้ต่อ (แนะนำเป็นข้อถัดไปเพราะกระทบหลายจุดพร้อมกัน) — เสนอ 3 ทางเลือก (ข้อความแปลอย่างเดียว / ต้องมี TTS ด้วย / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **ข้อความแปลอย่างเดียว ไม่มีเสียงพากย์**
+
+ไล่แก้ทุกจุดที่มี DRAFT flag ค้างจากคำถามนี้:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — เพิ่ม Business Rule, renumber Open Questions (4→3 ข้อ)
+2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด note ของ BL-003
+3. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิด flag ของ field `body_en`
+4. [[../02-design/01-prototypes/community-content-journey|community-content-journey]] — ปิด step 6 (จุดสุดท้ายที่ค้าง) **ทำให้ journey นี้ปิด Open Question ครบทุกจุดแล้ว เปลี่ยนสถานะเป็น Confirmed** อัปเดต [[../02-design/01-prototypes/index|01-prototypes/index]] ให้ตรงกัน
+5. [[../02-design/01-prototypes/tourist-journey|tourist-journey]] — ปิด step 4 ส่วน TTS (ส่วนภาษาปิดไปแล้วรอบก่อน) — journey นี้ยังเป็น DRAFT โดยรวมต่อไปเพราะ Consent granular (step 1-2) ยังไม่ปิด
+6. [[../02-design/01-prototypes/DESIGN|DESIGN.md]] — ปิดหมายเหตุท้ายไฟล์เรื่อง TTS component ที่เคยกันไว้ (ไม่ต้องเพิ่มปุ่มเล่นเสียงแล้ว)
+7. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด DRAFT ของ TC-015 (BL-003) — DRAFT รวมลดจาก 6/36 เหลือ 5/36 ข้อ
+8. [[../01-requirements/03-task/open-questions|open-questions]] — regenerate: เหลือ 9 ข้อ (จาก 10)
+
+### 2026-09-22 — ปิด Open Question เรื่อง Data Controller
+
+ผู้ใช้ขอให้ปิด Open Question "ใครเป็น Data Controller/ผู้รับผิดชอบด้าน PDPA ของโครงการ" — เสนอ 3 ทางเลือก (อาจารย์ที่ปรึกษาโครงการ / มหาวิทยาลัยพะเยาในนามนิติบุคคล / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **อาจารย์ที่ปรึกษาโครงการ**
+
+แก้ [[../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|01-spec/20260822-01-it-log-pdpa-consent]]:
+- เพิ่ม Business Rule ใหม่ระบุ Data Controller ชัดเจน
+- ลบข้อเสนอแนะเดิม "กำหนด Data Controller" ออกจากหัวข้อ "ข้อเสนอแนะเพิ่มเติม" (ไม่ใช่ข้อเสนอแนะที่รอตัดสินใจอีกต่อไป — กลายเป็น Business Rule แล้ว)
+- ปิด Open Question ข้อนี้ออกจากลิสต์ (เหลือ 4 ข้อจาก 5 ข้อเดิมของไฟล์นี้)
+
+อัปเดต [[../01-requirements/03-task/open-questions|open-questions]]: เหลือ **10 ข้อ** (จาก 11) — **ไม่มีข้อไหนที่ต้องถามอาจารย์ที่ปรึกษาเป็นการเฉพาะแล้ว** (ข้อเดียวที่เคยแนะนำถามอาจารย์ปิดไปแล้ว) ข้อที่เหลือทั้งหมดแนะนำถามตัวแทนชุมชนหรือทั้งสองฝ่ายร่วมกัน
+
+### 2026-09-22 — ปิด Open Questions เรื่อง SEO และภาษาที่รองรับ
+
+ผู้ใช้ขอให้ตอบ Open Questions 2 ข้อของ `local-story-hub` — เป็นการตัดสินใจเชิง scope จึงเสนอตัวเลือกให้ผู้ใช้เลือกเองแทนการเดา (ตามกฎ ≥3 ทางเลือกของโปรเจกต์):
+
+1. **SEO (FR-1.4, BL-004)** — เสนอ 3 ทาง (แนะนำ keyword ภายในระบบเท่านั้น / เชื่อมกับ search engine จริง / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **แนะนำ keyword ภายในระบบเท่านั้น ไม่เชื่อม search engine จริง**
+2. **ภาษาที่รองรับ (FR-2.2)** — เสนอ 3 ทาง (เฉพาะไทย-อังกฤษ / รองรับภาษาอื่นเพิ่ม เช่น จีน/ญี่ปุ่น / ยังไม่ตัดสินใจ) ผู้ใช้เลือก **เฉพาะไทย-อังกฤษ**
+
+ไล่แก้เอกสารตามลำดับ dependency:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — ย้ายทั้ง 2 คำตอบไปเป็น Business Rules, ปิดออกจาก Open Questions แล้ว renumber (6→4 ข้อ) — ระบุชัดว่าคำถามเรื่อง TTS/เสียงพากย์ (แยกจากเรื่องจำนวนภาษา) ยังเป็น Open Question ต่อไป
+2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด Open Question note ของ BL-004, ปรับ note บนสุดของไฟล์
+3. [[../02-design/02-technical/architecture|02-technical/architecture]] — ปิด flag ของ field `seo_keywords` ใน Content entity
+4. [[../02-design/01-prototypes/community-content-journey|community-content-journey]] — ปิด DRAFT ของ step 5 (SEO) เหลือแค่ step 6 (TTS) เป็น DRAFT
+5. [[../02-design/01-prototypes/tourist-journey|tourist-journey]] — แก้ step 4 ให้แยกชัดว่าส่วนภาษาปิดแล้ว เหลือแค่ส่วน TTS ที่ยังเป็น DRAFT
+6. [[../03-testing/01-test-plan/test-plan|test-plan]] — ปิด DRAFT flag ของ TC-005 (BL-009) และ TC-014 (BL-004) — DRAFT รวมลดจาก 8/36 เหลือ 6/36 ข้อ
+7. [[../01-requirements/03-task/open-questions|open-questions]] — regenerate: เหลือ 11 ข้อ (จาก 13)
+
+### 2026-09-22 — รัน detailed-design ปิดช่องว่างเทคนิคของ BL-014/BL-017
+
+ผู้ใช้ขอให้ปิดช่องว่างของ BL-014 (เก็บ log 90 วัน) และ BL-017 (บันทึกหลักฐาน consent) โดยให้ทำ technical design ให้ครบก่อน — เช็ค open-questions.md แล้วพบว่า Open Question ที่เหลือ (รายละเอียด field ของ log, รูปแบบ consent granular/เดียว) ไม่กระทบการออกแบบ sequence ระดับ conceptual จึงไม่ต้องถามผู้ใช้เพิ่ม ดำเนินการต่อได้เลย:
+
+- **ตรวจสอบ Sequence #1 (PDPA Consent)** ที่มีอยู่แล้ว — พบว่าขั้น "ConsentLog->>DB: บันทึก ConsentRecord" ครอบคลุม BL-017 อยู่แล้ว (ConsentRecord มี field `timestamp` ตรงตาม Acceptance Criteria พอดี) — เพิ่มหมายเหตุระบุ BL-017 ไว้ในบรรทัดอ้างอิงให้ชัดเจน ไม่ต้องออกแบบ sequence ใหม่ซ้ำ
+- **เพิ่ม Sequence #7 ใหม่** ใน [[../02-design/02-technical/detailed-design|detailed-design]]: "บันทึก Access Log อัตโนมัติ + นโยบายเก็บรักษา 90 วัน" (BL-014) — ครอบคลุมทั้งการบันทึกทุก request แบบ fire-and-forget และ retention job ที่ลบ/หมุนเวียน log เก่ากว่า 90 วัน ซึ่งไม่เคยถูกออกแบบมาก่อนในเอกสารใดของโปรเจกต์ (เดิมมีแค่ note บรรทัดเดียวใน Sequence #2)
+- อัปเดต Open Items ของ detailed-design.md: ปิดข้อเดิมเรื่องสิทธิ์เข้าถึงชุมชน (ตกหล่นจากรอบ architecture-design ก่อนหน้า ไม่เคยอัปเดตในไฟล์นี้), เพิ่มข้อสรุปการปิดช่องว่าง BL-014/017
+- เพิ่ม backlink จาก [[../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]] ไปยัง detailed-design.md, เพิ่มสเปคนี้เข้าหัวข้ออ้างอิงบนสุดของ detailed-design.md
+- อัปเดต [[../03-testing/01-test-plan/test-plan|test-plan]] § "Backlog ที่ยังไม่มี Test Case": ระบุชัดว่า technical design เสร็จแล้วแต่ **ยังไม่มี test case แบบ journey-based ได้** เพราะเป็นพฤติกรรมอัตโนมัติที่ไม่มีผู้ใช้ริเริ่ม — แนะนำให้เพิ่มเป็น backend/integration test แยกต่างหากเมื่อมีโค้ดจริง แทนการฝืนสร้าง journey step ปลอมขึ้นมา
+
+**สรุปสถานะ BL-014/BL-017**: technical design ปิดครบแล้ว — เป็นข้อจำกัดของรูปแบบ test-plan ปัจจุบัน (journey-based เท่านั้น) ไม่ใช่งานที่ค้างอยู่อีกต่อไป
+
+### 2026-09-22 — สร้าง User Journey ปิดช่องว่าง BL-019/020/021 (สมัครบัญชีนิสิต + ดูผลงานแบบ public)
+
+ผู้ใช้ขอให้รัน `user-journey` ปิดช่องว่างที่พบระหว่างงาน `test-cases` รอบก่อน — BL-019/020 (สมัคร/อนุมัติบัญชีนิสิต) และ BL-021 (ดู/ค้นหาผลงานแบบ public) implement จริงแล้วใน prototype-v2 ตั้งแต่ 2026-09-12 แต่ไม่เคยมี journey diagram รองรับเลย
+
+เช็ค open-questions.md ตามกฎ gate ก่อนเสมอ:
+- สเปค `20260912-01-account-registration-approval` (BL-019/020) — **ไม่มี Open Question ค้างแล้ว** (ปิดครบ 2026-09-12) → วาด **Confirmed**
+- สเปค `20260912-02-public-view-search-published-works` (BL-021) — ยังมี 2 Open Question ค้าง (ขอบเขตการค้นหา, ตำแหน่งหน้าจอ) แต่ไม่ gate-blocking — **ถามผู้ใช้ตามกฎบังคับ** ว่าจะวาด DRAFT ตามสมมติฐานที่ implement ไปแล้วจริง หรือรอคำตอบก่อน ผู้ใช้เลือก **วาดเป็น DRAFT ตามสมมติฐานที่ implement ไปแล้ว**
+
+สร้าง 2 journey ใหม่ (อ้างอิงโค้ดจริงใน [[../02-design/01-prototypes/prototype-v2/README|prototype-v2]] เพื่อให้ diagram ตรงกับพฤติกรรมจริง):
+- [[../02-design/01-prototypes/student-account-registration-journey|student-account-registration-journey]] (Confirmed) — mirror จากโครงสร้างเดียวกับ community-account-registration-journey แต่เป็นฝั่งนิสิต
+- [[../02-design/01-prototypes/public-view-search-journey|public-view-search-journey]] (DRAFT บางส่วน) — ทำเครื่องหมาย DRAFT ที่ step ค้นหา (ขอบเขตการค้นหา) และ step เปิดหน้า (ตำแหน่งหน้าจอ)
+
+อัปเดต backlink: [[../02-design/02-technical/architecture|architecture.md]] (2 จุดใน Data Flow/API Spec), สเปคทั้ง 2 ไฟล์ต้นทาง, [[../02-design/01-prototypes/prototype-v2/README|prototype-v2/README]] (2 จุด), และ [[../02-design/01-prototypes/index|01-prototypes/index]]
+
+ต่อด้วยอัปเดต [[../03-testing/01-test-plan/test-plan|test-plan]] เพิ่ม TC-027–032 (BL-019/020) และ TC-033–036 (BL-021) — หัวข้อ "Backlog ที่ยังไม่มี Test Case" เหลือแค่ BL-014/BL-017 แล้ว (ครบทุก backlog item ที่มี journey รองรับ) รวมเป็น 36 test case จาก 21 backlog item, DRAFT 8/36 ข้อ
+
+### 2026-09-22 — Regenerate Test Plan ทั้งระบบ (เพิ่ม test case ฝั่งชุมชน)
+
+ผู้ใช้ขอให้ทำ `test-cases` ต่อจากงาน prototype-v3 ฝั่งชุมชน — ตามกฎของ skill ต้อง regenerate หัวข้อ "Test Case จาก Acceptance Criteria" ใหม่ทั้งหมดจาก backlog + journey **ปัจจุบันทั้งระบบ** (ไม่ใช่แค่เพิ่มเฉพาะชุมชน) จึงอ่าน product-backlog.md และ journey ทั้ง 5 ไฟล์ใหม่ทั้งหมดก่อนเขียนทับ — ส่วน "Test Case เพิ่มเติม (เพิ่มโดยมนุษย์)" ไม่มีรายการอยู่แล้วจึงคงว่างไว้เหมือนเดิม ไม่ได้แตะต้อง
+
+**ผลลัพธ์**: 20 → **26 test case** (จาก 18 backlog item, เพิ่มจาก journey ใหม่ 2 ไฟล์ฝั่งชุมชน):
+- เพิ่ม TC-017–019 จาก BL-022 (สมัคร/อนุมัติบัญชีชุมชน) และ TC-020–022 จาก BL-023 (ขอแก้ไขข้อมูล→อนุมัติ)
+- ปิด DRAFT flag ของ TC-009 (BL-006) เพราะ Open Question ปิดแล้ว 2026-09-22
+- **renumber ทั้งไฟล์**: จัดกลุ่ม journey ฝั่งชุมชนทั้ง 3 ไฟล์ให้อยู่ติดกัน (TC-009–022) — ทำให้ TC ของฝั่งนิสิตเดิม (TC-017–020) ย้ายเป็น TC-023–026 อัปเดต backlink ใน [[../02-design/01-prototypes/student-content-journey|student-content-journey]] ให้ตรงกันแล้ว
+
+**พบข้อผิดพลาดเดิมที่แก้ไขในรอบนี้**: หัวข้อ "Backlog ที่ยังไม่มี Test Case" เดิมระบุแค่ BL-014/BL-017 — แต่ BL-019/BL-020/BL-021 (เพิ่มเข้า backlog มาตั้งแต่ 2026-09-12) ไม่เคยมี User Journey diagram รองรับเลยเช่นกัน (ทั้งที่ implement จริงแล้วใน prototype-v2) ไม่เคยถูกระบุไว้ในหัวข้อนี้มาก่อน — เพิ่มเข้าไปให้ถูกต้องพร้อมคำแนะนำให้รัน `user-journey` เพิ่มถ้าต้องการ test case ของ 3 รายการนี้
+
+เพิ่ม backlink ระหว่าง test-plan.md กับ journey ทั้ง 5 ไฟล์ (เลข TC ตรงกันแล้วทุกจุด) และปรับคำอธิบายใน [[../03-testing/01-test-plan/index|01-test-plan/index]] เล็กน้อย
+
+### 2026-09-22 — สร้าง Prototype v3 ฝั่งชุมชน (5 หน้าจอ)
+
+ผู้ใช้ขอให้ทำ `prototype-builder` ต่อจากงาน architecture/data-api/ACL/journey ฝั่งชุมชนที่ครบแล้ว — เสนอแผน 5 หน้าจอให้ผู้ใช้ดูก่อนตามกฎบังคับของ skill แล้วถามเรื่อง folder version (มี prototype-v1/v2 อยู่แล้ว) พร้อม 3 ทางเลือก (v3 ใหม่ / แก้ v1 เดิม / เพิ่มเข้า v2) — ผู้ใช้เลือก **สร้าง `prototype-v3/` ใหม่** เพราะเป็นรอบการตัดสินใจชุดใหม่ทั้งหมด ไม่กระทบ v1/v2 เดิม
+
+สร้าง 5 ไฟล์ (self-contained, ยึด DESIGN.md ทุก token, จำลองข้อมูลด้วย `localStorage` เพราะยังไม่มี Firestore collection รองรับ entity ใหม่):
+- `community-register.html` — สมัครบัญชี + login แบบสาธิต (BL-022)
+- `community-dashboard.html` — คอนเทนต์ตนเอง + คอนเทนต์ชุมชนอื่น (read-only, shared data), ค้นหาแบบ live ทั้งสองตาราง
+- `community-create-content.html` — ปุ่ม AI ครบ (ปรับภาพ/แคปชัน/แนะนำเรื่อง/SEO DRAFT/แปลภาษา DRAFT), เผยแพร่ได้ทันที
+- `community-request-edit.html` — ขอแก้ไขคอนเทนต์ตนเองที่เผยแพร่แล้ว (BL-023) — บล็อกการขอแก้ไขคอนเทนต์ชุมชนอื่นจริง (ตามข้อสันนิษฐานใน ACL.md)
+- `admin-review-community.html` — อนุมัติบัญชีชุมชน + คำขอแก้ไข (พร้อม diff เดิม/ใหม่), ประวัติทั้งสองประเภท
+
+**ทดสอบผ่าน browser จริง** (รัน `npx http-server` local ชี้ที่โฟลเดอร์นี้ เพราะ `localStorage` ต้องรันผ่าน HTTP ไม่ใช่ `file://`) ครบ flow หลัก: สมัคร → ถูกบล็อกตอน pending → อนุมัติ → login → สร้าง+เผยแพร่ → เห็นคอนเทนต์ชุมชนอื่น + ค้นหา live ถูกต้อง → ส่งคำขอแก้ไข → อาจารย์เห็น diff ถูกต้อง → อนุมัติ → คอนเทนต์จริงเปลี่ยนตาม → ทดสอบเคสปฏิเสธ (ขอแก้ไขข้ามชุมชนถูกบล็อก, ฟอร์ม validate ช่องว่าง/อีเมลผิดรูปแบบ) — ผ่านทุกเคส ไม่พบบั๊ก
+
+เพิ่ม wikilink ใน [[../02-design/01-prototypes/index|01-prototypes/index]] และ backlink จาก journey ทั้ง 3 ไฟล์ที่เกี่ยวข้อง (append เท่านั้น)
+
+ฝั่งชุมชนตอนนี้ครบทุกขั้นของ pipeline แล้ว: Requirement/Backlog → Architecture (Component/Data Flow/Database/API) → ACL → User Journey → Prototype (ยังเป็น mockup `localStorage` ไม่ใช่ backend จริง)
+
+### 2026-09-22 — สร้าง User Journey ใหม่ 2 เส้นทางฝั่งชุมชน + อัปเดต community-content-journey เดิม
+
+ผู้ใช้ขอให้ทำ `user-journey` ต่อจากงาน architecture-design/data-api-design/ACL ฝั่งชุมชน — เช็ค [[../01-requirements/03-task/open-questions|open-questions]] ก่อนตามกฎ gate แล้วพบว่าไม่มี Open Question กระทบ 2 flow ใหม่ (สมัครบัญชีชุมชน, ขอแก้ไขข้อมูล) จึงวาดแบบ **Confirmed** ได้เลย ไม่ต้อง DRAFT:
+
+- สร้าง [[../02-design/01-prototypes/community-account-registration-journey|community-account-registration-journey]] (Confirmed) — mirror จาก flow อนุมัติบัญชีนิสิต แต่ยืนยันตัวตนชุมชนโดยอาจารย์/แอดมิน (BL-022)
+- สร้าง [[../02-design/01-prototypes/community-content-edit-request-journey|community-content-edit-request-journey]] (Confirmed) — ใช้ entity `ContentEditRequest` ใหม่ (BL-023) — พบข้อสันนิษฐานเดิม (ชุมชนขอแก้ไขคอนเทนต์ของชุมชนอื่นได้ไหม) ยังไม่ปิด ระบุไว้ในคำอธิบาย step 2 ของ journey นี้ ไม่ใช่ Open Question ที่บล็อก แค่เป็นข้อสันนิษฐานที่ต้องยืนยันภายหลัง
+- อัปเดต [[../02-design/01-prototypes/community-content-journey|community-content-journey]] เดิม: ปิด DRAFT flag ของ step 1 (ล็อกอิน/สิทธิ์เข้าถึง) เพราะ Open Question ปิดแล้ว 2026-09-22 — **step 5 (SEO) และ step 6 (TTS) ยังคง DRAFT ต่อไป** เพราะ Open Question ที่เกี่ยวข้องยังไม่ปิด (ไม่ได้เดาปิดให้ทั้งไฟล์)
+- อัปเดต [[../02-design/01-prototypes/index|01-prototypes/index]]: เพิ่ม entry 2 journey ใหม่, แก้ข้อความหัวข้อบนให้สะท้อนว่าไม่ใช่ทุก journey เป็น DRAFT แล้ว
+- เพิ่ม backlink จาก [[../01-requirements/01-spec/local-story-hub|local-story-hub]] ไปยัง journey ใหม่ทั้ง 2 ไฟล์ (append เท่านั้น)
+- อัปเดต [[../02-design/02-technical/architecture|architecture.md]]: เพิ่มลิงก์ไปยัง journey ใหม่ในหัวข้อ Data Flow ทั้ง 2 จุด และปิด Open Item เดิมข้อ 9 (ยังไม่มี journey diagram)
+
+ฝั่งชุมชนตอนนี้มีครบ: Architecture (Component/Data Flow), Database Schema/API Spec, ACL, และ User Journey แล้วทั้งหมด (ยังเป็น conceptual — ยังไม่มี prototype/backend จริงรองรับ)
+
+### 2026-09-22 — ขยาย ACL.md ให้ครอบคลุมบทบาทชุมชน
+
+ผู้ใช้ขอให้ทำ ACL.md ต่อจากงาน architecture-design/data-api-design ฝั่งชุมชน — ไม่มี agent/skill เฉพาะสำหรับ ACL.md (เดิมสร้างแบบ ad-hoc ตามคำขอผู้ใช้เมื่อ 2026-09-11) จึงแก้ไฟล์ตรงตามรูปแบบเดิมที่มีอยู่แล้ว (ตาราง ทำได้/ทำไม่ได้ ต่อบทบาท + ข้อสันนิษฐาน + คำถามที่ยังไม่มีคำตอบ):
+
+- เพิ่มแถวบทบาท **ชุมชน** ในตารางสิทธิ์: สมัครบัญชี+ยืนยันตัวตน (BL-022), จัดการ/เผยแพร่คอนเทนต์ตนเองทันที (BL-006 — ไม่เปลี่ยนจากเดิม), ดูคอนเทนต์ชุมชนอื่นได้ (shared data), ส่งคำขอแก้ไขคอนเทนต์ตนเองไปรออนุมัติ (BL-023)
+- ขยายแถวบทบาท **อาจารย์**: เพิ่มสิทธิ์อนุมัติ/ไม่อนุมัติบัญชีชุมชนใหม่และคำขอแก้ไขข้อมูลชุมชน (BL-022, BL-023)
+- ขยายตาราง "สถานะบัญชี" ให้ครอบคลุม role=community เหมือน role=student
+- **พบประเด็นที่ Business Rule ไม่ได้ตอบชัด** ระหว่างเขียนตาราง: ชุมชนขอแก้ไขคอนเทนต์ของชุมชนอื่นได้หรือไม่ (เพราะข้อมูลใช้ร่วมกันแบบ shared) — ไม่เดาเอง ระบุเป็นข้อสันนิษฐาน (สมมติว่าแก้ได้เฉพาะของตนเอง) พร้อมเพิ่มในหัวข้อ "คำถามที่ยังไม่มีคำตอบ" ของ ACL.md และ Open Items ของ [[../02-design/02-technical/architecture|architecture.md]] (ข้อ 8) ให้ตรงกัน — ต้องยืนยันกับผู้ใช้/ตัวแทนชุมชนก่อน implement จริง
+- อัปเดต [[../02-design/02-technical/architecture|architecture.md]]: ปิด Open Item เดิมเรื่อง "ACL.md ยังไม่ครอบคลุมบทบาทชุมชน" (เสร็จแล้ว) และแก้ข้อความในหัวข้อประเด็นข้ามระบบให้ตรงกับสถานะใหม่
+- ระบุชัดในไฟล์ว่า flow ฝั่งชุมชนทั้งหมดยังเป็น **conceptual เท่านั้น** ยังไม่มี prototype/backend จริงรองรับ ต่างจาก flow นิสิต/บุคคลทั่วไปที่ implement จริงแล้ว
+
+### 2026-09-22 — รัน data-api-design ฝั่งชุมชน (community) ต่อจาก architecture-design
+
+ผู้ใช้ขอให้ทำ Database Schema/API Spec ต่อจาก Data Flow ใหม่ 2 เส้นทางที่เพิ่งเพิ่มใน architecture.md (BL-022, BL-023) — อ่านทั้งไฟล์ก่อนแก้เสมอ แก้เฉพาะหัวข้อ "Database Schema" และ "API Spec" ไม่แตะ Component/Data Flow ที่เป็นของ `architecture-design`
+
+**ถามผู้ใช้ 1 จุด** (โครงสร้างข้อมูลไม่ชัดเจน ตามกฎของ skill): กลไกเก็บ "คำขอแก้ไขคอนเทนต์ชุมชน" (BL-023) ควรออกแบบแบบไหน — เสนอ 3 ทาง (เพิ่ม field pending ใน Content เดิม / สร้าง entity `ContentEditRequest` แยก / version ทั้ง Content แบบ append-only) ผู้ใช้เลือก **สร้าง entity แยก** เพราะ Content ที่ published ไม่ถูกแตะจนกว่าอนุมัติ, รองรับหลายคำขอ/ประวัติได้, และตรงกับ pattern เดียวกับ StudentWork/UserAccount ที่มีอยู่แล้ว
+
+**Database Schema**:
+- **UserAccount** — ขยาย field `status`/`rejection_reason`/`reviewed_by` ให้ครอบคลุม `role=community` ด้วย (เดิมมีแค่ `role=student`), ปิด flag Open Question ของ field `community_id`
+- **Content** — เพิ่มหมายเหตุว่าการแก้ไขคอนเทนต์ published ต้องผ่าน ContentEditRequest เสมอ ไม่ update ตรง ๆ
+- เพิ่ม entity ใหม่ **ContentEditRequest** (content_id, proposed_changes, status pending/approved/rejected, requested_by role=community, reviewed_by role=admin, rejection_reason, created_at) พร้อมเพิ่มความสัมพันธ์ใน ER Diagram
+
+**API Spec**:
+- เพิ่ม operation ของ UserAccount: สมัครบัญชี(ชุมชน), ดูรายการ/อนุมัติ/ไม่อนุมัติบัญชีชุมชนใหม่ (BL-022)
+- เพิ่มตาราง operation ใหม่ของ ContentEditRequest: ส่งคำขอแก้ไข, ดูรายการรอพิจารณา, อนุมัติ (นำ proposed_changes ไป apply), ไม่อนุมัติ (BL-023)
+- เพิ่ม operation แจ้งเตือนอาจารย์/แอดมินเมื่อมีคำขอแก้ไขรอพิจารณา ใน Notification
+
+เพิ่ม Decision Log entry บันทึกทางเลือกที่ถามและเหตุผลที่ผู้ใช้เลือก — ไม่มี Open Item ใหม่เพิ่มจากงานรอบนี้ (รายละเอียดข้อมูลยืนยันตัวตนชุมชนที่ยังไม่ปิดถูกบันทึกไว้แล้วในรอบ architecture-design ก่อนหน้า)
+
+### 2026-09-22 — รัน architecture-design ฝั่งชุมชน (community) หลังปิด Open Questions
+
+ผู้ใช้ขอให้เริ่มออกแบบ Architecture ฝั่งชุมชนต่อ หลังปิด 3 Open Questions gate-blocking (ดูรายการด้านล่าง) — ตรวจ [[../01-requirements/03-task/open-questions|open-questions]] แล้วพบว่าไม่มีข้อไหนบล็อกงานฝั่งชุมชนอีก (คำถามที่เหลือ เช่น NFR/Consent/Log ไม่กระทบการออกแบบ component ระดับนี้) จึงไม่ต้องถามเพิ่มก่อนลงมือ
+
+แก้ [[../02-design/02-technical/architecture|02-technical/architecture]] เฉพาะหัวข้อที่ agent นี้ดูแล (Context, Component หลัก, Data Flow, ประเด็นข้ามระบบ, Decision Log, Open Items) — ไม่แตะ Database Schema/API Spec:
+
+- **Component**: อัปเดต Client ให้ระบุ Website เท่านั้น (ตัดธง Open Question ออก), ขยายหน้าที่ Notification Service ให้ครอบคลุมการแจ้งเตือนบัญชีชุมชนใหม่ (BL-022) และคำขอแก้ไขข้อมูลชุมชน (BL-023) นอกเหนือจากบัญชีนิสิตเดิม
+- **Data Flow**: เพิ่ม 2 diagram ใหม่ — "สมัคร/อนุมัติบัญชีชุมชนใหม่" (มีรูปแบบเดียวกับ flow อนุมัติบัญชีนิสิต) และ "ชุมชนขอแก้ไขข้อมูล → อาจารย์/แอดมินอนุมัติ" (สะท้อน Business Rule ข้อมูลใช้ร่วมกันแต่ต้องอนุมัติก่อนแก้ไข)
+- **ประเด็นข้ามระบบ**: ปิด flag ของขอบเขตระบบจัดการข้อมูลชุมชน (= เฉพาะคอนเทนต์), เพิ่มบันทึกเรื่อง shared-data + edit-approval pattern และบัญชีชุมชนต้องอนุมัติก่อนใช้งาน, ระบุชัดว่า [[../02-design/02-technical/ACL|ACL.md]] ยังไม่ครอบคลุมบทบาทชุมชน (เดิมติด Open Question ตอนนี้เป็นแค่งานค้าง)
+- **Decision Log**: เพิ่มรายการ 2026-09-22 สรุปการปิด 3 Open Questions และผลกระทบต่อเอกสารนี้
+- **Open Items**: ปิด/ย้าย 3 ข้อเดิมออก (แพลตฟอร์ม, สิทธิ์เข้าถึงชุมชน, ขอบเขตข้อมูล), renumber ที่เหลือ (9→6), เพิ่ม 3 ข้อใหม่ — ข้อมูลยืนยันตัวตนที่ต้องใช้ตอนชุมชนสมัครบัญชียังไม่ระบุ, ACL.md ยังไม่ครอบคลุมชุมชน, ยังไม่มี User Journey diagram แยกสำหรับ 2 flow ใหม่ (แนะนำให้รัน skill `user-journey` ต่อ)
+
+ไม่ได้แตะ [[../02-design/01-prototypes/community-content-journey|community-content-journey]] ในรอบนี้ (นอกขอบเขตงานที่ขอ — เป็นของ skill `user-journey`) แม้ journey นั้นจะยังมี DRAFT flag อ้างอิง Open Question ที่ปิดไปแล้ว — ทิ้งไว้เป็น Open Item ให้ตามแก้ทีหลัง
+
+### 2026-09-22 — ปิด 3 Open Questions ที่เป็น gate-blocking ของ local-story-hub
+
+ผู้ใช้ตอบคำถามทั้ง 3 ข้อ gate-blocking ที่ค้างมาตั้งแต่ต้นโครงการ (ระบุไว้ใน [[../01-requirements/03-task/open-questions|open-questions]] ว่าบล็อกทั้งไฟล์สเปคหลักไม่ให้เข้า `02-design` เต็มรูปแบบ):
+
+1. **แพลตฟอร์ม**: **Website** เท่านั้น
+2. **สิทธิ์การเข้าถึงข้อมูลของแต่ละชุมชน (multi-tenant)**: ข้อมูล/คอนเทนต์ใช้ร่วมกันได้ระหว่างชุมชน ไม่ทำ isolation เต็มรูปแบบ แต่คำขอ**แก้ไข**ข้อมูลต้องผ่านการอนุมัติจากอาจารย์ที่ปรึกษา/แอดมินก่อนเสมอ
+3. **การยืนยันตัวตนชุมชนใหม่** (กันมิจฉาชีพแอบอ้างเป็นไกด์ชุมชน): อาจารย์ที่ปรึกษา/แอดมินเป็นผู้อนุมัติบัญชีชุมชนใหม่เอง (รูปแบบเดียวกับการอนุมัติบัญชีนิสิต BL-019/020)
+4. **ขอบเขตของ "ระบบจัดการข้อมูลชุมชน" (FR-1.6)**: ครอบคลุมเฉพาะการจัดการ**คอนเทนต์** (เรื่องราว/สื่อ) เท่านั้น ไม่รวมโปรไฟล์ชุมชน/แดชบอร์ด
+
+ไล่แก้เอกสารตามลำดับ dependency:
+1. [[../01-requirements/01-spec/local-story-hub|01-spec/local-story-hub]] — ย้ายทั้ง 4 คำตอบจาก Open Questions ไปเป็น Business Rules, แก้หัวข้อ Scope ให้ระบุ Website ชัดเจน, renumber Open Questions ที่เหลือ (9 → 6 ข้อ)
+2. [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] — ปิด Open Question ของ BL-006 (ระบุขอบเขต = คอนเทนต์เท่านั้น), เพิ่ม Epic ใหม่ "การจัดการบัญชีและสิทธิ์แก้ไขข้อมูลชุมชน" พร้อม **BL-022** (สมัคร/ยืนยันตัวตนบัญชีชุมชนใหม่ อนุมัติโดยอาจารย์/แอดมิน) และ **BL-023** (อาจารย์/แอดมินอนุมัติคำขอแก้ไขข้อมูลชุมชน) ทั้งคู่ Priority Must — ลบรายการ "มิจฉาชีพแอบอ้าง" และ "แพลตฟอร์ม" ออกจากหัวข้อ "Requirement ที่ยังคลุมเครือ" เพราะตอบแล้ว
+3. [[../01-requirements/03-task/open-questions|03-task/open-questions]] — regenerate ใหม่: เหลือ 13 ข้อค้าง (จาก 16), **ไม่มี Open Question ที่กระทบ scope ใหญ่ (gate-blocking) ค้างอยู่แล้วทั้งโปรเจกต์**
+
+Open Question ย่อยที่ยังไม่ปิด (ไม่บล็อก): รายละเอียดข้อมูลยืนยันตัวตนที่ต้องใช้ตอนชุมชนสมัครบัญชี (BL-022) ยังไม่ระบุ — ควรสอบถามเพิ่มภายหลัง ไม่จำเป็นต้องหยุดรอก่อนเข้า `02-design` เพราะไม่กระทบ scope ใหญ่
+
 ### 2026-08-21 — แทนที่ spec/backlog ตัวอย่างด้วยของจริง
 
 - ย้าย `product-spec.md` (mock) และ `product-backlog.md` (mock) ไปเก็บที่ [[../00-archived/product-spec|00-archived/product-spec]] และ [[../00-archived/product-backlog|00-archived/product-backlog]] เนื่องจากเป็นเพียงเอกสารตัวอย่างที่สร้างไว้สาธิตการทำงานของ agent/skill
@@ -252,3 +572,31 @@
 - **พบข้อมูลที่ไม่คาดคิดระหว่างทดสอบ**: บัญชีนิสิต 1 บัญชีกับผลงานที่อนุมัติแล้ว 1 รายการที่ไม่ได้มาจากการทดสอบของผม — ครั้งนี้ไม่ใช่ปัญหาแท็บค้างเหมือน 2 ครั้งก่อน แต่เป็นเพราะ**ผู้ใช้ทดสอบระบบเองแบบขนานกันไป** (ยืนยันแล้ว) จึงไม่ลบทิ้ง — ผู้ใช้บอกให้เก็บไว้ก่อนแต่ไม่ถือเป็นข้อมูลทางการ (รายละเอียดบัญชี/อีเมลไม่บันทึกไว้ในไฟล์นี้เพราะ repo เป็น public — บันทึกไว้ใน memory ส่วนตัวแทน) บันทึกไว้ว่า baseline ของ Firestore ตอนนี้คือ 5+1 LSHRequests และ 4+1 users ไม่ใช่แค่ 5/4 เดิม กันสับสนเป็นข้อมูลหลุดในการทดสอบครั้งต่อไป
 - อัปเดตเอกสาร: [[../02-design/01-prototypes/prototype-v2/README|02-design/01-prototypes/prototype-v2/README]], [[../02-design/02-technical/ACL|02-technical/ACL]] (ทำเครื่องหมายว่า implement แล้ว), [[../../CLAUDE|CLAUDE.md]] และ [[../../README|README.md]] (root — เพิ่มลิงก์หน้าใหม่)
 - Redeploy Hosting + Firestore rules ให้เว็บจริงตรงกับโค้ดล่าสุด
+
+### 2026-09-23 — Detailed Design: เพิ่ม Sequence Flow สำหรับ flow ชุมชนให้ครบ (BL-022, BL-023)
+
+- ผู้ใช้ขอ "ทำ detailed-design เพิ่ม sequence สำหรับ flow ชุมชนให้ครบ" — ปิดช่องว่างที่ระบุไว้ใน [[../02-design/02-technical/detailed-design|02-technical/detailed-design]] § Open Items ข้อ 2 เดิม: มี Data Flow ระดับ high-level ใน [[../02-design/02-technical/architecture|02-technical/architecture]] สำหรับ 2 flow ของชุมชน (BL-022 สมัคร/อนุมัติบัญชี, BL-023 ขอแก้ไขข้อมูล→อนุมัติ) แต่ยังไม่มี Sequence Diagram ละเอียดระดับ component-to-component ในไฟล์ detailed-design.md เลย
+- เช็ค `open-questions.md` ก่อนตามกฎ gate ของ skill — **ไม่มี Open Question ค้างที่กระทบ 2 flow นี้แล้ว** (ปิดหมดตั้งแต่ 2026-09-22) จึงออกแบบ sequence แบบสมบูรณ์ได้เลยโดยไม่ต้องถามผู้ใช้เพิ่ม
+- เพิ่ม **Sequence #8** (สมัคร/อนุมัติบัญชีชุมชนใหม่) — ออกแบบตาม pattern เดียวกับ Sequence #6 (นิสิตส่งผลงานขออนุมัติ): Client → API → DB (สร้าง UserAccount role=community, status=pending_approval) → Notification Service แจ้งอาจารย์/แอดมิน → alt อนุมัติ/ไม่อนุมัติ — ต่างจาก Sequence #6 ตรงที่ไม่อนุมัติ = สถานะสิ้นสุด (ไม่มี resubmission เหมือนนิสิต ตรงตาม Business Rule ที่ปิดแล้ว)
+- เพิ่ม **Sequence #9** (ชุมชนขอแก้ไขข้อมูล → อนุมัติ) — แสดงการตรวจสอบความเป็นเจ้าของคอนเทนต์ก่อน (ปฏิเสธทันทีถ้าไม่ใช่คอนเทนต์ของตนเอง — ไม่รองรับข้ามชุมชน), สร้าง `ContentEditRequest` (status=pending) → แจ้งเตือน → alt อนุมัติ (นำ proposed_changes ไปใช้จริงกับ Content) / ไม่อนุมัติ (Content ไม่เปลี่ยน)
+- เพิ่ม Decision Log entry อธิบายที่มาและเหตุผลที่ไม่ต้องถามผู้ใช้เพิ่ม, ปิด Open Items ข้อ 2 ส่วนที่เหลือ (sequence diagram gap), เพิ่ม wikilink อ้างอิงจากทั้งสอง Data Flow ใน architecture.md และทั้งสอง journey file ([[../02-design/01-prototypes/community-account-registration-journey|community-account-registration-journey]], [[../02-design/01-prototypes/community-content-edit-request-journey|community-content-edit-request-journey]]) กลับมายัง detailed-design.md § Sequence #8/#9 (append เท่านั้น)
+- เป็นเอกสารเชิงแนวคิดล้วน ไม่มีโค้ด/prototype ให้ทดสอบในรอบนี้ — ไม่กระทบ test-plan.md เพราะ BL-022/BL-023 มี test case (TC-017–022) อยู่แล้วจาก journey โดยไม่ต้องพึ่ง sequence diagram
+- **สถานะหลังรอบนี้**: detailed-design.md มี Sequence Flow ครบ 9 เส้นทางแล้ว ครอบคลุมทั้ง 3 persona (นักท่องเที่ยว, นิสิต, ชุมชน) + PDPA Consent + Access Log — ไม่มีช่องว่างที่รู้จักเหลืออยู่ในเอกสารนี้อีก
+
+### 2026-09-23 — ตรวจสอบ Open Question/งานค้างทั้งโปรเจกต์ + ปิดคำถามที่เหลือใน ACL.md
+
+- ผู้ใช้ขอตรวจสอบว่ามี Open Question หรืองานค้างอื่นเหลือไหม — ตรวจตรงจากทุกไฟล์ spec จริง (`local-story-hub.md`, `20260822-01-it-log-pdpa-consent.md`, `20260912-01-account-registration-approval.md`, `20260912-02-public-view-search-published-works.md`) ยืนยันตรงกับ `open-questions.md`: **0 Open Question ค้างทั้งโปรเจกต์** ตรวจ [[../02-design/02-technical/detailed-design|02-technical/detailed-design]] § Open Items — ปิดครบทั้ง 4 ข้อ (ข้อ 3 เป็นข้อจำกัดที่ยอมรับแล้ว ไม่ใช่ของค้าง)
+- พบงานค้างจริง 3 ข้อใน [[../02-design/02-technical/ACL|02-technical/ACL]] § "คำถามที่ยังไม่มีคำตอบ" — เป็นรายละเอียดที่ไม่เคยมีที่มาจาก spec/backlog ใดเลย ไม่ใช่ gate-blocking Open Question แต่ยังไม่มีคำตอบ: (1) นิสิตแก้ไข/ลบผลงานที่ส่งไปแล้วได้ไหมก่อนอาจารย์ตรวจสอบ (2) อาจารย์แก้ไขเนื้อหาผลงานนิสิตได้โดยตรงไหม หรือทำได้แค่อนุมัติ/ไม่อนุมัติ (3) ชุมชนแก้ไข/ยกเลิกคำขอแก้ไขที่ส่งไปแล้วได้ไหมก่อนอาจารย์/แอดมินพิจารณา
+- ผู้ใช้ขอให้ปิดให้ครบพร้อมเสนอทางเลือก — ถามผ่าน AskUserQuestion 3 ข้อ ข้อละ 3 ทางเลือกพร้อมข้อดี/ข้อเสีย ผู้ใช้เลือกทางเลือกที่แนะนำทั้ง 3 ข้อ (ทุกข้อคือ "ทำไม่ได้ ต้องรอผลอนุมัติ/ไม่อนุมัติก่อนเสมอ" หรือ "ทำได้แค่อนุมัติ/ไม่อนุมัติ") เพราะสอดคล้องกับ sequence ที่ออกแบบไว้แล้วในตอนแรก ไม่ต้องเพิ่ม state/API ใหม่
+- คำตอบ: (1) นิสิตแก้ไข/ลบผลงานไม่ได้ขณะสถานะ "รอพิจารณา" ต้องรอผลอนุมัติ/ไม่อนุมัติก่อน ถ้าไม่ผ่านค่อยแก้ไขแล้วส่งใหม่ (2) อาจารย์แก้ไขเนื้อหาผลงานนิสิตแทนไม่ได้ ทำได้แค่อนุมัติ/ไม่อนุมัติ (3) ชุมชนแก้ไข/ยกเลิกคำขอแก้ไขไม่ได้ขณะสถานะ "รอพิจารณา" ต้องรอผลอนุมัติ/ไม่อนุมัติก่อนเช่นกัน
+- อัปเดตเอกสาร: [[../02-design/02-technical/ACL|02-technical/ACL]] (เพิ่มข้อจำกัดใหม่ในแถว "นิสิต"/"อาจารย์"/"ชุมชน" ของตารางสิทธิ์ ปิด/ลบหัวข้อ "คำถามที่ยังไม่มีคำตอบ" เดิมเป็นรายการที่ปิดแล้ว), [[../01-requirements/03-task/product-backlog|03-task/product-backlog]] (เพิ่มหมายเหตุใน BL-018 และ BL-023), [[../02-design/02-technical/detailed-design|02-technical/detailed-design]] (เพิ่มหมายเหตุยืนยันใน Sequence #6/#9 ว่าไม่มี operation แก้ไข/ยกเลิกโดยเจตนา + Decision Log entry ใหม่)
+- เป็นเอกสารเชิงแนวคิดล้วน ไม่มีโค้ด/prototype ให้ทดสอบในรอบนี้ (ยังไม่มี implementation ฝั่งชุมชนหรือ edit-request จริง) — **ตอนนี้ไม่มี Open Question หรืองานค้างที่รู้จักเหลืออยู่เลยทั้งโปรเจกต์** เหลือแค่ BL-014/BL-017 ที่ต้องรอโค้ดจริงถึงจะมี test case แบบ backend/integration ได้ (ข้อจำกัดที่ยอมรับแล้ว ไม่ใช่ของค้าง)
+
+### 2026-09-23 — ตรวจสอบ prototype-v1/prototype-v3 ว่ายังตรงกับการตัดสินใจล่าสุดไหม + แก้ไข
+
+- ผู้ใช้ขอตรวจว่า `prototype-v1` กับ `prototype-v3` ยังตรงกับการตัดสินใจล่าสุดทั้งหมดไหม (ทั้ง 3 การตัดสินใจใหม่เรื่อง edit/cancel ก่อนอนุมัติ และการตัดสินใจเก่าที่ 2026-09-22 เช่น tourist login gate, consent single-toggle, community edit request ข้ามชุมชน, ข้อมูลยืนยันตัวตนชุมชน)
+- ตรวจ 8 จุดผ่าน fork agent (อ่านโค้ด HTML จริงทุกไฟล์ที่เกี่ยวข้อง): `student-publish.html`/`admin-review-student-work.html` (prototype-v1) ไม่มี UI ให้แก้ไข/ลบผลงาน pending หรือให้อาจารย์แก้เนื้อหาแทนอยู่แล้ว (**ผ่าน** ตรงกับการตัดสินใจ 2026-09-23 โดยไม่ต้องแก้โค้ด), `tourist-login.html`/`tourist-story-detail.html`/`tourist-home-consent.html` ยังคง login-gate และ consent แบบเดียวถูกต้อง (**ผ่าน** ไม่มี regression), `community-request-edit.html`/`community-dashboard.html` (prototype-v3) ไม่มีปุ่มแก้ไข/ยกเลิกคำขอที่ pending อยู่แล้ว (**ผ่าน**), `community-register.html` ใช้ข้อมูลพื้นฐานอย่างเดียวถูกต้อง (**ผ่าน**)
+- **พบ 1 จุดไม่ตรงจริง**: `prototype-v3/community-create-content.html` step 4 (SEO) และ step 5 (แปลภาษา) ยังมี `.draft-note` บอกว่า "ยังเป็น Open Question" ทั้งที่ Business Rule เรื่อง SEO (แนะนำ keyword ภายในระบบเท่านั้น) และแปลภาษา/TTS (ข้อความอย่างเดียว ไม่มีเสียงพากย์) ปิดไปแล้วตั้งแต่ 2026-09-22 (วันเดียวกับที่สร้าง prototype-v3) — `prototype-v1` เวอร์ชันเดียวกันถูกลบ badge นี้ไปแล้วในรอบก่อนหน้า แต่ `prototype-v3` ตกหล่นไม่ได้อัปเดตตาม
+- แก้ไข: ลบทั้ง 2 `.draft-note` div ออกจาก `community-create-content.html`, อัปเดต [[../02-design/01-prototypes/prototype-v3/README|prototype-v3/README]] § "จุดที่ยังเป็น DRAFT" เป็น "ไม่มี" พร้อมอธิบายที่มา และปรับตารางหน้าจอให้ตรงกัน
+- **ทดสอบผ่าน browser จริง** (`npx http-server -p 8747`, ตั้ง `lsh_v3_session` ผ่าน `page.evaluate` แล้ว navigate เข้า `community-create-content.html`): หน้าเรนเดอร์ปกติ, `document.querySelectorAll('.draft-note').length === 0` ยืนยันว่าลบครบ, ไม่มี JS error ใหม่ (มีแค่ 404 ของ resource ที่ไม่เกี่ยวข้อง เช่น favicon)
+- **สรุป**: หลังแก้ไขจุดนี้ `prototype-v1` และ `prototype-v3` ตรงกับการตัดสินใจล่าสุดทั้งหมดครบแล้ว ไม่มีจุดไม่สอดคล้องเหลืออยู่

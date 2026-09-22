@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ตรวจสอบชุมชน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:900px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-sm);}
+h2{font-size:22px;font-weight:600;margin:var(--space-2xl) 0 var(--space-md);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-xl);}
+.draft-note{display:inline-block;background:#F4E9D3;color:#8A6A22;font-size:13px;padding:2px 10px;border-radius:999px;margin-bottom:var(--space-lg);}
+.notify-banner{background:var(--color-ochre);color:#fff;border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-weight:600;margin-bottom:var(--space-lg);}
+.card{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-md);}
+.card h3{margin:0 0 4px;font-size:19px;}
+.card .meta{color:var(--color-bark);font-size:15px;margin-bottom:var(--space-sm);}
+.card .desc{margin-bottom:var(--space-md);}
+.diff-row{display:flex;gap:var(--space-md);margin-bottom:var(--space-sm);flex-wrap:wrap;}
+.diff-col{flex:1;min-width:220px;}
+.diff-label{font-size:13px;font-weight:600;color:var(--color-bark);margin-bottom:2px;}
+.diff-old{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-sm) var(--space-md);font-size:15px;}
+.diff-new{background:#E4F1E6;border-radius:var(--radius-sm);padding:var(--space-sm) var(--space-md);font-size:15px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:15px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+.btn-primary{background:var(--color-moss);color:#fff;}
+.btn-danger{background:transparent;color:#A13D2C;border-color:#A13D2C;}
+.actions{display:flex;gap:var(--space-md);}
+.reject-form{margin-top:var(--space-md);display:none;}
+.reject-form.show{display:block;}
+.reject-form textarea{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:16px;min-height:70px;}
+.field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
+.empty-state{color:var(--color-bark);padding:var(--space-lg);text-align:center;}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);overflow:hidden;}
+th, td{text-align:left;padding:var(--space-md);border-bottom:1px solid var(--color-sand);font-size:15px;}
+th{background:var(--color-sand);font-weight:600;}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;}
+.status.approved{background:#E4F1E6;color:var(--color-moss);}
+.status.rejected{background:#F7E0DA;color:#A13D2C;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="community-register.html">Local Story Hub</a>
+  <nav class="site"><a href="community-register.html">มุมมองชุมชน (ตัวอย่าง)</a></nav>
+</header>
+
+<main>
+  <h1>ตรวจสอบชุมชน (อาจารย์ที่ปรึกษา/แอดมิน)</h1>
+  <p class="hint">หน้านี้จำลองมุมมองอาจารย์/แอดมินโดยตรง (เวอร์ชันนี้ยังไม่มีระบบ login จริง ต่างจาก prototype-v2 ฝั่งนิสิตที่ต่อ Firebase Authentication แล้ว)</p>
+  <div class="draft-note">เวอร์ชันนี้จำลองข้อมูลด้วย localStorage ในเบราว์เซอร์ (ยังไม่เชื่อมฐานข้อมูลจริง) — อ้างอิง BL-022, BL-023</div>
+
+  <div class="notify-banner" id="notify-banner" hidden></div>
+
+  <h2>บัญชีชุมชนใหม่ที่รออนุมัติ</h2>
+  <div id="pending-accounts-list"></div>
+  <div class="empty-state" id="pending-accounts-empty" style="display:none;">ยังไม่มีบัญชีชุมชนใหม่รอการอนุมัติในขณะนี้</div>
+
+  <h2>คำขอแก้ไขข้อมูลชุมชนที่รอพิจารณา</h2>
+  <div id="pending-edits-list"></div>
+  <div class="empty-state" id="pending-edits-empty" style="display:none;">ยังไม่มีคำขอแก้ไขข้อมูลรอพิจารณาในขณะนี้</div>
+
+  <h2>ประวัติบัญชีชุมชนที่ตรวจสอบแล้ว</h2>
+  <table>
+    <thead><tr><th>ชื่อชุมชน</th><th>สถานะ</th><th>เหตุผล (ถ้าไม่อนุมัติ)</th></tr></thead>
+    <tbody id="accounts-history-body"></tbody>
+  </table>
+  <div class="empty-state" id="accounts-history-empty" style="display:none;">ยังไม่มีประวัติการตรวจสอบบัญชี</div>
+
+  <h2>ประวัติคำขอแก้ไขที่พิจารณาแล้ว</h2>
+  <table>
+    <thead><tr><th>คอนเทนต์</th><th>ชุมชน</th><th>สถานะ</th><th>เหตุผล (ถ้าไม่อนุมัติ)</th></tr></thead>
+    <tbody id="edits-history-body"></tbody>
+  </table>
+  <div class="empty-state" id="edits-history-empty" style="display:none;">ยังไม่มีประวัติคำขอแก้ไขที่พิจารณาแล้ว</div>
+</main>
+
+<script>
+var COMM_KEY = 'lsh_v3_communities';
+var CONTENT_KEY = 'lsh_v3_content';
+var EDIT_REQ_KEY = 'lsh_v3_edit_requests';
+
+function readList(key){ try{ return JSON.parse(localStorage.getItem(key)) || []; }catch(e){ return []; } }
+function writeList(key, list){ localStorage.setItem(key, JSON.stringify(list)); }
+
+function escapeHtml(str){
+  var div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+function renderNotifyBanner(){
+  var pendingAccounts = readList(COMM_KEY).filter(function(c){ return c.status === 'รออนุมัติ'; });
+  var pendingEdits = readList(EDIT_REQ_KEY).filter(function(r){ return r.status === 'รอพิจารณา'; });
+  var banner = document.getElementById('notify-banner');
+  var total = pendingAccounts.length + pendingEdits.length;
+  if(total === 0){ banner.hidden = true; return; }
+  banner.hidden = false;
+  banner.textContent = '🔔 มีรายการรอพิจารณา ' + total + ' รายการ (บัญชีชุมชนใหม่ ' + pendingAccounts.length + ', คำขอแก้ไข ' + pendingEdits.length + ') — จำลองการแจ้งเตือน ยังไม่ได้ส่งอีเมลจริง';
+}
+
+function renderPendingAccounts(){
+  var accounts = readList(COMM_KEY).filter(function(c){ return c.status === 'รออนุมัติ'; });
+  var container = document.getElementById('pending-accounts-list');
+  var emptyEl = document.getElementById('pending-accounts-empty');
+  if(accounts.length === 0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  container.innerHTML = accounts.map(function(a){
+    return (
+      '<div class="card">' +
+        '<h3>' + escapeHtml(a.name) + '</h3>' +
+        '<div class="meta">อีเมล: ' + escapeHtml(a.email) + '</div>' +
+        '<div class="desc"><strong>ข้อมูลยืนยันตัวตน:</strong> ' + escapeHtml(a.verify) + '</div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-primary" onclick="approveAccount(\'' + a.id + '\')">อนุมัติ</button>' +
+          '<button class="btn btn-danger" onclick="toggleAccountReject(\'' + a.id + '\')">ไม่อนุมัติ</button>' +
+        '</div>' +
+        '<div class="reject-form" id="reject-account-' + a.id + '">' +
+          '<label for="account-reason-' + a.id + '">เหตุผลที่ไม่อนุมัติ (จะแจ้งกลับไปยังผู้สมัคร)</label>' +
+          '<textarea id="account-reason-' + a.id + '"></textarea>' +
+          '<div class="field-error" id="account-reason-error-' + a.id + '">กรุณาระบุเหตุผลก่อนไม่อนุมัติ</div>' +
+          '<div class="actions" style="margin-top:8px;"><button class="btn btn-danger" onclick="rejectAccount(\'' + a.id + '\')">ยืนยันไม่อนุมัติ</button></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+window.toggleAccountReject = function(id){
+  document.getElementById('reject-account-' + id).classList.toggle('show');
+};
+
+window.approveAccount = function(id){
+  var communities = readList(COMM_KEY);
+  communities.forEach(function(c){ if(c.id === id) c.status = 'อนุมัติแล้ว'; });
+  writeList(COMM_KEY, communities);
+  renderAll();
+};
+
+window.rejectAccount = function(id){
+  var reasonEl = document.getElementById('account-reason-' + id);
+  var reason = reasonEl.value.trim();
+  var errEl = document.getElementById('account-reason-error-' + id);
+  if(!reason){ errEl.style.display = 'block'; reasonEl.focus(); return; }
+  errEl.style.display = 'none';
+  var communities = readList(COMM_KEY);
+  communities.forEach(function(c){ if(c.id === id){ c.status = 'ไม่อนุมัติ'; c.rejectionReason = reason; } });
+  writeList(COMM_KEY, communities);
+  renderAll();
+};
+
+function renderPendingEdits(){
+  var edits = readList(EDIT_REQ_KEY).filter(function(r){ return r.status === 'รอพิจารณา'; });
+  var container = document.getElementById('pending-edits-list');
+  var emptyEl = document.getElementById('pending-edits-empty');
+  if(edits.length === 0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  container.innerHTML = edits.map(function(r){
+    return (
+      '<div class="card">' +
+        '<h3>' + escapeHtml(r.contentTitle) + '</h3>' +
+        '<div class="meta">ชุมชน: ' + escapeHtml(r.communityName) + ' · ' + r.createdAt + '</div>' +
+        '<div class="diff-row">' +
+          '<div class="diff-col"><div class="diff-label">ชื่อคอนเทนต์ (เดิม)</div><div class="diff-old">' + escapeHtml(r.originalValues.title) + '</div></div>' +
+          '<div class="diff-col"><div class="diff-label">ชื่อคอนเทนต์ (ขอแก้เป็น)</div><div class="diff-new">' + escapeHtml(r.proposedChanges.title) + '</div></div>' +
+        '</div>' +
+        '<div class="diff-row">' +
+          '<div class="diff-col"><div class="diff-label">เนื้อหา (เดิม)</div><div class="diff-old">' + escapeHtml(r.originalValues.bodyTh) + '</div></div>' +
+          '<div class="diff-col"><div class="diff-label">เนื้อหา (ขอแก้เป็น)</div><div class="diff-new">' + escapeHtml(r.proposedChanges.bodyTh) + '</div></div>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-primary" onclick="approveEdit(\'' + r.id + '\')">อนุมัติ</button>' +
+          '<button class="btn btn-danger" onclick="toggleEditReject(\'' + r.id + '\')">ไม่อนุมัติ</button>' +
+        '</div>' +
+        '<div class="reject-form" id="reject-edit-' + r.id + '">' +
+          '<label for="edit-reason-' + r.id + '">เหตุผลที่ไม่อนุมัติ (จะแจ้งกลับไปยังชุมชน)</label>' +
+          '<textarea id="edit-reason-' + r.id + '"></textarea>' +
+          '<div class="field-error" id="edit-reason-error-' + r.id + '">กรุณาระบุเหตุผลก่อนไม่อนุมัติ</div>' +
+          '<div class="actions" style="margin-top:8px;"><button class="btn btn-danger" onclick="rejectEdit(\'' + r.id + '\')">ยืนยันไม่อนุมัติ</button></div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+window.toggleEditReject = function(id){
+  document.getElementById('reject-edit-' + id).classList.toggle('show');
+};
+
+window.approveEdit = function(id){
+  var edits = readList(EDIT_REQ_KEY);
+  var target = edits.filter(function(r){ return r.id === id; })[0];
+  if(!target) return;
+  edits.forEach(function(r){ if(r.id === id) r.status = 'อนุมัติ'; });
+  writeList(EDIT_REQ_KEY, edits);
+
+  var contents = readList(CONTENT_KEY);
+  contents.forEach(function(c){
+    if(c.id === target.contentId){
+      c.title = target.proposedChanges.title;
+      c.bodyTh = target.proposedChanges.bodyTh;
+    }
+  });
+  writeList(CONTENT_KEY, contents);
+  renderAll();
+};
+
+window.rejectEdit = function(id){
+  var reasonEl = document.getElementById('edit-reason-' + id);
+  var reason = reasonEl.value.trim();
+  var errEl = document.getElementById('edit-reason-error-' + id);
+  if(!reason){ errEl.style.display = 'block'; reasonEl.focus(); return; }
+  errEl.style.display = 'none';
+  var edits = readList(EDIT_REQ_KEY);
+  edits.forEach(function(r){ if(r.id === id){ r.status = 'ไม่อนุมัติ'; r.rejectionReason = reason; } });
+  writeList(EDIT_REQ_KEY, edits);
+  renderAll();
+};
+
+function renderAccountsHistory(){
+  var reviewed = readList(COMM_KEY).filter(function(c){ return c.status === 'อนุมัติแล้ว' || c.status === 'ไม่อนุมัติ'; });
+  var tbody = document.getElementById('accounts-history-body');
+  var emptyEl = document.getElementById('accounts-history-empty');
+  if(reviewed.length === 0){ tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = reviewed.map(function(c){
+    var cls = c.status === 'อนุมัติแล้ว' ? 'approved' : 'rejected';
+    return '<tr><td>' + escapeHtml(c.name) + '</td><td><span class="status ' + cls + '">' + c.status + '</span></td><td>' + (c.status === 'ไม่อนุมัติ' ? escapeHtml(c.rejectionReason) : '—') + '</td></tr>';
+  }).join('');
+}
+
+function renderEditsHistory(){
+  var reviewed = readList(EDIT_REQ_KEY).filter(function(r){ return r.status === 'อนุมัติ' || r.status === 'ไม่อนุมัติ'; });
+  var tbody = document.getElementById('edits-history-body');
+  var emptyEl = document.getElementById('edits-history-empty');
+  if(reviewed.length === 0){ tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = reviewed.map(function(r){
+    var cls = r.status === 'อนุมัติ' ? 'approved' : 'rejected';
+    return '<tr><td>' + escapeHtml(r.contentTitle) + '</td><td>' + escapeHtml(r.communityName) + '</td><td><span class="status ' + cls + '">' + r.status + '</span></td><td>' + (r.status === 'ไม่อนุมัติ' ? escapeHtml(r.rejectionReason) : '—') + '</td></tr>';
+  }).join('');
+}
+
+function renderAll(){
+  renderNotifyBanner();
+  renderPendingAccounts();
+  renderPendingEdits();
+  renderAccountsHistory();
+  renderEditsHistory();
+}
+renderAll();
+</script>
+
+</body>
+</html>

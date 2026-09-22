@@ -10,4 +10,4 @@
 
 ## เอกสารในหมวดนี้
 
-- [[test-plan|test-plan]] — test case ที่แปลงมาจาก Acceptance Criteria ของ backlog item ตามแต่ละ step ใน User Journey (ครอบคลุม 3 persona: นักท่องเที่ยว, ชุมชน, นิสิต)
+- [[test-plan|test-plan]] — test case ที่แปลงมาจาก Acceptance Criteria ของ backlog item ตามแต่ละ step ใน User Journey (ครอบคลุม 4 persona: นักท่องเที่ยว, ชุมชน, นิสิต, บุคคลทั่วไป — ฝั่งชุมชนมี 3 journey ย่อย: สร้างคอนเทนต์/สมัคร-อนุมัติบัญชี/ขอแก้ไขข้อมูล, ฝั่งนิสิตมี 2 journey ย่อย: เผยแพร่ผลงาน/สมัคร-อนุมัติบัญชี)
