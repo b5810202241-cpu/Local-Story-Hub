@@ -931,3 +931,51 @@ Acceptance Criteria ของ backlog
 ปักหมุดตำแหน่งเดียวพอ หรือต้องมีเส้นทาง/นำทางจากตำแหน่งผู้ใช้ด้วย (ถ้าใช่ ต้องเลือกฝัง Google Maps
 Embed/JS API หรือทำแค่ deep-link ออกแอปภายนอกเหมือนเดิม) — ทั้ง 3 ข้อกระทบ scope/schema โดยตรง ควรถาม
 อาจารย์ที่ปรึกษา (ขอบเขตงาน/เทคนิค) ร่วมกับตัวแทนชุมชน (ใครควรเป็นคนกรอกพิกัดจริง) ก่อนเริ่มออกแบบ
+
+### 2026-09-23 — ปิดช่องว่างสุดท้ายของ BL-013 (dropdown "เลือกชุมชนที่เกี่ยวข้อง" ยังเป็น static placeholder)
+
+พบว่า backend ของ BL-013 (นิสิตส่งผลงาน → `LSHRequests` สถานะ `รอพิจารณา` → อาจารย์อนุมัติ ตาม BL-018)
+implement และ deploy จริงไปนานแล้ว ส่วนที่เหลือค้างมีจุดเดียว: dropdown "เลือกชุมชนที่เกี่ยวข้อง" ใน
+`student-publish.html` ยังเป็น static placeholder list (`ชุมชนบ้านผาบ่อง`/`ชุมชนริมน้ำแม่กลอง`/
+`ชุมชนดอยสูง` ฮาร์ดโค้ด พร้อม badge DRAFT ค้างจากตอนที่ยังเป็น Open Question) ทั้งที่ระบบบัญชีชุมชนจริง
+(BL-022) implement เสร็จและ deploy แล้วตั้งแต่รอบก่อน — บัญชีชุมชนที่อนุมัติแล้วจริงมีอยู่ใน `users`
+collection (`role: 'community'`, `status: 'อนุมัติแล้ว'`) พร้อมใช้แล้ว
+
+**แก้**: เปลี่ยน dropdown ให้ query `users` collection จริง (`where('role','==','community')` +
+`where('status','==','อนุมัติแล้ว')`) ผ่าน Firestore modular SDK แบบเดียวกับหน้าจออื่น แทนรายชื่อ
+ฮาร์ดโค้ด — ลบ badge DRAFT ที่ล้าสมัยออก (Open Question นี้ปิดไปแล้วตั้งแต่ 2026-09-22) เพิ่ม error/info
+note ให้เห็นชัดถ้า query ล้มเหลวหรือยังไม่มีชุมชนอนุมัติในระบบ — เก็บ field `community` บน `LSHRequests`
+เป็น string ชื่อชุมชนเหมือนเดิมทุกประการ (ไม่เปลี่ยน schema) เพราะทุกหน้าที่อ่านค่านี้อยู่แล้ว
+(`published-works.html`, `tourist-search-results.html`, `tourist-story-detail.html`,
+`tourist-home-consent.html`) ใช้ `data.community` เป็น string ชื่อชุมชนตรงๆ อยู่แล้ว ไม่ต้องแก้ 4 ไฟล์
+นี้เลย
+
+**ต้องแก้ `LSH/firestore.rules` ด้วย**: rule เดิมของ `users/{userId}` อนุญาต `read` เฉพาะเจ้าของหรือ
+role=`teacher` เท่านั้น — นิสิตธรรมดา query หาบัญชีชุมชนคนอื่นไม่ได้ (ยืนยันด้วยการทดสอบจริงผ่าน
+browser ก่อนแก้ rule — login นิสิตจริงแล้วเจอ `Missing or insufficient permissions.` ตรงตามคาด) เพิ่ม
+เงื่อนไข OR แคบๆ อีก 1 ข้อในบรรทัด `allow read` เดิม: `resource.data.role == 'community' &&
+resource.data.status == 'อนุมัติแล้ว'` — mirror pattern เดียวกับ public read ของ `LSHRequests`
+(`resource.data.status == 'อนุมัติ'`) ที่ใช้อยู่แล้วในไฟล์เดียวกัน ยังคงบังคับ `request.auth != null`
+(ต้อง login ก่อนเสมอ ไม่เปิด public แบบ `LSHRequests`) ไม่เปิด field อื่นหรือสถานะอื่น (รออนุมัติ/
+ไม่อนุมัติ) ของบัญชีชุมชนให้เห็น และไม่เปิดอ่านบัญชี role อื่น (เช่น student คนอื่น) เพิ่มจากเดิมเลย
+
+**ทดสอบ**: serve `prototype-v2` local (`http-server`) ชี้ไปที่ Firestore project `lsh-nammon` จริง —
+(1) login นิสิตจริง (u001) ก่อนแก้ rule → ยืนยัน gap มีจริง เจอ `Missing or insufficient permissions.`
+บน dropdown ตามคาด (2) ตรวจข้อมูลจริงผ่าน `firebase-admin` (read-only) พบมีบัญชีชุมชนอนุมัติแล้วจริง
+1 บัญชีอยู่แล้ว ("ชุมชนทดสอบผาบ่อง QA") ยืนยันว่า query จะได้ผลลัพธ์จริงหลัง deploy rule (3) ส่งผลงาน
+ทดสอบจริงผ่านฟอร์ม (ไม่มีชุมชนเพราะ dropdown ยัง fail ด้วย rule เดิม) ยืนยันว่ายัง insert ลง
+`LSHRequests` ด้วย `status: 'รอพิจารณา'` ถูกต้องตาม AC ข้อ 2 เหมือนเดิม (ไม่กระทบจาก field community ที่
+ว่างเปล่า) — ลบเอกสารทดสอบทิ้งหลังตรวจสอบเสร็จ (4) ตรวจ `published-works.html` ยืนยันว่ากลไกแสดงผล
+"ชุมชน: ..." บนผลงานที่อนุมัติแล้วทำงานถูกต้องอยู่แล้วจากข้อมูลเดิมที่มี — **ยังไม่ได้ deploy
+`firestore.rules` ใหม่ในรอบนี้ (รอผู้ประสานงาน merge งาน parallel agent ชุดนี้ทั้งหมดก่อนแล้วค่อย deploy
+รวดเดียว)** จึงยังไม่ได้ทดสอบ end-to-end แบบเต็มรูปแบบ (dropdown เห็นรายชื่อจริง + submit จริงพร้อม
+community ที่มาจาก dropdown) — เป็นการตรวจสอบเชิงตรรกะ/อ่าน rule อย่างละเอียดแทนสำหรับส่วนที่ deploy
+ไม่ได้ในตอนนี้
+
+**อัปเดตเอกสาร**: [[../01-requirements/03-task/product-backlog|product-backlog]] (BL-013 status →
+เกือบเสร็จ รอ deploy rules)
+
+**เหลือให้ผู้ประสานงานทำต่อ**: deploy `firestore.rules` ที่แก้ไว้ (เพิ่ม OR clause ให้ `users/{userId}`
+allow read) แล้ว retest end-to-end จริงอีกครั้ง (login นิสิต → เห็น dropdown มีชื่อชุมชนจริง → เลือก →
+submit → อาจารย์อนุมัติ → เช็คว่า `published-works.html`/หน้านักท่องเที่ยวโชว์ชื่อชุมชนที่เลือกถูกต้อง)
+ก่อนจะปิด BL-013 เป็น "เสร็จแล้ว" เต็มรูปแบบ

@@ -125,11 +125,10 @@ textarea{min-height:80px;}
 
       <label for="community" style="margin-top:var(--space-md)">เลือกชุมชนที่เกี่ยวข้อง</label>
       <select id="community">
-        <option>ชุมชนบ้านผาบ่อง</option>
-        <option>ชุมชนริมน้ำแม่กลอง</option>
-        <option>ชุมชนดอยสูง</option>
+        <option value="">กำลังโหลดรายชื่อชุมชน...</option>
       </select>
-      <div class="draft-note">DRAFT — วิธีเชื่อมโยงผลงานกับพื้นที่ของชุมชนยังเป็น Open Question (ตัวอย่างนี้สมมติให้เลือกจาก dropdown)</div>
+      <div class="field-error" id="community-error">ไม่พบชุมชนที่อนุมัติแล้วในระบบขณะนี้</div>
+      <div class="info-note" id="community-info">รายชื่อชุมชนดึงจากบัญชีชุมชนจริงที่อาจารย์อนุมัติแล้วเท่านั้น (collection <code>users</code>, <code>role: 'community'</code>) — ถ้าชุมชนที่ต้องการยังไม่ขึ้นในลิสต์ แปลว่ายังไม่ได้สมัครบัญชีหรือยังไม่ผ่านการอนุมัติ</div>
 
       <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
       <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
@@ -155,7 +154,7 @@ textarea{min-height:80px;}
 <script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const app = initializeApp(window.LSH_FIREBASE_CONFIG);
@@ -283,6 +282,7 @@ onAuthStateChanged(auth, async function(user){
     show('rejected-view');
   }else if(profile.role === 'student' && profile.status === 'อนุมัติแล้ว'){
     show('form-view');
+    loadCommunityOptions();
   }else{
     show('deny-view');
   }
@@ -292,6 +292,53 @@ function selectFile(){
   document.getElementById('upload-box').innerHTML = '✓ เลือกไฟล์แล้ว: student-doc-pha-bong.mp4';
 }
 window.selectFile = selectFile;
+
+// เพิ่ม 2026-09-23 (BL-013 gap): เดิม dropdown นี้เป็น static placeholder list (DRAFT — Open Question
+// ยังไม่ปิด) ตอนนี้ Open Question ปิดแล้ว (นิสิตเลือกชุมชนจาก dropdown) และมีบัญชีชุมชนจริงแล้ว
+// (BL-022, collection users role='community') จึง query บัญชีชุมชนที่อนุมัติแล้วจริงมาเติม dropdown
+// แทน — ต้องมี rule ใน firestore.rules อนุญาต query นี้ด้วย (ดู users/{userId} allow read)
+async function loadCommunityOptions(){
+  const selectEl = document.getElementById('community');
+  const errorEl = document.getElementById('community-error');
+  errorEl.style.display = 'none';
+  try{
+    const communityQuery = query(
+      collection(db, 'users'),
+      where('role', '==', 'community'),
+      where('status', '==', 'อนุมัติแล้ว')
+    );
+    const snap = await getDocs(communityQuery);
+    const names = [];
+    snap.forEach(function(docSnap){
+      const data = docSnap.data();
+      if(data.name) names.push(data.name);
+    });
+    names.sort(function(a, b){ return a.localeCompare(b, 'th'); });
+
+    selectEl.innerHTML = '';
+    if(names.length === 0){
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '— ยังไม่มีชุมชนที่อนุมัติแล้วในระบบ —';
+      selectEl.appendChild(opt);
+      errorEl.textContent = 'ยังไม่มีบัญชีชุมชนที่อาจารย์อนุมัติแล้วในระบบขณะนี้ — สามารถส่งผลงานต่อได้ แต่จะยังไม่เชื่อมโยงกับชุมชนใดจนกว่าจะมีชุมชนสมัครและได้รับอนุมัติ';
+      errorEl.style.display = 'block';
+      return;
+    }
+    names.forEach(function(name){
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      selectEl.appendChild(opt);
+    });
+  }catch(e){
+    console.error('โหลดรายชื่อชุมชนไม่สำเร็จ', e);
+    selectEl.innerHTML = '<option value="">— โหลดรายชื่อชุมชนไม่สำเร็จ —</option>';
+    errorEl.textContent = 'โหลดรายชื่อชุมชนไม่สำเร็จ: ' + e.message;
+    errorEl.style.display = 'block';
+  }
+}
+window.loadCommunityOptions = loadCommunityOptions;
 
 window.publishWork = async function(){
   if(!currentProfile || currentProfile.role !== 'student' || currentProfile.status !== 'อนุมัติแล้ว') return;
