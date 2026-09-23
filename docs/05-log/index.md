@@ -1056,3 +1056,20 @@ deploy แล้วควรทดสอบ end-to-end อีกครั้ง�
 สมบูรณ์แบบไม่มี caveat
 
 **หมายเหตุผู้ประสานงาน (merge)**: BL-009 กับ BL-010 (ตัวก่อนหน้า) แก้ `tourist-search-results.html` ทับซ้อนกัน (แท็บ TH/EN ของ BL-009 vs ลิงก์ Google Maps ของ BL-010 บนการ์ดเดียวกัน) — merge ด้วยมือให้อยู่ด้วยกัน: `cardSnippetHtml(it)` (แท็บ TH/EN) ต่อด้วย `.card-actions` ที่มีทั้งลิงก์ "อ่านเรื่องราว →" และ "🗺️ ดูตำแหน่งบน Google Maps" ไม่มีโค้ดของฝั่งไหนถูกทิ้ง
+
+### 2026-09-23 — สรุปรอบสร้าง BL-007/009/010/013 แบบขนาน + deploy firestore.rules
+
+รอบ agent ขนาน 4 ตัว (BL-007, BL-009, BL-010, BL-013 — แต่ละตัวทำงานใน git worktree แยกกัน) เสร็จครบ
+ทั้งหมดแล้ว merge เข้า `main` ตามลำดับที่เสร็จ (BL-007 → BL-010 → BL-013 → BL-009) แก้ conflict ที่
+`docs/05-log/index.md` (ไฟล์ append-only ชนกันทุกรอบเพราะทุก agent เขียนท้ายไฟล์เดียวกัน — แก้โดยเรียง
+entry ตามลำดับ ไม่เสียเนื้อหาใคร) และที่ `tourist-search-results.html` (BL-009/BL-010 แก้การ์ดเดียวกัน
+— รวมโค้ดทั้งสองฝั่งด้วยมือ ดูหมายเหตุด้านบน)
+
+หลัง merge ครบ deploy `LSH/firestore.rules` ขึ้น production แล้ว (`firebase deploy --only
+firestore:rules` — มีการเปลี่ยนแปลงเดียวจากรอบนี้คือ rule ของ BL-013 ที่เปิดให้ผู้ใช้ login แล้วทุกคน
+query `users` ที่ `role=='community' && status=='อนุมัติแล้ว'` ได้) ยังไม่ได้ retest end-to-end ผ่าน
+browser จริงด้วยบัญชีนิสิตจริงหลัง deploy (ไม่มี credential ทดสอบในเซสชันนี้) — แนะนำให้ผู้ใช้คลิก
+ทดสอบ dropdown ใน `student-publish.html` เองอีกครั้งหนึ่ง
+
+**ยังไม่ deploy hosting** — โค้ด client-side ของทั้ง 4 รายการ (BL-007/009/010/013) อยู่ใน `main` แล้ว
+แต่ยังไม่ขึ้น `https://lsh-nammon.web.app/` จริงจนกว่าจะรัน `firebase deploy --only hosting`
