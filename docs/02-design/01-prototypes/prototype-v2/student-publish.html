@@ -44,6 +44,13 @@ textarea{min-height:80px;}
 .field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
 .submit-error{color:#A13D2C;font-size:15px;margin-top:var(--space-sm);display:none;}
 .switch-row{text-align:center;margin-top:var(--space-md);font-size:15px;color:var(--color-bark);}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:600;}
+.status.pending{background:#F4E9D3;color:#8A6A22;}
+.status.approved{background:#E4F1E6;color:var(--color-moss);}
+.status.rejected{background:#F7E0DA;color:#A13D2C;}
+.submission-item{border-bottom:1px solid var(--color-stone);padding:var(--space-sm) 0;}
+.submission-item:last-child{border-bottom:none;}
+.submission-reason{font-size:14px;color:#A13D2C;margin-top:2px;}
 [hidden]{display:none !important;}
 </style>
 </head>
@@ -113,6 +120,12 @@ textarea{min-height:80px;}
     <h1>เผยแพร่ผลงานสนับสนุนชุมชน</h1>
     <p class="hint">ผลงานของคุณจะถูกส่งให้อาจารย์ (ผู้ดูแลระบบ) ตรวจสอบและอนุมัติก่อน จึงจะเผยแพร่ได้</p>
 
+    <div class="step" id="my-submissions-section">
+      <label style="margin-bottom:var(--space-sm)">ผลงานที่เคยส่งของคุณ</label>
+      <div id="my-submissions-list"></div>
+      <div class="info-note" id="my-submissions-empty" hidden>ยังไม่เคยส่งผลงานเลย</div>
+    </div>
+
     <div class="step">
       <label>อัปโหลดผลงาน</label>
       <div class="upload-box" id="upload-box">ลากไฟล์มาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์ (วิดีโอ/ภาพ/บทความ)</button></div>
@@ -167,6 +180,11 @@ let lastAiSuggestionText = null; // ข้อความล่าสุดท�
 
 function show(id){ document.getElementById(id).hidden = false; }
 function hide(id){ document.getElementById(id).hidden = true; }
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
 function hideAllViews(){
   ['login-view','register-view','pending-view','rejected-view','deny-view','form-view'].forEach(hide);
 }
@@ -283,6 +301,7 @@ onAuthStateChanged(auth, async function(user){
   }else if(profile.role === 'student' && profile.status === 'อนุมัติแล้ว'){
     show('form-view');
     loadCommunityOptions();
+    loadMySubmissions();
   }else{
     show('deny-view');
   }
@@ -339,6 +358,47 @@ async function loadCommunityOptions(){
   }
 }
 window.loadCommunityOptions = loadCommunityOptions;
+
+// เพิ่ม 2026-09-23 (แก้บั๊กที่พบจาก tester — TC-026): เดิมนิสิตไม่มีทางเห็นเลยว่าผลงานที่ส่งไป
+// ถูกอนุมัติ/ไม่อนุมัติแล้วหรือยัง หรือเหตุผลที่ไม่อนุมัติคืออะไร (AC ของ BL-018 ข้อ 2 กำหนดไว้ว่า
+// "ระบบไม่เผยแพร่ผลงานนั้น และแจ้งเหตุผลกลับไปยังนิสิต" — ทำแค่ครึ่งแรก ไม่เคยทำครึ่งหลัง) เพิ่ม
+// รายการ "ผลงานที่เคยส่งของคุณ" แสดงสถานะ + เหตุผลไม่อนุมัติ (ถ้ามี) ของทุกผลงานที่นิสิตคนนี้เคยส่ง
+async function loadMySubmissions(){
+  const listEl = document.getElementById('my-submissions-list');
+  const emptyEl = document.getElementById('my-submissions-empty');
+  try{
+    const q = query(collection(db, 'LSHRequests'), where('requesterId', '==', currentProfile.id));
+    const snap = await getDocs(q);
+    const items = [];
+    snap.forEach(function(d){ items.push(Object.assign({ id: d.id }, d.data())); });
+    items.sort(function(a, b){
+      const at = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const bt = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return bt - at;
+    });
+    if(items.length === 0){
+      listEl.innerHTML = '';
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+    listEl.innerHTML = items.map(function(it){
+      const statusClass = it.status === 'อนุมัติ' ? 'approved' : (it.status === 'ไม่อนุมัติ' ? 'rejected' : 'pending');
+      const reasonHtml = (it.status === 'ไม่อนุมัติ' && it.rejectionReason)
+        ? '<div class="submission-reason">เหตุผลที่ไม่อนุมัติ: ' + escapeHtml(it.rejectionReason) + '</div>'
+        : '';
+      return '<div class="submission-item"><strong>' + escapeHtml(it.title) + '</strong> '
+        + '<span class="status ' + statusClass + '">' + escapeHtml(it.status) + '</span>'
+        + reasonHtml + '</div>';
+    }).join('');
+  }catch(e){
+    console.error('โหลดผลงานที่เคยส่งไม่สำเร็จ', e);
+    listEl.innerHTML = '';
+    emptyEl.hidden = false;
+    emptyEl.textContent = 'โหลดรายการผลงานที่เคยส่งไม่สำเร็จ: ' + e.message;
+  }
+}
+window.loadMySubmissions = loadMySubmissions;
 
 window.publishWork = async function(){
   if(!currentProfile || currentProfile.role !== 'student' || currentProfile.status !== 'อนุมัติแล้ว') return;

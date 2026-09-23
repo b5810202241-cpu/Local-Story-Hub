@@ -101,7 +101,7 @@ const auth = getAuth(app);
 let currentProfile = null;
 let ownContent = [];
 let othersContent = [];
-let pendingEditContentIds = [];
+let latestEditByContentId = {}; // contentId -> คำขอแก้ไขล่าสุด (ทุกสถานะ ไม่ใช่แค่รอพิจารณา)
 let unsubOwn = null, unsubOthers = null, unsubEdits = null;
 
 function escapeHtml(str){
@@ -178,12 +178,24 @@ function startListening(){
     renderOthers();
   }, function(err){ console.error('อ่านคอนเทนต์ของชุมชนอื่นไม่สำเร็จ', err); });
 
-  const editsQuery = query(collection(db, 'ContentEditRequests'), where('communityId', '==', currentProfile.id), where('status', '==', 'รอพิจารณา'));
+  // แก้ 2026-09-23 (บั๊กที่พบจาก tester — TC-022): เดิม query กรองแค่สถานะ "รอพิจารณา" เท่านั้น
+  // ทำให้คำขอที่ถูกปฏิเสธไปแล้วไม่เคยถูกดึงมาแสดงเลย ชุมชนจึงไม่รู้ว่าคำขอถูกปฏิเสธหรือเหตุผลอะไร
+  // (AC ของ BL-023 ข้อ 3 กำหนดไว้ว่าต้อง "แจ้งเหตุผลกลับไปยังชุมชน") — เอา filter สถานะออก ดึงคำขอ
+  // ทั้งหมดของชุมชนนี้มา แล้วหาคำขอล่าสุด (ตาม createdAt) ต่อ 1 คอนเทนต์ไว้ใช้ตัดสินใจแสดงผล
+  const editsQuery = query(collection(db, 'ContentEditRequests'), where('communityId', '==', currentProfile.id));
   unsubEdits = onSnapshot(editsQuery, function(snapshot){
-    pendingEditContentIds = [];
-    snapshot.forEach(function(d){ pendingEditContentIds.push(d.data().contentId); });
+    latestEditByContentId = {};
+    snapshot.forEach(function(d){
+      const data = d.data();
+      const existing = latestEditByContentId[data.contentId];
+      const t = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
+      const existingT = existing && existing.createdAt && existing.createdAt.toMillis ? existing.createdAt.toMillis() : -1;
+      if(!existing || t > existingT){
+        latestEditByContentId[data.contentId] = data;
+      }
+    });
     renderOwn();
-  }, function(err){ console.error('อ่านคำขอแก้ไขที่รอพิจารณาไม่สำเร็จ', err); });
+  }, function(err){ console.error('อ่านคำขอแก้ไขไม่สำเร็จ', err); });
 }
 
 window.renderOwn = function(){
@@ -200,12 +212,19 @@ window.renderOwn = function(){
   emptyEl.style.display = 'none';
   tbody.innerHTML = all.map(function(c){
     const statusClass = c.status === 'เผยแพร่แล้ว' ? 'published' : 'draft';
-    const hasPending = pendingEditContentIds.indexOf(c.id) !== -1;
-    const actionCell = c.status === 'เผยแพร่แล้ว'
-      ? (hasPending
-          ? '<span class="status pending">มีคำขอแก้ไขรอพิจารณา</span>'
-          : '<a class="btn btn-secondary" href="community-request-edit.html?contentId=' + c.id + '">ขอแก้ไข</a>')
-      : '—';
+    const latestEdit = latestEditByContentId[c.id];
+    let actionCell = '—';
+    if(c.status === 'เผยแพร่แล้ว'){
+      if(latestEdit && latestEdit.status === 'รอพิจารณา'){
+        actionCell = '<span class="status pending">มีคำขอแก้ไขรอพิจารณา</span>';
+      }else if(latestEdit && latestEdit.status === 'ไม่อนุมัติ'){
+        actionCell = '<div class="status pending" style="background:#F7E0DA;color:#A13D2C;margin-bottom:6px;">คำขอแก้ไขล่าสุดถูกปฏิเสธ</div>'
+          + (latestEdit.rejectionReason ? '<div style="font-size:14px;color:#A13D2C;margin-bottom:6px;">เหตุผล: ' + escapeHtml(latestEdit.rejectionReason) + '</div>' : '')
+          + '<a class="btn btn-secondary" href="community-request-edit.html?contentId=' + c.id + '">ขอแก้ไขอีกครั้ง</a>';
+      }else{
+        actionCell = '<a class="btn btn-secondary" href="community-request-edit.html?contentId=' + c.id + '">ขอแก้ไข</a>';
+      }
+    }
     return '<tr><td>' + escapeHtml(c.title) + '</td><td><span class="status ' + statusClass + '">' + escapeHtml(c.status) + '</span></td><td>' + actionCell + '</td></tr>';
   }).join('');
 };
