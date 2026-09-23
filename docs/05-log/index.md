@@ -850,3 +850,16 @@ TTL policy) ตามที่ระบุไว้ในแต่ละ Part
 **ทดสอบผ่าน local `wrangler dev`**: สร้าง throwaway self-signed keypair ด้วย `openssl` (ไม่ใช่ service account จริง) → เรียก `/log-access` ทั้งแบบมี/ไม่มี Authorization header → ตอบ `{ok:true}` เร็ว (fire-and-forget ทำงานถูกต้อง) → เห็น error `INVALID_CUSTOM_TOKEN` จาก `identitytoolkit.googleapis.com` จริง (ยืนยันว่า pipeline เซ็น JWT + เรียก Google endpoint ถูกต้องทั้งหมด รอแค่ service account จริงถึงจะสำเร็จ) — ทดสอบ bearer token ปลอมด้วย ยืนยันว่ายัง log ต่อแบบ anonymous ได้โดยไม่ crash
 
 อัปเดต `cf-worker/README.md`, `.dev.vars.example`, `wrangler.toml` ให้ตรงกับกลไกใหม่ — ยังไม่ deploy (รอผู้ใช้ทำ `wrangler secret put`/`deploy` เหมือนเดิม, ผู้ประสานงานจะ deploy `firestore.rules` ที่แก้แล้ว)
+
+### 2026-09-23 — แก้สถานะ backlog ให้ตรงความจริง (BL-018/019/020/021) ก่อนเริ่มรอบสร้าง BL-007/009/010/013
+
+ผู้ใช้ขอให้สร้างระบบตาม `spec.md` ให้ครบ — ก่อนมอบหมายงาน ตรวจสอบ `product-backlog.md` เทียบกับโค้ดจริงใน `prototype-v2/` พบว่า 4 รายการเขียนสถานะ "ยังไม่เริ่ม" ทั้งที่ implement และ deploy ไปแล้วตั้งแต่ ~2026-09-11/12 (ก่อนแผน "5 ส่วน" ของรอบหลังๆ จะเริ่ม) — น่าจะเป็นรอยต่อที่ backlog ไม่เคยถูกอัปเดตตอนนั้น:
+
+- **BL-018** (อาจารย์อนุมัติผลงานนิสิต) → **เสร็จแล้ว** — `admin-review-student-work.html` อนุมัติ/ไม่อนุมัติพร้อมเหตุผลจริง เชื่อม `LSHRequests` จริง
+- **BL-019** (นิสิตสมัครบัญชีเอง) → **เสร็จแล้ว** — flow สมัครสมาชิกฝังอยู่ใน `student-publish.html` (`createUserWithEmailAndPassword` + สร้าง `users` doc จริง)
+- **BL-021** (ดูผลงานสาธารณะไม่ต้อง login) → **เสร็จแล้ว** — `published-works.html` deploy จริง + `firestore.rules` เปิด public read เฉพาะ `status='อนุมัติ'` แล้วจริง
+- **BL-020** (อาจารย์อนุมัติบัญชีใหม่) → **ทำบางส่วน** (ไม่ใช่เสร็จสมบูรณ์) — กลไกอนุมัติ/ไม่อนุมัติทำงานจริง แต่ **AC ข้อแจ้งเตือนอีเมลไปยังอาจารย์ยังไม่ implement เลย** (grep ทั้ง `prototype-v2/` ไม่พบโค้ด email/notification ใดๆ) สอดคล้องกับการตัดสินใจข้าม "Part 4 (notification service)" ของแผน 5 ส่วนก่อนหน้านี้ในไฟล์นี้ — ไม่ถือเป็นบั๊กใหม่ เป็นผลตามการตัดสินใจเดิมที่ยังไม่เคยสะท้อนกลับมาที่ BL-020 โดยตรง
+
+แก้ไฟล์เดียว: [[../01-requirements/03-task/product-backlog|product-backlog.md]] (แก้ 4 บรรทัด status + หมายเหตุอธิบายหลักฐานที่ใช้ตรวจ ไม่แตะเนื้อหาอื่น)
+
+ลำดับถัดไป: มอบหมาย agent คนละตัวสร้าง BL-007 (หน้าจออ่านง่ายสำหรับผู้สูงอายุ), BL-009 (เรื่องเล่าชุมชนสองภาษา), BL-010 (วางแผนเส้นทาง+หมุดหมาย), BL-013 (พื้นที่คอนเทนต์นิสิต — ส่วนที่เหลือจริงคือ dropdown เลือกชุมชนยังเป็น DRAFT ไม่ได้ดึงรายชื่อชุมชนจริงจาก `users` role=`community`) แบบขนานกัน แต่ละตัวรายงานผลเมื่อเสร็จ
