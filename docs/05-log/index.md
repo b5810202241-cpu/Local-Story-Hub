@@ -979,3 +979,80 @@ community ที่มาจาก dropdown) — เป็นการตรว�
 allow read) แล้ว retest end-to-end จริงอีกครั้ง (login นิสิต → เห็น dropdown มีชื่อชุมชนจริง → เลือก →
 submit → อาจารย์อนุมัติ → เช็คว่า `published-works.html`/หน้านักท่องเที่ยวโชว์ชื่อชุมชนที่เลือกถูกต้อง)
 ก่อนจะปิด BL-013 เป็น "เสร็จแล้ว" เต็มรูปแบบ
+
+### 2026-09-23 — BL-009: Thai/English toggle สำหรับเรื่องราวชุมชน (ฝั่งนักท่องเที่ยว)
+
+BL-009 เดิมมีหมายเหตุค้างว่า `tourist-story-detail.html` แสดงเนื้อหาภาษาไทยจริงแล้วแต่ยังแปล
+ภาษาอังกฤษไม่ได้ เพราะตอนนั้น AI แปลภาษา (BL-003) ยังไม่เชื่อม backend จริง — ตอนนี้ BL-003 เชื่อม
+Cloudflare Worker proxy เสร็จแล้วในโค้ด (ดู log วันที่ 2026-09-23 หัวข้อ Part 3/5) จึงกลับมาทำรอบนี้
+ต่อ: เปลี่ยนจาก "ปุ่มแปลเดี่ยว" (กดแล้วโชว์คำแปลต่อท้ายข้อความไทย) เป็น **language toggle แบบแท็บ**
+ให้ชัดเจนว่าเป็นการ "เลือกภาษาที่จะอ่าน" ไม่ใช่แค่ปุ่มเสริม ตรงตาม Acceptance Criteria ของ BL-009 ที่
+พูดถึง "นักท่องเที่ยวเลือกภาษาไทยหรือภาษาอังกฤษ"
+
+**ตรวจ data source ก่อนแก้ (ข้อ 2 ของ task)**: `tourist-story-detail.html` อ่านทั้ง `LSHRequests`
+(`type=student`) และ `CommunityContent` (`type=community`, field `bodyTh`/`caption`) อยู่แล้วตั้งแต่
+ก่อนรอบนี้ ผ่าน query param `type` — ตัว toggle ใหม่จึงครอบคลุมทั้งสอง schema โดยอัตโนมัติ ไม่ต้องแยก
+โค้ด เพราะทำงานกับตัวแปร `content.body` กลางที่ map มาจากทั้งสอง schema แล้ว (ยืนยันว่า BL-009 ซึ่ง
+user story เจาะจง "เรื่องราวของชุมชน" ถูกครอบคลุมจริง ไม่ใช่แค่ผลงานนิสิต)
+
+**แก้ `tourist-story-detail.html`**: ลบปุ่ม "🌐 แปลเป็นภาษาอังกฤษ" เดี่ยวเดิม เปลี่ยนเป็นแท็บ
+"ภาษาไทย" / "🌐 English" เหนือกล่องเนื้อหา (`role="tablist"`/`role="tab"` + `aria-selected` ให้
+accessible) — แท็บ "ภาษาไทย" แสดงข้อความต้นฉบับทันที (public อ่านได้เสมอ ไม่ต้อง login เหมือนเดิม),
+แท็บ "English" ครั้งแรกที่กด (และมี AI backend พร้อม + login แล้ว) เรียก `callAiProxy('translate', ...)`
+อัตโนมัติแล้ว**แคชผลลัพธ์ไว้ในตัวแปร** (`translatedBody`) กดสลับกลับไปกลับมาไม่ต้องเรียก AI ซ้ำ — แยก
+สถานะชัดเจน 4 แบบใต้แท็บ English: (1) AI backend ยังไม่พร้อมใช้งาน (2) ต้อง login ก่อน (3) กำลังแปล...
+(4) แปลสำเร็จ/แปลพลาด+ปุ่ม "ลองแปลอีกครั้ง" — ไม่มี state ไหนปล่อยว่างเปล่าหรือค้างที่ "กำลังโหลด"
+ตลอดไป
+
+**แก้ `tourist-search-results.html`**: การ์ดผลการค้นหาแต่ละใบแสดง snippet เนื้อหา (ตัดมา 80 ตัวอักษร)
+อยู่แล้ว จึงถือว่าเข้าเงื่อนไข "search results snippets, if those show body text" ของ task — เพิ่มแท็บ
+TH/EN ขนาดเล็กต่อการ์ด (`.mini-tab`) แปล snippet แบบ on-demand ด้วย `callAiProxy` ตัวเดียวกัน ไม่ใช่
+เรียกแปลทั้งเนื้อหาเต็ม (เนื้อหาเต็มแปลได้ที่หน้ารายละเอียด) — เพิ่ม `currentTourist`/`hasAiProxy()`/
+`callAiProxy()` เข้าไปในหน้านี้เป็นครั้งแรก (เดิมไม่มี แม้จะ `<script src="ai-assist-config.js">` ไว้
+เฉยๆ โดยไม่ได้ใช้) คง reference เดียวกับ `allItems` ไว้ใน `displayedItems` เพื่อไม่ให้ cache คำแปลหาย
+เวลาค้นหา/กรองใหม่ (คนละ object ก็คนละ cache)
+
+**การตัดสินใจ — ไม่เพิ่ม stored-translation schema ใหม่ (เช่น `bodyEn` ใน `CommunityContent`)**:
+พิจารณาแล้วว่า AI แปลแบบ on-demand (เรียกทุกครั้งที่กด แคชแค่ใน memory ของหน้านั้นๆ) เพียงพอต่อ
+Acceptance Criteria ของ BL-009 แล้ว ("ระบบแสดงเนื้อหาในภาษานั้นอย่างถูกต้อง" ไม่ได้บังคับว่าต้อง
+เก็บคำแปลถาวร) เหตุผลที่เลือกไม่เก็บถาวร: (1) คำแปลจาก AI เปลี่ยนแปลงได้ทุกครั้งที่เรียก (ไม่ deterministic)
+เก็บถาวรแล้วชุมชนแก้ `bodyTh` ทีหลัง (ผ่าน BL-006 `ContentEditRequests`) จะต้องมีกลไก invalidate คำแปล
+เก่าเพิ่มอีกชั้น เพิ่มความซับซ้อนโดยไม่มี requirement ไหนขอมา (2) การเก็บถาวรเป็น business rule ที่กระทบ
+schema ของ `CommunityContent`/`LSHRequests` ทั้งสองฝั่ง กระทบ `firestore.rules` (ต้องตัดสินใจว่าใคร
+เขียน field นี้ได้ — ชุมชนตอนสร้าง? Worker ตอนแปลครั้งแรก?) และกระทบ flow การอนุมัติของอาจารย์ ซึ่งเป็น
+การตัดสินใจเชิง scope ที่เกินขอบเขตงานนี้ ตามกฎของโปรเจกต์ (CLAUDE.md — ห้ามเดา business rule ที่กระทบ
+scope ใหญ่) จึงไม่ implement เอง — **ถ้าในอนาคตพบว่า on-demand ไม่พอ** (เช่น ต้องการให้นักท่องเที่ยว
+เห็นคำแปลแบบ SEO-indexable, หรือกังวลเรื่องต้นทุนเรียก AI ซ้ำบ่อยเกินไป) ควรถามผู้ใช้/อาจารย์ที่ปรึกษา
+ก่อนว่าจะเพิ่ม field ถาวรแบบไหน — **ไม่ใช่ open question ที่บล็อกงานตอนนี้** เพราะ on-demand ทำงานได้จริง
+ตาม AC แล้ว บันทึกไว้เผื่ออนาคตเท่านั้น
+
+**ไม่แก้ `LSH/firestore.rules`**: ฟีเจอร์นี้ไม่เขียนข้อมูลใหม่ลง Firestore เลย (อ่าน `CommunityContent`/
+`LSHRequests` ที่มีสิทธิ์ public read อยู่แล้ว, เรียก AI ผ่าน Worker ซึ่ง log ลง `AiAssistLogs` ที่เปิด
+สิทธิ์ไว้แล้วตั้งแต่ Part 3) จึงไม่มีอะไรต้อง deploy เพิ่มจากรอบนี้
+
+**ทดสอบ**: คัดลอก `firebase-config.js`/`ai-assist-config.js` จาก repo จริงเข้า worktree (ไม่ commit),
+รัน `npx http-server docs/02-design/01-prototypes/prototype-v2` แล้วเปิดผ่าน Playwright จริงกับ
+Firestore project `lsh-nammon` จริง (ไม่ mock ข้อมูล):
+- `tourist-search-results.html` โหลดข้อมูลจริงทั้งจาก `LSHRequests`(อนุมัติแล้ว)+`CommunityContent`
+  (เผยแพร่แล้ว) ถูกต้อง ทุกการ์ดมีแท็บ TH/EN, ค่าเริ่มต้นเป็น TH เสมอ
+- คลิกแท็บ EN ตอน AI backend ยังเป็น placeholder URL (สถานะจริงตอนนี้) → ขึ้นข้อความ "AI backend
+  ยังไม่พร้อมใช้งาน" ทันทีทั้งในการ์ดและหน้ารายละเอียด **ไม่มี JS error/crash ใดๆ** (เช็คจาก
+  `browser_console_messages` ยืนยันไม่มี uncaught exception มีแค่ `console.error` ที่ตั้งใจ log เอง)
+- จำลองกรณี "AI backend ดูพร้อมใช้งานแต่ยังไม่ login" (set `window.LSH_AI_PROXY_URL` ปลอมชั่วคราวผ่าน
+  `page.evaluate`) → ขึ้นข้อความ "ต้องเข้าสู่ระบบ/สมัครบัญชีก่อน" ถูกต้องทั้งสองหน้า
+- เรียก `window.translateContent()` ตรงๆ ตอนยังไม่ login → error box + ข้อความ error ที่เข้าใจง่าย +
+  ปุ่ม "ลองแปลอีกครั้ง" ปรากฏถูกต้อง, loading indicator ถูกซ่อนกลับ ไม่ค้าง
+- ทดสอบทั้ง `type=student` และ `type=community` ที่หน้ารายละเอียด — toggle แสดงผลถูกต้องเหมือนกันทั้งคู่
+  ตามที่ตั้งใจ (ยืนยันข้อ 2 ของ task ว่า `CommunityContent` ถูกครอบคลุมจริง ไม่ใช่แค่ `LSHRequests`)
+- **ยังไม่ได้ทดสอบคำแปลจริงแบบ end-to-end** (ต้องรอผู้ใช้ deploy Cloudflare Worker ก่อน ตามที่ระบุไว้ใน
+  CLAUDE.md อยู่แล้ว — ไม่อยู่ในสโคปงานนี้ และเป็นพฤติกรรมที่คาดไว้ล่วงหน้า)
+
+**อัปเดตสถานะ**: BL-009 → เสร็จแล้ว (พร้อม caveat รอ deploy Worker) ใน
+[[../01-requirements/03-task/product-backlog|product-backlog]] — แก้ไฟล์: `tourist-story-detail.html`,
+`tourist-search-results.html` เท่านั้น ไม่แตะ `leaveeasy/` หรือไฟล์อื่นนอกสโคป
+
+**เหลือให้ผู้ประสานงาน/ผู้ใช้ทำต่อ**: deploy Cloudflare Worker จริง (Part 3 เดิม ยังไม่มีใครทำ) — เมื่อ
+deploy แล้วควรทดสอบ end-to-end อีกครั้งที่ทั้งสองหน้านี้เพื่อยืนยันคำแปลถูกต้องจริงก่อนปิด BL-009
+สมบูรณ์แบบไม่มี caveat
+
+**หมายเหตุผู้ประสานงาน (merge)**: BL-009 กับ BL-010 (ตัวก่อนหน้า) แก้ `tourist-search-results.html` ทับซ้อนกัน (แท็บ TH/EN ของ BL-009 vs ลิงก์ Google Maps ของ BL-010 บนการ์ดเดียวกัน) — merge ด้วยมือให้อยู่ด้วยกัน: `cardSnippetHtml(it)` (แท็บ TH/EN) ต่อด้วย `.card-actions` ที่มีทั้งลิงก์ "อ่านเรื่องราว →" และ "🗺️ ดูตำแหน่งบน Google Maps" ไม่มีโค้ดของฝั่งไหนถูกทิ้ง
