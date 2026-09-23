@@ -29,6 +29,8 @@ select{width:100%;max-width:360px;border:1px solid var(--color-stone);border-rad
 .card{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-md);}
 .card h3{margin:0 0 4px;font-size:19px;}
 .card .meta{color:var(--color-bark);font-size:15px;margin-bottom:var(--space-sm);}
+.card .maps-link{color:var(--color-indigo);font-size:14px;text-decoration:none;display:inline-block;margin-top:var(--space-sm);}
+.card .maps-link:hover{text-decoration:underline;}
 .empty-state{color:var(--color-bark);padding:var(--space-lg);text-align:center;}
 [hidden]{display:none !important;}
 </style>
@@ -93,11 +95,15 @@ function render(){
   emptyEl.style.display = 'none';
 
   container.innerHTML = filtered.map(function(w){
+    const mapsLink = w.community
+      ? '<a class="maps-link" href="https://www.google.com/maps/search/' + encodeURIComponent(w.community) + '" target="_blank" rel="noopener">🗺️ ดูตำแหน่งบน Google Maps</a>'
+      : '';
     return (
       '<div class="card">' +
         '<h3>' + escapeHtml(w.title) + '</h3>' +
         '<div class="meta">โดย: ' + escapeHtml(w.requesterName) + (w.community ? ' · ชุมชน: ' + escapeHtml(w.community) : ' · ไม่ระบุชุมชน') + '</div>' +
         '<div>' + escapeHtml(w.Content) + '</div>' +
+        mapsLink +
       '</div>'
     );
   }).join('');
