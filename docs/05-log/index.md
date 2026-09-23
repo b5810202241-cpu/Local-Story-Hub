@@ -850,3 +850,33 @@ TTL policy) ตามที่ระบุไว้ในแต่ละ Part
 **ทดสอบผ่าน local `wrangler dev`**: สร้าง throwaway self-signed keypair ด้วย `openssl` (ไม่ใช่ service account จริง) → เรียก `/log-access` ทั้งแบบมี/ไม่มี Authorization header → ตอบ `{ok:true}` เร็ว (fire-and-forget ทำงานถูกต้อง) → เห็น error `INVALID_CUSTOM_TOKEN` จาก `identitytoolkit.googleapis.com` จริง (ยืนยันว่า pipeline เซ็น JWT + เรียก Google endpoint ถูกต้องทั้งหมด รอแค่ service account จริงถึงจะสำเร็จ) — ทดสอบ bearer token ปลอมด้วย ยืนยันว่ายัง log ต่อแบบ anonymous ได้โดยไม่ crash
 
 อัปเดต `cf-worker/README.md`, `.dev.vars.example`, `wrangler.toml` ให้ตรงกับกลไกใหม่ — ยังไม่ deploy (รอผู้ใช้ทำ `wrangler secret put`/`deploy` เหมือนเดิม, ผู้ประสานงานจะ deploy `firestore.rules` ที่แก้แล้ว)
+### 2026-09-23 — BL-007: ปรับปรุง UI สำหรับผู้สูงอายุในชุมชน
+
+**ปรับปรุง CSS/markup ของหน้าจอชุมชน 4 หน้า** เพื่อให้มีความสามารถในการอ่านและการใช้งานที่ดีขึ้นสำหรับผู้สูงอายุ โดยคงการออกแบบตาม DESIGN.md ตัวอย่างที่กำหนด:
+
+- **community-dashboard.html** — จัดการข้อมูลชุมชน: ปรับปรุงตาราง (font-size 18px, padding ใหญ่ขึ้น), heading (h1 36px, h2 26px), hint text (18px)
+- **community-create-content.html** — สร้างคอนเทนต์: ปรับปรุง step indicators (36px), form labels (18px), upload box (18px)
+- **community-register.html** — สมัครและเข้าสู่ระบบ: ปรับปรุง form inputs (52px height, 18px font), navigation links (18px)
+- **community-request-edit.html** — ขอแก้ไขคอนเทนต์: ปรับปรุง current value displays (18px), labels (18px)
+
+**ปรับปรุงทั่วไป**:
+- ขนาด font เริ่มต้นของ body: 18px (ตามที่ DESIGN.md กำหนด แต่ให้แน่ใจว่าใช้ทั่วทั้งระบบ)
+- ปุ่ม primary: 56px height (จาก 48px), font-size 18px (จาก 16px)
+- Input/textarea: 52px height (จาก 44px), font-size 18px
+- Labels: 18px (จาก 16px)
+- Navigation links: 18px (จาก 16px)
+- Status badges: ขนาด padding และ font ใหญ่ขึ้น
+- Error/note messages: 18px (จาก 15-16px)
+
+**ทดสอบผ่าน HTTP server**:
+- สตาร์ท local server (`npx http-server`) ที่ port 8888
+- ตรวจสอบ CSS syntax ใน HTML ด้วย grep → ยืนยันว่า font-size, height, padding ทั้งหมดเป็นไปตามแบบ
+- ตรวจสอบ contrast ของตัวอักษร → ทั่วทั้ง 4 หน้า ใช้ color tokens จาก DESIGN.md เดิม ไม่เพิ่มสี/โทนใหม่
+- ตรวจสอบ button/link touch targets → ขนาดพอ (56px buttons, 52px inputs) สำหรับการใช้งานบนอุปกรณ์หรือเมาส์
+
+**เหลือให้ผู้ใช้ทดสอบต่อ** (manual UAT):
+- ทดสอบ UI ด้วยการเพิ่มขยายบราวเซอร์ (browser zoom) ให้ผู้สูงอายุจริง
+- ทดสอบบนอุปกรณ์ต่างๆ (tablet/phone) ถ้ามี
+- ทดสอบ interaction flow ว่าเหลือขั้นตอนใดที่ไม่จำเป็นหรือซับซ้อน (จากการใช้งานจริงจากผู้ใช้เป้าหมาย)
+
+อัปเดต `product-backlog.md` (BL-007 → เสร็จแล้ว) ด้วยหมายเหตุรายละเอียด
