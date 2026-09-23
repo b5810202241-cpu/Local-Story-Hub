@@ -7,3 +7,13 @@
 - สถานะการแก้ไขบั๊ก
 
 ผลลัพธ์และปัญหาที่พบในโฟลเดอร์นี้จะถูกนำไปสรุปบทเรียนต่อใน [[../../04-retrospectives/index|04-retrospectives]]
+
+## บันทึกผลทดสอบ
+
+- [[20260923-test-run-tourist|20260923-test-run-tourist]] — ผลทดสอบ TC-001 ถึง TC-008 (หมวดนักท่องเที่ยว) ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-community-content|20260923-test-run-community-content]] — ผลทดสอบ TC-009 ถึง TC-016 (หมวดชุมชน — สร้าง/จัดการคอนเทนต์) ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-community-registration|20260923-test-run-community-registration]] — ผลทดสอบ TC-017 ถึง TC-019 (หมวดชุมชน — สมัคร/อนุมัติบัญชีชุมชนใหม่) ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-community-edit-request|20260923-test-run-community-edit-request]] — ผลทดสอบ TC-020 ถึง TC-022 (หมวดชุมชน — ขอแก้ไขข้อมูล/คอนเทนต์) ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-student-content|20260923-test-run-student-content]] — ผลทดสอบ TC-023 ถึง TC-026 (หมวดนิสิตนิเทศศาสตร์ — ส่งผลงาน/อนุมัติ/ไม่อนุมัติ) รวมการ retest dropdown "เลือกชุมชนที่เกี่ยวข้อง" (BL-013) หลัง deploy firestore.rules ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-student-registration|20260923-test-run-student-registration]] — ผลทดสอบ TC-027 ถึง TC-032 (หมวดนิสิต — สมัคร/อนุมัติบัญชีผู้ใช้ใหม่) ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`)
+- [[20260923-test-run-public-view|20260923-test-run-public-view]] — ผลทดสอบ TC-033 ถึง TC-036 (หมวดบุคคลทั่วไป — ไม่ Login) รวม security test เจาะลึก TC-035 ผ่าน browser จริงบน production (`https://lsh-nammon.web.app/`) — **รอบทดสอบสุดท้าย ปิด test plan ครบ 36/36 ข้อ**
