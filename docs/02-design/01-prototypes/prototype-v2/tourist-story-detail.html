@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — รายละเอียดเรื่องราว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site a.active{color:var(--color-clay);font-weight:600;}
+main{max-width:780px;margin:0 auto;padding:var(--space-xl);}
+.hero-img{aspect-ratio:16/7;background:linear-gradient(135deg,var(--color-stone),var(--color-sand));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--color-bark);margin-bottom:var(--space-lg);}
+.title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-md);flex-wrap:wrap;}
+h1{font-size:32px;font-weight:600;margin:0;}
+.tag{display:inline-block;font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:2px 10px;margin:var(--space-sm) 0;}
+.story-text{font-size:18px;margin:var(--space-lg) 0;white-space:pre-wrap;}
+.en-note{font-size:14px;color:var(--color-bark);background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);}
+.map-box{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin:var(--space-xl) 0;}
+.map-box h2{font-size:22px;margin:0 0 var(--space-sm);}
+.map-box a{color:var(--color-indigo);}
+.actions{display:flex;gap:var(--space-md);margin:var(--space-xl) 0;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;text-decoration:none;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);}
+.btn:disabled{opacity:.6;cursor:default;}
+.reviews{margin-top:var(--space-2xl);}
+.reviews h2{font-size:22px;}
+textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:16px;color:var(--color-ink);}
+.review-item{border-top:1px solid var(--color-stone);padding:var(--space-md) 0;font-size:16px;color:var(--color-bark);}
+.consent-badge{font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:3px 12px;margin-left:var(--space-lg);}
+.login-prompt{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-size:16px;margin-bottom:var(--space-md);}
+.login-prompt a{color:var(--color-clay);font-weight:600;}
+.error-view{padding:var(--space-2xl);text-align:center;color:var(--color-bark);}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="tourist-home-consent.html">Local Story Hub</a>
+  <nav class="site">
+    <a class="active" href="tourist-search-results.html">ค้นหาชุมชน</a>
+    <a href="tourist-login.html" id="tourist-login-link">เข้าสู่ระบบ</a>
+    <span id="tourist-session-info" class="consent-badge" style="display:none;"></span>
+  </nav>
+</header>
+
+<main>
+  <div id="loading-view">กำลังโหลด...</div>
+  <div id="error-view" class="error-view" hidden></div>
+
+  <div id="content-view" hidden>
+    <div class="hero-img" id="hero-label"></div>
+
+    <div class="title-row">
+      <h1 id="content-title"></h1>
+    </div>
+    <span class="tag" id="content-type-tag"></span>
+    <p style="color:var(--color-bark)" id="content-community"></p>
+
+    <p class="story-text" id="content-body"></p>
+    <p class="en-note">คำแปลภาษาอังกฤษ (FR-2.2) จะพร้อมใช้งานเมื่อเชื่อมต่อ AI backend จริง (อยู่ระหว่างดำเนินการ) — ตอนนี้แสดงเฉพาะภาษาไทยต้นฉบับ</p>
+
+    <div class="map-box">
+      <h2>หมุดหมายเดินทาง</h2>
+      <p>ระบบยังไม่มีข้อมูลพิกัดที่แม่นยำต่อเรื่องราว (BL-010 ยังไม่ได้เก็บ field ตำแหน่ง) — ลองค้นหาชื่อชุมชนใน <a id="maps-link" target="_blank" rel="noopener">Google Maps</a> ไปพลางก่อน</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="bookmark-btn" onclick="toggleBookmark()">บันทึกสถานที่โปรด</button>
+      <a class="btn btn-primary" href="#review-form">เขียนรีวิว</a>
+    </div>
+
+    <section class="reviews" id="review-form">
+      <h2>รีวิวจากนักท่องเที่ยว</h2>
+      <div class="login-prompt" id="review-guest-prompt" hidden>
+        ต้อง<a id="review-login-link">เข้าสู่ระบบ/สมัครบัญชี</a>ก่อน จึงจะเขียนรีวิวได้ (ตัดสินใจ 2026-08-28)
+      </div>
+      <div id="review-form-inner" hidden>
+        <textarea id="review-text" placeholder="แบ่งปันประสบการณ์ของคุณ..."></textarea>
+        <div style="margin-top:var(--space-md)"><button class="btn btn-primary" id="post-review-btn" onclick="postReview()">โพสต์รีวิว</button></div>
+      </div>
+
+      <div id="review-list"><p style="color:var(--color-bark)">กำลังโหลดรีวิว...</p></div>
+    </section>
+  </div>
+</main>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc, collection, addDoc, query, where,
+  getDocs, orderBy, serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+function getParam(name){
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+const contentType = getParam('type'); // 'student' | 'community'
+const contentId = getParam('id');
+const selfUrl = 'tourist-story-detail.html?type=' + encodeURIComponent(contentType || '') + '&id=' + encodeURIComponent(contentId || '');
+
+let currentTourist = null; // { uid, displayName } or null
+let content = null; // { title, body, communityName }
+
+async function loadContent(){
+  if(!contentType || !contentId || (contentType !== 'student' && contentType !== 'community')){
+    showError('ไม่พบเรื่องราวนี้ (ลิงก์ไม่ถูกต้อง)');
+    return false;
+  }
+  try{
+    if(contentType === 'student'){
+      const snap = await getDoc(doc(db, 'LSHRequests', contentId));
+      if(!snap.exists() || snap.data().status !== 'อนุมัติ'){
+        showError('ไม่พบเรื่องราวนี้ หรือยังไม่ได้เผยแพร่');
+        return false;
+      }
+      const data = snap.data();
+      content = { title: data.title, body: data.Content, communityName: data.community || 'ไม่ระบุชุมชน', typeLabel: 'ผลงานนิสิต' };
+    }else{
+      const snap = await getDoc(doc(db, 'CommunityContent', contentId));
+      if(!snap.exists() || snap.data().status !== 'เผยแพร่แล้ว'){
+        showError('ไม่พบเรื่องราวนี้ หรือยังไม่ได้เผยแพร่');
+        return false;
+      }
+      const data = snap.data();
+      content = { title: data.title, body: data.bodyTh || data.caption, communityName: data.communityName, typeLabel: 'คอนเทนต์ชุมชน' };
+    }
+  }catch(e){
+    console.error('โหลดเรื่องราวไม่สำเร็จ', e);
+    showError('โหลดเรื่องราวไม่สำเร็จ: ' + e.message);
+    return false;
+  }
+  return true;
+}
+
+function showError(msg){
+  document.getElementById('loading-view').hidden = true;
+  const errEl = document.getElementById('error-view');
+  errEl.hidden = false;
+  errEl.textContent = msg;
+}
+
+function renderContent(){
+  document.getElementById('loading-view').hidden = true;
+  document.getElementById('content-view').hidden = false;
+  document.getElementById('hero-label').textContent = 'ภาพ' + content.title;
+  document.getElementById('content-title').textContent = content.title;
+  document.getElementById('content-type-tag').textContent = content.typeLabel;
+  document.getElementById('content-community').textContent = content.communityName;
+  document.getElementById('content-body').textContent = content.body || '';
+  document.getElementById('maps-link').href = 'https://www.google.com/maps/search/' + encodeURIComponent(content.communityName);
+}
+
+// เซสชันนักท่องเที่ยว — real Firebase Auth + touristAccounts (แทน localStorage เดิมของ prototype-v1)
+onAuthStateChanged(auth, async function(user){
+  var link = document.getElementById('tourist-login-link');
+  var info = document.getElementById('tourist-session-info');
+  var guestPrompt = document.getElementById('review-guest-prompt');
+  var formInner = document.getElementById('review-form-inner');
+
+  if(!user){
+    currentTourist = null;
+    link.textContent = 'เข้าสู่ระบบ';
+    link.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    link.onclick = null;
+    info.style.display = 'none';
+    guestPrompt.hidden = false;
+    formInner.hidden = true;
+    document.getElementById('review-login-link').href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    renderBookmarkButton();
+    return;
+  }
+
+  let profile = null;
+  try{
+    const snap = await getDoc(doc(db, 'touristAccounts', user.uid));
+    if(snap.exists()) profile = Object.assign({ id: snap.id }, snap.data());
+  }catch(e){
+    console.error('โหลดข้อมูล touristAccounts ไม่สำเร็จ', e);
+  }
+
+  if(!profile){
+    // login แล้วแต่ยังไม่เคยลงทะเบียนเป็นนักท่องเที่ยว (อาจเป็นบทบาทอื่น) — ให้ไปหน้า login เพื่อลงทะเบียนก่อน
+    currentTourist = null;
+    link.textContent = 'ลงทะเบียนนักท่องเที่ยว';
+    link.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    info.style.display = 'none';
+    guestPrompt.hidden = false;
+    formInner.hidden = true;
+    document.getElementById('review-login-link').href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    renderBookmarkButton();
+    return;
+  }
+
+  currentTourist = { uid: user.uid, displayName: profile.displayName };
+  link.textContent = 'ออกจากระบบ';
+  link.href = '#';
+  link.onclick = function(e){ e.preventDefault(); signOut(auth).then(function(){ window.location.reload(); }); };
+  info.textContent = profile.displayName;
+  info.style.display = 'inline-block';
+  guestPrompt.hidden = true;
+  formInner.hidden = false;
+  renderBookmarkButton();
+});
+
+function getBookmarkDocId(){
+  if(!currentTourist) return null;
+  return currentTourist.uid + '_' + contentType + '_' + contentId;
+}
+
+async function renderBookmarkButton(){
+  const btn = document.getElementById('bookmark-btn');
+  if(!currentTourist){
+    btn.textContent = 'บันทึกสถานที่โปรด';
+    return;
+  }
+  try{
+    const snap = await getDoc(doc(db, 'Bookmarks', getBookmarkDocId()));
+    btn.textContent = snap.exists() ? 'บันทึกแล้ว ✓ (กดเพื่อยกเลิก)' : 'บันทึกสถานที่โปรด';
+  }catch(e){
+    console.error('เช็คสถานะบันทึกสถานที่ไม่สำเร็จ', e);
+  }
+}
+
+window.toggleBookmark = async function(){
+  if(!currentTourist){
+    window.location.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    return;
+  }
+  const btn = document.getElementById('bookmark-btn');
+  btn.disabled = true;
+  const bId = getBookmarkDocId();
+  try{
+    const ref = doc(db, 'Bookmarks', bId);
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      await deleteDoc(ref);
+    }else{
+      await setDoc(ref, {
+        touristId: currentTourist.uid,
+        contentId: contentId,
+        contentType: contentType,
+        contentTitle: content.title,
+        createdAt: serverTimestamp(),
+      });
+    }
+  }catch(e){
+    console.error('บันทึก/ยกเลิกสถานที่โปรดไม่สำเร็จ', e);
+    alert('ทำรายการไม่สำเร็จ: ' + e.message);
+  }finally{
+    btn.disabled = false;
+    renderBookmarkButton();
+  }
+};
+
+function renderReviews(reviews){
+  const listEl = document.getElementById('review-list');
+  if(reviews.length === 0){
+    listEl.innerHTML = '<p style="color:var(--color-bark)">ยังไม่มีรีวิวสำหรับเรื่องราวนี้ — เป็นคนแรกที่เขียนรีวิวสิ!</p>';
+    return;
+  }
+  listEl.innerHTML = reviews.map(function(r){
+    return '<div class="review-item">"' + escapeHtml(r.text) + '" — ' + escapeHtml(r.touristName) + '</div>';
+  }).join('');
+}
+
+async function loadReviews(){
+  try{
+    const q = query(
+      collection(db, 'Reviews'),
+      where('contentId', '==', contentId),
+      where('contentType', '==', contentType),
+    );
+    const snap = await getDocs(q);
+    const reviews = [];
+    snap.forEach(function(d){ reviews.push(d.data()); });
+    renderReviews(reviews);
+  }catch(e){
+    console.error('โหลดรีวิวไม่สำเร็จ', e);
+    document.getElementById('review-list').innerHTML = '<p style="color:var(--color-error)">โหลดรีวิวไม่สำเร็จ: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+window.postReview = async function(){
+  if(!currentTourist){
+    window.location.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+    return;
+  }
+  const textEl = document.getElementById('review-text');
+  const text = textEl.value.trim();
+  if(!text){ textEl.focus(); return; }
+  const btn = document.getElementById('post-review-btn');
+  btn.disabled = true;
+  try{
+    await addDoc(collection(db, 'Reviews'), {
+      contentId: contentId,
+      contentType: contentType,
+      contentTitle: content.title,
+      touristId: currentTourist.uid,
+      touristName: currentTourist.displayName,
+      text: text,
+      createdAt: serverTimestamp(),
+    });
+    textEl.value = '';
+    await loadReviews();
+  }catch(e){
+    console.error('โพสต์รีวิวไม่สำเร็จ', e);
+    alert('โพสต์รีวิวไม่สำเร็จ: ' + e.message);
+  }finally{
+    btn.disabled = false;
+  }
+};
+
+(async function init(){
+  const ok = await loadContent();
+  if(!ok) return;
+  renderContent();
+  await loadReviews();
+})();
+</script>
+<script type="module" src="consent-banner.js"></script>
+
+</body>
+</html>

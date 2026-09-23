@@ -86,7 +86,8 @@
   - Given นักท่องเที่ยวเข้าระบบ When ค้นหาแหล่งท่องเที่ยวชุมชน Then ระบบแสดงผลลัพธ์จากข้อมูลที่ชุมชนเผยแพร่เองในระบบ
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-2.1)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: **เพิ่ม 2026-09-23** — implement จริงใน `prototype-v2/tourist-search-results.html` (ไม่ต้อง login) ดึงข้อมูลจริงจากทั้ง `LSHRequests` (ผลงานนิสิต) และ `CommunityContent` (คอนเทนต์ชุมชน) มารวมกัน ค้นหา/กรองแบบ live
 
 ### BL-009: รับเรื่องเล่าของชุมชนสองภาษา
 - **Epic**: การสืบค้นและวางแผนท่องเที่ยว
@@ -96,6 +97,7 @@
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-2.2)
 - **Status**: ยังไม่เริ่ม
+- **หมายเหตุ**: **อัปเดต 2026-09-23** — หน้าจอ `tourist-story-detail.html` (prototype-v2) แสดงเนื้อหาภาษาไทยจริงจาก Firestore แล้ว แต่**ยังไม่มีคำแปลภาษาอังกฤษจริง** เพราะ AI แปลภาษา (FR-1.3) ยังไม่เชื่อม backend จริง (รอ Part 3 — Cloud Functions proxy) — แสดงข้อความแจ้งผู้ใช้ตรงๆ แทนการเดา/ปลอมคำแปล
 
 ### BL-010: วางแผนเส้นทางท่องเที่ยวพร้อมหมุดหมาย
 - **Epic**: การสืบค้นและวางแผนท่องเที่ยว
@@ -105,6 +107,7 @@
 - **Priority**: Should
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-2.3)
 - **Status**: ยังไม่เริ่ม
+- **หมายเหตุ**: **อัปเดต 2026-09-23** — ยังไม่มี field พิกัด/เส้นทางในสคีมา `LSHRequests`/`CommunityContent` เลย (ไม่มีที่มาจาก requirement ใดกำหนดรูปแบบไว้ชัดเจน) `tourist-story-detail.html` จึงลิงก์ไป Google Maps ค้นหาด้วยชื่อชุมชนแทนไปพลางก่อน แทนที่จะทำ routing service เอง (เกินสโคปของรอบนี้) — ควรถามผู้มีส่วนได้ส่วนเสียก่อนออกแบบ field พิกัดจริง
 
 ## Epic: การมีส่วนร่วมของนักท่องเที่ยว
 
@@ -115,8 +118,8 @@
   - Given นักท่องเที่ยวเคยเข้าดูแหล่งท่องเที่ยวในระบบ When เขียนรีวิว Then ระบบบันทึกและแสดงรีวิวนั้นในหน้าแหล่งท่องเที่ยว
 - **Priority**: Could
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-2.4)
-- **Status**: ยังไม่เริ่ม
-- **หมายเหตุ**: ต้องมีบัญชีผู้ใช้ (login เต็มรูปแบบ) ก่อนเขียนรีวิวได้เสมอ (Decision Log 2026-08-28 ใน architecture.md) — prototype-v1 แก้ไขให้ตรงกันแล้ว 2026-09-22
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: ต้องมีบัญชีผู้ใช้ (login เต็มรูปแบบ) ก่อนเขียนรีวิวได้เสมอ (Decision Log 2026-08-28 ใน architecture.md) — **implement จริงแล้ว 2026-09-23** ใน `prototype-v2/tourist-story-detail.html` (collection `Reviews`, gate ด้วย Firebase Auth + `touristAccounts`, บังคับที่ `firestore.rules` ด้วย) prototype-v1 (localStorage mockup) superseded
 
 ### BL-012: บันทึกสถานที่โปรด
 - **Epic**: การมีส่วนร่วมของนักท่องเที่ยว
@@ -125,8 +128,8 @@
   - Given นักท่องเที่ยวดูแหล่งท่องเที่ยวที่สนใจ When กดบันทึก Then ระบบเก็บรายการสถานที่โปรดไว้ให้ดูภายหลังได้
 - **Priority**: Could
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-2.5)
-- **Status**: ยังไม่เริ่ม
-- **หมายเหตุ**: ต้องมีบัญชีผู้ใช้ (login เต็มรูปแบบ) ก่อนบันทึกสถานที่โปรดได้เสมอ (Decision Log 2026-08-28 ใน architecture.md) — prototype-v1 แก้ไขให้ตรงกันแล้ว 2026-09-22
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: ต้องมีบัญชีผู้ใช้ (login เต็มรูปแบบ) ก่อนบันทึกสถานที่โปรดได้เสมอ (Decision Log 2026-08-28 ใน architecture.md) — **implement จริงแล้ว 2026-09-23** ใน `prototype-v2/tourist-story-detail.html` (collection `Bookmarks`, toggle บันทึก/ยกเลิกจริง, บังคับที่ `firestore.rules` ด้วย) prototype-v1 (localStorage mockup) superseded
 
 ## Epic: พื้นที่คอนเทนต์สำหรับนิสิตนิเทศศาสตร์
 
@@ -240,7 +243,8 @@
   - Given ผู้ใช้งานเข้าเว็บไซต์/แอปโดยยังไม่เคยตอบ Consent When หน้าเว็บโหลดขึ้นมา Then ระบบแสดง Consent Notice/Banner ก่อนเริ่มเก็บข้อมูลผ่าน tracking tools
 - **Priority**: Must
 - **Source**: [[../01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]] (FR-2)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: **implement จริงแล้ว 2026-09-23** — `consent-banner.js` (prototype-v2) แสดง banner ก่อนเก็บข้อมูล wired เข้า `tourist-home-consent.html`/`tourist-search-results.html`
 
 ### BL-016: เลือกยินยอม/ปฏิเสธการเก็บข้อมูลที่ไม่จำเป็น
 - **Epic**: การปฏิบัติตามกฎหมาย IT และ PDPA
@@ -250,8 +254,8 @@
   - Given ผู้ใช้งานเลือกยินยอม When กดยืนยัน Then ระบบเริ่มเก็บ/ใช้ข้อมูลผ่าน tracking tools ตามที่ยินยอม
 - **Priority**: Must
 - **Source**: [[../01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]] (FR-3)
-- **Status**: ยังไม่เริ่ม
-- **หมายเหตุ**: รูปแบบ Consent แบบ granular (เลือกได้ทีละประเภท) หรือแบบเดียว (ยอมรับ/ปฏิเสธทั้งหมด) ยังเป็น Open Question ในสเปคต้นทาง
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: ปิด Open Question แล้ว 2026-09-22 (Consent แบบเดียว ไม่ granular) — **implement จริงแล้ว 2026-09-23** ปุ่ม "ยินยอมทั้งหมด"/"ปฏิเสธที่ไม่จำเป็น" ใน `consent-banner.js` เขียนผล localStorage ทันที + Firestore แบบ fire-and-forget
 
 ### BL-017: บันทึกหลักฐานการให้ Consent
 - **Epic**: การปฏิบัติตามกฎหมาย IT และ PDPA
@@ -260,7 +264,8 @@
   - Given ผู้ใช้งานให้ความยินยอมผ่าน Consent Notice When ระบบบันทึกผล Then มีการเก็บวันเวลาที่ยินยอมไว้อ้างอิงได้ภายหลัง
 - **Priority**: Should
 - **Source**: [[../01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]] (FR-4)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: **implement จริงแล้ว 2026-09-23** — collection `ConsentRecords` (`user_account_id`, `analytics_consent`/`marketing_consent`, `timestamp`) เขียนโดย `consent-banner.js` ทุกครั้งที่ผู้ใช้ตอบ banner (ไม่ต้อง login)
 
 ## ข้อสันนิษฐาน
 

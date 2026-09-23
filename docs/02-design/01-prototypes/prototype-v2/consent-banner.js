@@ -1,9 +1,6 @@
 /**
- * superseded 2026-09-23: copy moved to ../prototype-v2/consent-banner.js (the deployed folder)
- * and wired into tourist-home-consent.html/tourist-search-results.html there. This file kept
- * as history, not deleted.
- *
- * consent-banner.js — Local Story Hub (prototype-v4)
+ * consent-banner.js — Local Story Hub (moved from prototype-v4 into prototype-v2 on 2026-09-23,
+ * the shared "real" deployed folder, and wired into tourist-home-consent.html/tourist-search-results.html)
  * =====================================================================================
  * PDPA consent notice + real Firestore write, replacing the localStorage-only mockup at
  * docs/02-design/01-prototypes/prototype-v1/tourist-home-consent.html.
@@ -11,54 +8,33 @@
  * HOW TO USE
  * ----------
  * This file uses native ES module `import` statements (Firebase modular SDK v10.12.2,
- * matching the version already used in prototype-v2), so it MUST be included as a module:
+ * matching the version already used elsewhere in prototype-v2), so it MUST be included as a module:
  *
  *   <script src="firebase-config.js"></script>                 <!-- sets window.LSH_FIREBASE_CONFIG -->
  *   <script type="module" src="consent-banner.js"></script>
  *
- * (Note: the task brief said `<script src="consent-banner.js">` — a plain, non-module
- * script tag cannot contain `import` statements at all, so `type="module"` is required.
- * This is called out explicitly so nobody copies a plain `<script src>` tag and gets a
- * silent syntax/parse failure.)
- *
- * If `window.LSH_FIREBASE_CONFIG` is not present (e.g. the host page forgot to load
- * firebase-config.js, or a developer is running this file standalone with no backend),
- * this module degrades gracefully: it still shows the banner and still remembers the
- * visitor's answer locally (so the banner doesn't reappear on reload), it just cannot
- * persist a real ConsentRecord to Firestore. It logs a loud console.warn when that
- * happens so the gap is never silent.
+ * If `window.LSH_FIREBASE_CONFIG` is not present, this module degrades gracefully: it still
+ * shows the banner and still remembers the visitor's answer locally (so the banner doesn't
+ * reappear on reload), it just cannot persist a real ConsentRecord to Firestore. It logs a
+ * loud console.warn when that happens so the gap is never silent.
  *
  * INTERPRETATION OF "SINGLE-TOGGLE CONSENT" (see spec Business Rules, 20260822-01-it-log-pdpa-consent.md,
  * decided 2026-09-22: "ปุ่มเดียว 'ยอมรับ' หรือ 'ปฏิเสธ' ไม่มีการแยก toggle รายประเภท"):
- *   - The UI exposes exactly ONE user decision (accept-all vs reject-non-essential), matching
- *     the two buttons already used in prototype-v1 ("ยินยอมทั้งหมด" / "ปฏิเสธที่ไม่จำเป็น").
- *     There is no per-category (analytics vs marketing/IP) toggle anywhere in the UI.
- *   - architecture.md's ConsentRecord entity still keeps TWO stored fields,
- *     `analytics_consent` and `marketing_consent`, and explicitly says merging them into a
- *     single field was left as an implementation detail ("ยังไม่ได้ตัดสินใจรวมเป็น field เดียว
- *     — เป็นรายละเอียดที่ตัดสินใจได้ตอน implement จริง"). This implementation keeps both
- *     fields (so the stored schema matches the documented ER diagram / Firestore rules
- *     proposal without requiring a schema change elsewhere), but derives BOTH of them from
- *     the SAME single toggle/click — they are always written with an identical boolean value,
- *     enforced both here in code and again in the proposed Firestore rule
- *     (`analytics_consent == marketing_consent`) in firestore-rules-compliance-proposal.md.
- *     In short: "one toggle driving two fields", not "one boolean field" and not "two
- *     independently-settable booleans".
+ *   - The UI exposes exactly ONE user decision (accept-all vs reject-non-essential).
+ *   - ConsentRecord keeps TWO stored fields, `analytics_consent` and `marketing_consent`
+ *     (matching architecture.md's ER diagram), but both are always written with an identical
+ *     boolean value derived from the single toggle — enforced here and again in
+ *     LSH/firestore.rules (`analytics_consent == marketing_consent`).
  *
- * ANONYMOUS / NOT-YET-AUTHENTICATED VISITORS (Sequence #1, detailed-design.md — the `Client`
- * participant there is generic, not necessarily logged in):
+ * ANONYMOUS / NOT-YET-AUTHENTICATED VISITORS:
  *   - ConsentRecord.user_account_id is optional per architecture.md ("Consent เกิดขึ้นได้ก่อน
  *     login"). This module resolves the current Firebase Auth uid (if any) at the moment the
- *     user answers and stores that as `user_account_id`; if nobody is logged in yet, it stores
- *     `null` — exactly matching the schema's documented meaning of that field.
- *   - Separately (and only for the *local* de-duplication check — "have I already asked this
- *     browser?"), an anonymous client-generated id is cached in localStorage. This anonymous id
- *     is NOT written into the ConsentRecord document (the schema has no field for it); it only
- *     drives this module's own "don't show the banner again" bookkeeping in localStorage.
+ *     user answers; if nobody is logged in yet, it stores `null`.
+ *   - A separate anonymous client-generated id is cached in localStorage purely for this
+ *     module's own "have I already asked this browser?" bookkeeping — it is NOT written into
+ *     the ConsentRecord document.
  *
- * FIRESTORE COLLECTION NAME: `ConsentRecords` (plural), matching the existing real Firestore
- * naming convention in this project (`AiAssistLogs`, `AiSummaries`, `LSHRequests` are all
- * plural) — see LSH/firestore.rules and CLAUDE.md.
+ * FIRESTORE COLLECTION NAME: `ConsentRecords` (plural) — see LSH/firestore.rules and CLAUDE.md.
  */
 
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -69,9 +45,8 @@ const LS_KEY = 'lsh_consent';
 const ANON_ID_KEY = 'lsh_anon_id';
 const COLLECTION_NAME = 'ConsentRecords';
 
-/** Reuse an already-initialized Firebase app if the host page (or another LSH module on the
- * same page, e.g. access-log.js) already called initializeApp() — Firebase throws if you call
- * initializeApp() twice with the default app name, so this guards against that. */
+/** Reuse an already-initialized Firebase app if the host page already called initializeApp()
+ * — Firebase throws if you call initializeApp() twice with the default app name. */
 function getFirebaseApp() {
   try {
     if (!window.LSH_FIREBASE_CONFIG) return null;
@@ -179,8 +154,8 @@ async function persistConsent(accepted) {
   if (!app) {
     console.warn(
       '[consent-banner] window.LSH_FIREBASE_CONFIG not found — consent was recorded in ' +
-      'localStorage only, NOT written to Firestore. Load firebase-config.js (see ' +
-      'firebase-config.example.js) before this script for real PDPA-compliant persistence.',
+      'localStorage only, NOT written to Firestore. Load firebase-config.js before this script ' +
+      'for real PDPA-compliant persistence.',
     );
     return;
   }

@@ -635,3 +635,32 @@ Open Question ย่อยที่ยังไม่ปิด (ไม่บล�
 ไม่พบ JS error หรือ permission-denied ตลอด flow (มีแค่ 404 ของ favicon ที่ไม่เกี่ยวข้อง) — **ระบบชุมชนใช้งานได้จริงครบสมบูรณ์แล้ว** เก็บบัญชี/คอนเทนต์ทดสอบไว้ใน Firestore ตามธรรมเนียมเดิมของโปรเจกต์ (ไม่ลบข้อมูลทดสอบทิ้ง)
 
 Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น `origin/main` แล้ว — **Part 1/5 เสร็จสมบูรณ์**
+
+### 2026-09-23 — Implement ฝั่งนักท่องเที่ยวจริง เชื่อม Firebase (BL-008–012, BL-015–017) — Part 2/5 ของแผน "สร้างระบบตาม spec.md ให้ครบ"
+
+รอบนี้ทำเฉพาะ **ส่วนนักท่องเที่ยว** ต่อจาก Part 1 (ระบบชุมชน)
+
+**พบว่ามีงานค้างจากสองรอบก่อนหน้าที่ไม่เคยเสร็จสมบูรณ์**: `tourist-login.html` (สมัคร/login ด้วย Firebase Auth จริง เขียน collection `touristAccounts`) และ `consent-banner.js` (เขียน `ConsentRecords` จริง) ถูกสร้างไว้แล้วใน `prototype-v4/` ตั้งแต่ก่อนแผน 5-part นี้เริ่ม แต่**ไม่เคยมี `firestore.rules` รองรับทั้งสอง collection เลย** (ตรวจสอบ git history ยืนยันแล้ว — ไม่มีใน commit ใดก่อนหน้านี้) ทำให้ทุก write ของสองไฟล์นี้ถูกบล็อกด้วย catch-all `allow read, write: if false` มาตลอด ไม่เคยทำงานจริงบน production แม้แต่ครั้งเดียว และ `consent-banner.js` ก็ไม่เคยถูก wire เข้าใช้ในหน้าใดเลย (มีคอมเมนต์ในโค้ดเดิมระบุว่าจงใจทิ้งไว้ให้ agent คนถัดไปต่อ) — งานรอบนี้คือทำให้ทั้งสองส่วนนี้ใช้งานได้จริงเป็นครั้งแรก บวกสร้างส่วนที่ยังไม่มีเลย (ค้นหา/ดูเนื้อหาจริง, รีวิว, บันทึกสถานที่โปรด)
+
+**ตัดสินใจ**: รวมหน้าจอทั้งหมดเข้า `prototype-v2/` (โฟลเดอร์ deploy จริง) ตาม pattern เดียวกับ Part 1 — ย้าย `tourist-login.html`, `tourist-home-consent.html`, `tourist-search-results.html`, `consent-banner.js` จาก `prototype-v4/` มาไว้ที่นี่ (แก้ path `firebase-config.js` ให้ตรง), คง `touristAccounts` เป็น collection แยกจาก `users` ตามที่ออกแบบไว้เดิม (ไม่รวมเข้า `users` แบบชุมชน เพราะนักท่องเที่ยวไม่มีสถานะ pending/approved เลย — ดู ACL.md § สถานะบัญชี)
+
+**สร้างใหม่**:
+- [[../02-design/01-prototypes/prototype-v2/README|prototype-v2/tourist-story-detail.html]] — หน้าใหม่ทั้งหมด (ไม่เคยมีเวอร์ชันจริงมาก่อน) โหลดเนื้อหาจริงตาม `?type=student|community&id=...`, เขียนรีวิว (`Reviews`)/บันทึกสถานที่โปรด (`Bookmarks`) ต้อง login ก่อนเสมอ (Decision Log 2026-08-28), หมุดหมายเดินทางลิงก์ไป Google Maps ด้วยชื่อชุมชน (ยังไม่มี field พิกัดจริงในสคีมา — บันทึกเป็นข้อจำกัดใน BL-010), คำแปลภาษาอังกฤษแจ้งผู้ใช้ตรงๆ ว่ายังไม่พร้อมใช้งาน (รอ AI backend Part 3) แทนการเดา/ปลอมคำแปล
+- `tourist-search-results.html` (rewrite) — query จริงรวมจากทั้ง `LSHRequests`(status=อนุมัติ) และ `CommunityContent`(status=เผยแพร่แล้ว) มาเป็น array กลางฝั่ง client (ไม่แก้ schema ต้นทาง) ค้นหา/กรองแบบ live
+- `tourist-home-consent.html` (rewrite) — การ์ดตัวอย่าง 3 รายการดึงจากข้อมูลจริงเดียวกัน, wire `consent-banner.js` เข้าใช้จริงเป็นครั้งแรก (ของเดิมมีแค่ banner ปลอมด้วย localStorage คู่ขนานอยู่)
+
+**แก้ `LSH/firestore.rules`** (ยังไม่ deploy รอผู้ประสานงาน):
+- เพิ่ม rule `touristAccounts` (อ่าน/สร้างเฉพาะเจ้าของ, role ต้องเป็น `tourist`), `Reviews` (อ่าน public, เขียนต้อง login+เจ้าของ, immutable), `Bookmarks` (อ่าน/ลบเฉพาะเจ้าของ), `ConsentRecords` (เขียนได้แม้ไม่ login, บังคับ analytics=marketing ตาม single-toggle, ไม่มี read)
+- **แก้ rule เดิมของ Part 1**: `CommunityContent.read` เดิมบังคับ login เสมอ (`if request.auth != null`) — พบระหว่างทดสอบว่าขัดกับ ACL.md ที่ระบุชัดว่า "บุคคลทั่วไป"/"นักท่องเที่ยว" ต้องดูเนื้อหาชุมชนได้โดยไม่ login (เหมือน `LSHRequests`) แก้เป็น `if request.auth != null || resource.data.status == 'เผยแพร่แล้ว'` ให้ตรงกับ pattern เดียวกับ `LSHRequests`
+
+**ทดสอบผ่าน headless browser จริง** (`npx playwright` แบบ script ตรงๆ ไม่ผ่าน MCP — MCP เชื่อมต่อหลุดไปตั้งแต่ก่อนหน้านี้ในเซสชันนี้): ยืนยันว่า
+- `tourist-login.html`: validate ฟอร์มถูกต้อง (ชื่อว่างขึ้น error), toggle สมัคร/login ทำงานถูกต้อง, ไม่มี JS error
+- `tourist-story-detail.html?type=student&id=<เอกสารจริงที่อนุมัติแล้ว>`: โหลดเนื้อหาจริงสำเร็จ (public read ของ `LSHRequests` ที่ deploy อยู่แล้วทำงานถูกต้อง), guest เห็น prompt login ถูกต้อง (ไม่เห็นฟอร์มรีวิว), กดบันทึกสถานที่โปรดตอนยังไม่ login redirect ไป `tourist-login.html?redirect=...` ถูกต้อง (URL-encode ถูกต้อง)
+- type ที่ไม่ถูกต้อง (`?type=bogus`) แสดง error "ไม่พบเรื่องราวนี้ (ลิงก์ไม่ถูกต้อง)" ถูกต้องโดยไม่ยิง query ไป Firestore เลย
+- `Reviews`/`Bookmarks`/`touristAccounts`/`ConsentRecords` ทุก query ขึ้น `permission-denied` ตามคาด เพราะ rules ที่แก้ยังไม่ได้ deploy — **ยังไม่สามารถทดสอบ flow เขียนข้อมูลจริงแบบ end-to-end ได้ในรอบนี้** (เหมือนสถานการณ์เดียวกับ Part 1) ต้อง deploy rules แล้วทดสอบซ้ำเต็ม flow (สมัครนักท่องเที่ยว → ดูเนื้อหาที่รวมทั้งนิสิต+ชุมชน → เขียนรีวิว → บันทึกสถานที่ → consent banner เขียนจริง) ก่อนถือว่าสมบูรณ์
+
+**ทำเครื่องหมาย superseded** (ไม่ลบไฟล์): `prototype-v1/tourist-*.html` (README อัปเดตแล้ว), `prototype-v4/tourist-login.html`/`tourist-home-consent.html`/`tourist-search-results.html`/`consent-banner.js` (เพิ่มคอมเมนต์ชี้ไปที่ไฟล์ใหม่ใน prototype-v2)
+
+**พบไฟล์นอกสโคปที่ควรตรวจสอบภายหลัง**: `prototype-v4/community-register.html` มีอยู่ (ซ้ำกับ `prototype-v3`/`prototype-v2` — ไม่แน่ใจที่มา) ไม่ได้แตะเพราะเป็นสโคปของระบบชุมชน (Part 1) ไม่ใช่นักท่องเที่ยว
+
+อัปเดตสถานะ BL-008/009/011/012/015/016/017 เป็น "เสร็จแล้ว" (BL-010 ยังไม่เริ่ม — ไม่มีข้อมูลพิกัดจริง) ใน [[../01-requirements/03-task/product-backlog|product-backlog]], เพิ่ม mapping ใน [[../02-design/02-technical/architecture|architecture.md]], อัปเดต [[../02-design/02-technical/ACL|ACL.md]] § สถานะการบังคับใช้ ให้ตรงกับ backend จริง

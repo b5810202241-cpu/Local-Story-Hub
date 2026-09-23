@@ -2,7 +2,7 @@
 
 > เอกสารนี้เป็น **สรุปภาพรวม** ที่ประมวลจากเอกสารที่มีอยู่แล้วในโปรเจกต์ (ไม่มีไฟล์ชื่อ `SCOPE.md` ในโปรเจกต์นี้โดยตรง — เนื้อหา "ขอบเขต (Scope)" อยู่ในไฟล์ `docs/01-requirements/01-spec/local-story-hub.md` แทน) และจากซอร์สโค้ด prototype จริงใน `docs/02-design/01-prototypes/` รวมถึง `docs/02-design/02-technical/architecture.md`, `ACL.md`, และ `CLAUDE.md`
 >
-> วันที่สรุป: 2026-09-22 (อัปเดตส่วนชุมชน + แก้ไขหัวข้อ Open Questions ที่ล้าหลัง 2026-09-23) — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
+> วันที่สรุป: 2026-09-22 (อัปเดตส่วนชุมชน + แก้ไขหัวข้อ Open Questions ที่ล้าหลัง + อัปเดตส่วนนักท่องเที่ยว 2026-09-23) — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
 
 ---
 
@@ -18,24 +18,18 @@
 | ตรวจสอบ/อนุมัติผลงาน + อนุมัติบัญชีผู้ใช้ใหม่ | `admin-review-student-work.html` | อาจารย์ (`role: teacher`) | ใช้งานจริง (มีปุ่ม AI สรุปภาพรวมผลงานที่รอพิจารณา) |
 | ดู/ค้นหาผลงานที่เผยแพร่แล้ว | `published-works.html` | บุคคลทั่วไป (ไม่ต้อง login) | ใช้งานจริง — public read |
 | หน้ารวม | `index.html` | — | จุดเข้าใช้งาน |
-| สมัคร/เข้าสู่ระบบชุมชน + จัดการคอนเทนต์ + ขอแก้ไข | `community-register.html`, `community-dashboard.html`, `community-create-content.html`, `community-request-edit.html` | ชุมชน | **เพิ่ม 2026-09-23** — ใช้งานจริง (login จริงด้วย Firebase Auth, เชื่อม Firestore จริง collection `CommunityContent`/`ContentEditRequests`) — `firestore.rules` deploy แล้ว ทดสอบ end-to-end ผ่าน browser จริงครบ flow แล้ว (ดู `05-log/index.md` 2026-09-23) — ปุ่ม AI ปิดใช้งานชั่วคราวรอ Part 3 |
+| สมัคร/เข้าสู่ระบบชุมชน + จัดการคอนเทนต์ + ขอแก้ไข | `community-register.html`, `community-dashboard.html`, `community-create-content.html`, `community-request-edit.html` | ชุมชน | **เพิ่ม 2026-09-23** — ใช้งานจริง (login จริงด้วย Firebase Auth, เชื่อม Firestore จริง collection `CommunityContent`/`ContentEditRequests`) — `firestore.rules` deploy แล้ว ทดสอบ end-to-end ผ่าน browser จริงครบ flow แล้ว (ดู `05-log/index.md` 2026-09-23) — ปุ่ม AI ปิดใช้งานชั่วคราวรอ Part 3 (Cloudflare Workers proxy) |
 | อนุมัติบัญชีชุมชน + คำขอแก้ไขข้อมูลชุมชน | `admin-review-student-work.html` (ขยายจากเดิม) | อาจารย์ | **เพิ่ม 2026-09-23** — รวมอยู่ในหน้าเดียวกับการอนุมัติผลงานนิสิต/บัญชีนิสิต |
+| สมัคร/เข้าสู่ระบบนักท่องเที่ยว | `tourist-login.html` | นักท่องเที่ยว | **เพิ่ม 2026-09-23** — login จริงด้วย Firebase Auth, เก็บโปรไฟล์ใน collection `touristAccounts` (แยกจาก `users`) — สมัครเสร็จใช้งานได้ทันที ไม่ต้องรออนุมัติ |
+| หน้าแรก + Consent | `tourist-home-consent.html` | นักท่องเที่ยว/บุคคลทั่วไป | **เพิ่ม 2026-09-23** — การ์ดตัวอย่างดึงเนื้อหาเผยแพร่แล้วจริง, consent banner เขียน Firestore จริง (collection `ConsentRecords`) |
+| ค้นหาแหล่งท่องเที่ยวชุมชน | `tourist-search-results.html` | นักท่องเที่ยว/บุคคลทั่วไป | **เพิ่ม 2026-09-23** — query จริงรวมจาก `LSHRequests`(นิสิต) + `CommunityContent`(ชุมชน) ค้นหา/กรองแบบ live |
+| รายละเอียดเรื่องราว + รีวิว + บันทึกสถานที่โปรด | `tourist-story-detail.html` | นักท่องเที่ยว/บุคคลทั่วไป | **เพิ่ม 2026-09-23** — เขียนรีวิว (`Reviews`)/บันทึกสถานที่โปรด (`Bookmarks`) ต้อง login ก่อนเสมอ อ่านได้โดยไม่ต้อง login |
 
-### 1.2 Prototype v1 — mockup เท่านั้น (จำลองข้อมูลด้วย `localStorage`, ไม่เชื่อมฐานข้อมูลจริง)
+### 1.2 Prototype v1 — mockup เท่านั้น (จำลองข้อมูลด้วย `localStorage`, ไม่เชื่อมฐานข้อมูลจริง) — **superseded ครบทุกหน้าแล้ว**
 
-อยู่ที่ `docs/02-design/01-prototypes/prototype-v1/` — ครอบคลุมทั้ง 3 กลุ่มเป้าหมายในเชิง mockup:
+อยู่ที่ `docs/02-design/01-prototypes/prototype-v1/` — เดิมครอบคลุมทั้ง 3 กลุ่มเป้าหมายในเชิง mockup แต่ทุกหน้าถูกแทนที่ด้วยเวอร์ชันจริงใน `prototype-v2` แล้ว (คงไฟล์ไว้เป็นประวัติ ไม่ได้ลบ) — ดูตารางด้านบนสำหรับหน้าจอจริงที่ใช้แทน
 
-| หน้าจอ | ไฟล์ | ผู้ใช้เป้าหมาย |
-|---|---|---|
-| หน้าแรก + Consent | `tourist-home-consent.html` | นักท่องเที่ยว |
-| ผลการค้นหา | `tourist-search-results.html` | นักท่องเที่ยว |
-| รายละเอียดเรื่องราว/สถานที่ | `tourist-story-detail.html` | นักท่องเที่ยว |
-| ส่งผลงานขออนุมัติ | `student-publish.html` | นิสิต |
-| ตรวจสอบ/อนุมัติผลงาน | `admin-review-student-work.html` | อาจารย์ |
-
-> **หมายเหตุ**: หน้าจอฝั่งชุมชนใน `prototype-v1` (`community-dashboard.html`, `community-create-content.html`) ถูกแทนที่ด้วยเวอร์ชันที่เชื่อม Firebase จริงใน `prototype-v2` แล้ว (ดูตารางด้านบน) — ดูรายละเอียดที่ [[../prototype-v3/README|prototype-v3]] (mockup ที่ถูก superseded)
-
-**สรุป**: หน้าจอฝั่ง **นักท่องเที่ยว** ยังเป็นแค่ mockup ที่ยังไม่เชื่อมฐานข้อมูลจริง (จะทำใน Part 2 ถัดไป) — ฝั่ง **นิสิต/อาจารย์/บุคคลทั่วไป/ชุมชน** implement จริงแล้วจนถึงตอนนี้ (2026-09-23)
+**สรุป**: หน้าจอฝั่ง **นิสิต/อาจารย์/บุคคลทั่วไป/ชุมชน/นักท่องเที่ยว** implement จริงครบทั้งหมดแล้ว (2026-09-23) — เหลือแค่ปุ่ม AI (ทุกจุด) ที่ยังปิดใช้งานชั่วคราว รอ Part 3 (Cloudflare Workers proxy — เปลี่ยนจากแผนเดิม Cloud Functions/Blaze เพราะผู้ใช้ไม่ต้องการผูกบัตรเครดิต)
 
 ---
 
@@ -61,6 +55,10 @@
 | `users` | บัญชีผู้ใช้จริง (`name`, `email`, `role`) — นิสิต+ชุมชน (role `student`/`community`) มีเพิ่ม `status`, `approverId`, `approverName`, `rejectionReason`; เฉพาะชุมชนมีเพิ่ม `contactInfo` (ข้อมูลยืนยันตัวตน — เพิ่ม 2026-09-23) |
 | `CommunityContent` *(เพิ่ม 2026-09-23)* | คอนเทนต์ของชุมชน (`title`, `bodyTh`, `caption`, `communityId/Name`, `status`: `เผยแพร่แล้ว` เท่านั้น — สร้างแล้วเผยแพร่ทันที ไม่มีสถานะฉบับร่าง, `createdAt`, `updatedAt`) |
 | `ContentEditRequests` *(เพิ่ม 2026-09-23)* | คำขอแก้ไขคอนเทนต์ที่เผยแพร่แล้ว (`contentId`, `proposedChanges`, `originalValues`, `status`: `รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`, `rejectionReason`, `approverId/Name`) |
+| `touristAccounts` *(เพิ่ม 2026-09-22/23)* | บัญชีนักท่องเที่ยว (`displayName`, `email`, `role: 'tourist'`, `createdAt`) — **แยก collection จาก `users`** เพราะไม่มีสถานะ pending/approved |
+| `Reviews` *(เพิ่ม 2026-09-23)* | รีวิวของนักท่องเที่ยว (`contentId`, `contentType`: `student`/`community`, `contentTitle`, `touristId/Name`, `text`, `createdAt`) — อ่าน public ได้ เขียนต้อง login |
+| `Bookmarks` *(เพิ่ม 2026-09-23)* | สถานที่โปรด (doc id = `{touristId}_{contentType}_{contentId}`, field เดียวกับ Reviews) — อ่าน/ลบได้เฉพาะเจ้าของ |
+| `ConsentRecords` *(เพิ่ม 2026-09-22/23)* | หลักฐานการยินยอม PDPA (`user_account_id` — null ได้, `analytics_consent`/`marketing_consent` เท่ากันเสมอ, `timestamp`) — เขียนได้แม้ไม่ login |
 | `ContentTypes` | ประเภทผลงาน (VOD / album photo / Storytelling) — **ไม่มีที่มาจาก requirement ใดๆ เลย เป็นข้อมูลเฉพาะกิจ** |
 | `LSHRequests` | ผลงานที่นิสิตส่ง (`title`, `Content`, `status`, `requesterId/Name`, `approverId/Name`, `community`, `rejectionReason`, `aiAssisted`, `aiSuggestionText`, `createdAt`) — คือ `StudentWork` เชิงแนวคิด แต่คนละชื่อ field/ภาษา |
 | `AiSummaries` | ผลสรุปภาพรวมจาก AI ที่อาจารย์ใช้ดูก่อนตรวจงาน (เพิ่ม 2026-09-19) |
@@ -77,7 +75,7 @@
 | บทบาท | คำอธิบาย | สถานะการ implement |
 |---|---|---|
 | **ชุมชน** (`community`) | เจ้าของเรื่องราว/แหล่งท่องเที่ยว | **ใช้งานจริง** (เพิ่ม 2026-09-23) — สมัครบัญชีเองได้ (self-registration) ต้องรออนุมัติจากอาจารย์ก่อนเหมือนนิสิต, สร้าง/เผยแพร่คอนเทนต์ได้ทันที, แก้ไขคอนเทนต์ที่เผยแพร่แล้วต้องขออนุมัติก่อน — ปุ่ม AI ยังปิดใช้งานชั่วคราว, ทดสอบ end-to-end บน production ผ่านครบแล้ว |
-| **นักท่องเที่ยว** (`tourist`) | ผู้สืบค้น/วางแผนท่องเที่ยว, เขียนรีวิว, บันทึกสถานที่โปรด | มีแค่ mockup (prototype-v1), ยังไม่มีระบบบัญชีจริง |
+| **นักท่องเที่ยว** (`tourist`) | ผู้สืบค้น/วางแผนท่องเที่ยว, เขียนรีวิว, บันทึกสถานที่โปรด | **ใช้งานจริง** (เพิ่ม 2026-09-23) — สมัครบัญชีเองได้ ใช้งานได้ทันทีไม่ต้องรออนุมัติ (ต่างจากนิสิต/ชุมชน), ค้นหา/อ่านเรื่องราวไม่ต้อง login, เขียนรีวิว/บันทึกสถานที่ต้อง login — ยังไม่มีข้อมูลพิกัด/เส้นทางจริง (BL-010), ยังไม่มีคำแปลภาษาอังกฤษจริง (รอ Part 3) |
 | **นิสิตนิเทศศาสตร์** (`student`) | ส่งผลงานคอนเทนต์เพื่อขออนุมัติเผยแพร่ | **ใช้งานจริง** — สมัครบัญชีเองได้ (self-registration), ต้องรออนุมัติก่อนใช้งาน |
 | **อาจารย์** (`role: teacher` ใน Firestore จริง / `admin` ในเอกสารเชิงแนวคิด) | ตรวจสอบ/อนุมัติผลงานนิสิต, อนุมัติบัญชีนิสิตใหม่ | **ใช้งานจริง** — บัญชี provision โดย admin เท่านั้น ไม่มี self-registration |
 | **บุคคลทั่วไป** (ไม่ login) | ดู/ค้นหาผลงานนิสิตที่เผยแพร่แล้วเท่านั้น | **ใช้งานจริง** (เพิ่ม 2026-09-12) — แคบกว่า "นักท่องเที่ยว" เต็มรูปแบบ (ไม่มีสิทธิ์รีวิว/บันทึกสถานที่) |
@@ -91,11 +89,10 @@
 เอกสาร requirement ต้นฉบับ**ไม่ได้ระบุรายการ "Out of scope" ไว้อย่างชัดเจน** (ยังเป็น Open Question ที่ค้างอยู่) แต่จากการตรวจโค้ด/เอกสารจริง สรุปสิ่งที่ยังไม่ทำได้ดังนี้:
 
 ### 4.1 ฟีเจอร์ที่ยังไม่ implement จริง (มีแค่เอกสาร/mockup)
-- **AI ทั้งหมดฝั่งชุมชน** (FR-1.1–1.5): ปรับภาพ, คิดแคปชัน, แปลภาษา, แนะนำ SEO, แนะนำวิธีเล่าเรื่อง — ปุ่มมีอยู่จริงใน `community-create-content.html` แต่ปิดใช้งาน (placeholder) ยังไม่เชื่อม AI service จริง เพราะต้องรออัปเกรด Firebase เป็นแผน Blaze ก่อนทำ Cloud Functions proxy (สโคป Part 3)
-- **การสืบค้น/วางแผนท่องเที่ยว, หมุดหมายเดินทาง** (FR-2.1–2.3) — mockup เท่านั้น
-- **เขียนรีวิว / บันทึกสถานที่โปรด** (FR-2.4–2.5) — mockup เท่านั้น ไม่มีระบบบัญชีนักท่องเที่ยวจริง
-- **Notification Service ส่งอีเมลจริง** — ปัจจุบันจำลองด้วยแบนเนอร์แจ้งเตือนในหน้าอาจารย์เท่านั้น ยังไม่มีบริการส่งอีเมลจริง
-- **Consent & Log Service ที่ครบระบบ** (บันทึก consent, access log 90 วัน) — ยังไม่ implement เป็นโค้ดจริง มีแค่ระบุไว้ใน spec/architecture
+- **AI ทั้งหมด** (ฝั่งชุมชน FR-1.1–1.5: ปรับภาพ/คิดแคปชัน/แปลภาษา/SEO/แนะนำวิธีเล่าเรื่อง, ฝั่งนักท่องเที่ยว FR-2.2: คำแปลภาษาอังกฤษของเนื้อหา) — ปุ่ม/placeholder มีอยู่จริงแต่ปิดใช้งาน ยังไม่เชื่อม AI service จริง เพราะต้องทำ proxy กันคีย์รั่วก่อน (สโคป Part 3 — ใช้ Cloudflare Workers แทนแผนเดิม Cloud Functions/Blaze เพราะผู้ใช้ไม่ต้องการผูกบัตรเครดิต)
+- **วางแผนเส้นทาง/หมุดหมายเดินทางแบบมีพิกัดจริง** (FR-2.3, BL-010) — ยังไม่มี field ตำแหน่งในสคีมา `LSHRequests`/`CommunityContent` เลย ตอนนี้ลิงก์ไป Google Maps ค้นหาด้วยชื่อชุมชนแทนไปพลางก่อน
+- **Notification Service ส่งอีเมลจริง** — ปัจจุบันจำลองด้วยแบนเนอร์แจ้งเตือนในหน้าอาจารย์เท่านั้น ยังไม่มีบริการส่งอีเมลจริง (ตัดสินใจข้ามไปก่อนตามที่ผู้ใช้ยืนยัน)
+- **Access Log เก็บ 90 วันแบบอัตโนมัติ** (BL-014) — ยังไม่ implement เป็นโค้ดจริง มีแค่ระบุไว้ใน spec/architecture (แผนคือใช้ Firestore TTL policy — ไม่ต้องพึ่ง Cloud Functions/Blaze — สโคป Part 5)
 
 ### 4.2 สิ่งที่ทำแบบจำกัด/ชั่วคราวเท่านั้น
 - **ปุ่ม AI ช่วยงาน 2 จุด** ใน prototype-v2 (ช่วยร่างคำอธิบายผลงาน, สรุปภาพรวมงานรอพิจารณา) เป็น **local demo เท่านั้น** — เรียก OpenRouter API ตรงจาก browser (มี API key ฝัง client-side) **ยังไม่เหมาะ deploy ใช้งานจริง** ต้องย้ายไปเรียกผ่าน backend/serverless proxy ก่อน
