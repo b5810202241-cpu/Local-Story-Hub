@@ -26,7 +26,15 @@ main{max-width:780px;margin:0 auto;padding:var(--space-xl);}
 h1{font-size:32px;font-weight:600;margin:0;}
 .tag{display:inline-block;font-size:13px;color:var(--color-bark);border:1px solid var(--color-stone);border-radius:999px;padding:2px 10px;margin:var(--space-sm) 0;}
 .story-text{font-size:18px;margin:var(--space-lg) 0;white-space:pre-wrap;}
-.en-note{font-size:14px;color:var(--color-bark);background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);}
+.lang-toggle{display:flex;gap:var(--space-xs);margin-top:var(--space-lg);}
+.lang-tab{height:40px;padding:0 var(--space-lg);border-radius:var(--radius-md) var(--radius-md) 0 0;font-size:15px;font-weight:600;cursor:pointer;border:1px solid var(--color-stone);border-bottom:none;background:var(--color-sand);color:var(--color-bark);}
+.lang-tab.active{background:var(--color-paper);color:var(--color-clay);border-color:var(--color-clay);}
+.lang-tab:focus-visible{outline:2px solid var(--color-clay);outline-offset:2px;}
+.story-box{border:1px solid var(--color-stone);border-radius:0 var(--radius-md) var(--radius-md) var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
+.story-box .story-text{margin:0;}
+.en-panel{font-size:15px;}
+.en-panel .field-error{color:var(--color-bark);background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);margin:0;}
+.submit-error{color:#A13D2C;font-size:15px;}
 .map-box{background:var(--color-sand);border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin:var(--space-xl) 0;}
 .map-box h2{font-size:22px;margin:0 0 var(--space-sm);}
 .map-box a{color:var(--color-indigo);}
@@ -70,12 +78,22 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
     <span class="tag" id="content-type-tag"></span>
     <p style="color:var(--color-bark)" id="content-community"></p>
 
-    <p class="story-text" id="content-body"></p>
-    <div class="en-note">
-      <button class="btn btn-secondary" id="translate-btn" onclick="translateContent()" style="height:36px;padding:0 var(--space-md);font-size:14px;">🌐 แปลเป็นภาษาอังกฤษ</button>
-      <div class="field-error" id="translate-guest-note" style="margin-top:var(--space-xs);">ต้อง<a href="#" id="translate-login-link">เข้าสู่ระบบ/สมัครบัญชี</a>ก่อน จึงจะใช้ AI แปลภาษาได้ (ป้องกันการเรียกใช้ AI ฟรีจากภายนอก) — ข้อความต้นฉบับภาษาไทยด้านบนอ่านได้โดยไม่ต้อง login เสมอ</div>
-      <p class="submit-error" id="translate-error" style="display:none"></p>
-      <p id="translate-result" style="display:none;margin-top:var(--space-sm);white-space:pre-wrap;"></p>
+    <div class="lang-toggle" role="tablist" aria-label="เลือกภาษาที่แสดงเนื้อหา">
+      <button type="button" class="lang-tab active" id="lang-tab-th" onclick="switchLang('th')" role="tab" aria-selected="true">ภาษาไทย</button>
+      <button type="button" class="lang-tab" id="lang-tab-en" onclick="switchLang('en')" role="tab" aria-selected="false">🌐 English</button>
+    </div>
+    <div class="story-box">
+      <p class="story-text" id="content-body"></p>
+      <div class="en-panel" id="en-panel" hidden>
+        <div class="field-error" id="translate-unavailable-note" hidden>AI backend ยังไม่พร้อมใช้งาน (ยังไม่ได้ deploy Cloudflare Worker ตามที่ระบุใน CLAUDE.md) — ยังแปลภาษาอัตโนมัติไม่ได้ในตอนนี้ ข้อความต้นฉบับภาษาไทยอ่านได้จากแท็บ "ภาษาไทย" เสมอ</div>
+        <div class="field-error" id="translate-guest-note" hidden>ต้อง<a href="#" id="translate-login-link">เข้าสู่ระบบ/สมัครบัญชี</a>ก่อน จึงจะใช้ AI แปลภาษาได้ (ป้องกันการเรียกใช้ AI ฟรีจากภายนอก) — ข้อความต้นฉบับภาษาไทยอ่านได้จากแท็บ "ภาษาไทย" โดยไม่ต้อง login เสมอ</div>
+        <p id="translate-loading" style="display:none;color:var(--color-bark);margin:0;">🌐 กำลังแปลด้วย AI...</p>
+        <div id="translate-error-box" style="display:none;">
+          <p class="submit-error" id="translate-error" style="margin:0 0 var(--space-sm);"></p>
+          <button class="btn btn-secondary" onclick="translateContent()" style="height:36px;padding:0 var(--space-md);font-size:14px;">ลองแปลอีกครั้ง</button>
+        </div>
+        <p class="story-text" id="translate-result" style="display:none;"></p>
+      </div>
     </div>
 
     <div class="map-box">
@@ -269,42 +287,94 @@ async function callAiProxy(action, payload){
   }
 }
 
+// สถานะแท็บภาษา + แคชคำแปล (BL-009) — คำแปลแคชไว้ในตัวแปรนี้เท่านั้น ไม่เขียนกลับ Firestore
+// (ไม่ persist เป็น field ใหม่ เช่น bodyEn เพราะ AI แปลตามคำขอ (on-demand) พอแล้วตาม Acceptance
+// Criteria — ดูเหตุผลเต็มใน docs/05-log/index.md วันที่ 2026-09-23)
+let currentLang = 'th';
+let translateState = 'idle'; // idle | loading | done | error
+let translatedBody = null;
+
 function updateTranslateUi(){
-  var btn = document.getElementById('translate-btn');
-  var guestNote = document.getElementById('translate-guest-note');
   var loginLink = document.getElementById('translate-login-link');
-  loginLink.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+  if(loginLink) loginLink.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+  if(currentLang === 'en') updateEnPanel();
+}
+
+window.switchLang = function(lang){
+  currentLang = lang;
+  var thTab = document.getElementById('lang-tab-th');
+  var enTab = document.getElementById('lang-tab-en');
+  var thText = document.getElementById('content-body');
+  var enPanel = document.getElementById('en-panel');
+  if(lang === 'th'){
+    thTab.classList.add('active'); thTab.setAttribute('aria-selected', 'true');
+    enTab.classList.remove('active'); enTab.setAttribute('aria-selected', 'false');
+    thText.hidden = false;
+    enPanel.hidden = true;
+  }else{
+    thTab.classList.remove('active'); thTab.setAttribute('aria-selected', 'false');
+    enTab.classList.add('active'); enTab.setAttribute('aria-selected', 'true');
+    thText.hidden = true;
+    enPanel.hidden = false;
+    updateEnPanel();
+  }
+};
+
+function updateEnPanel(){
+  var unavailableNote = document.getElementById('translate-unavailable-note');
+  var guestNote = document.getElementById('translate-guest-note');
+  var loadingEl = document.getElementById('translate-loading');
+  var errBox = document.getElementById('translate-error-box');
+  var resultEl = document.getElementById('translate-result');
+  unavailableNote.hidden = true;
+  guestNote.hidden = true;
+  loadingEl.style.display = 'none';
+  errBox.style.display = 'none';
+  resultEl.style.display = 'none';
+
   if(!hasAiProxy()){
-    btn.disabled = true;
-    guestNote.style.display = 'none';
+    unavailableNote.hidden = false;
     return;
   }
   if(!currentTourist){
-    btn.disabled = true;
-    guestNote.style.display = 'block';
-  }else{
-    btn.disabled = false;
-    guestNote.style.display = 'none';
+    guestNote.hidden = false;
+    return;
   }
+  if(translateState === 'done'){
+    resultEl.textContent = translatedBody;
+    resultEl.style.display = 'block';
+    return;
+  }
+  if(translateState === 'error'){
+    errBox.style.display = 'block';
+    return;
+  }
+  // idle + login แล้ว + มี AI backend พร้อม -> เริ่มแปลอัตโนมัติทันทีที่กดแท็บ English ครั้งแรก
+  translateContent();
 }
 
 window.translateContent = async function(){
-  var btn = document.getElementById('translate-btn');
+  var loadingEl = document.getElementById('translate-loading');
+  var errBox = document.getElementById('translate-error-box');
   var errEl = document.getElementById('translate-error');
   var resultEl = document.getElementById('translate-result');
-  errEl.style.display = 'none';
-  var original = btn.textContent;
-  btn.disabled = true; btn.textContent = 'กำลังแปล...'; resultEl.style.display = 'none';
+  translateState = 'loading';
+  loadingEl.style.display = 'block';
+  errBox.style.display = 'none';
+  resultEl.style.display = 'none';
   try{
     var result = await callAiProxy('translate', { text: content.body || '' });
+    translatedBody = result;
+    translateState = 'done';
+    loadingEl.style.display = 'none';
     resultEl.textContent = result;
     resultEl.style.display = 'block';
   }catch(e){
     console.error('AI translate failed', e);
+    translateState = 'error';
+    loadingEl.style.display = 'none';
     errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
-    errEl.style.display = 'block';
-  }finally{
-    btn.disabled = false; btn.textContent = original;
+    errBox.style.display = 'block';
   }
 };
 
