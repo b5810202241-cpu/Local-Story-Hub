@@ -26,6 +26,8 @@ h1{font-size:36px;font-weight:600;margin:0 0 var(--space-xl);}
 .step .step-num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:999px;background:var(--color-clay);color:var(--color-paper);font-size:16px;font-weight:700;}
 .step p.hint{font-size:18px;color:var(--color-bark);margin:0 0 var(--space-md);}
 .upload-box{border:2px dashed var(--color-stone);border-radius:var(--radius-md);padding:var(--space-2xl);text-align:center;color:var(--color-bark);font-size:18px;}
+.upload-preview{max-width:100%;max-height:240px;border-radius:var(--radius-sm);margin-bottom:var(--space-md);display:block;margin-left:auto;margin-right:auto;}
+.upload-error{color:#A13D2C;font-size:16px;margin-top:var(--space-sm);display:none;}
 .btn{display:inline-flex;align-items:center;justify-content:center;height:56px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:18px;font-weight:600;cursor:pointer;border:1px solid transparent;}
 .btn-primary{background:var(--color-clay);color:var(--color-paper);}
 .btn-primary:disabled{opacity:.6;cursor:default;}
@@ -69,9 +71,11 @@ label{display:block;font-size:18px;font-weight:600;margin-bottom:var(--space-sm)
   <div class="step">
     <h2><span class="step-num">1</span> อัปโหลดภาพ</h2>
     <p class="hint">AI ปรับภาพให้สวยเหมาะกับการโพสต์ (FR-1.1)</p>
-    <div class="upload-box" id="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์</button></div>
+    <div class="upload-box" id="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" id="select-file-btn" onclick="selectFile()">เลือกไฟล์</button></div>
+    <input type="file" id="image-file-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+    <div class="upload-error" id="upload-error"></div>
     <button class="btn btn-primary" id="enhance-btn" style="margin-top:var(--space-md)" disabled>✨ ให้ AI ปรับภาพให้สวย</button>
-    <div class="draft-note">ปิดใช้งานถาวรในรอบนี้ — หน้านี้ยังไม่มีระบบอัปโหลดภาพจริง (ปุ่ม "เลือกไฟล์" ด้านบนเป็นแค่ placeholder) จึงยังไม่มีไฟล์ภาพจริงให้ AI ประมวลผล ต้องสร้างระบบอัปโหลดภาพ (เช่น Firebase Storage) ก่อนถึงจะทำฟีเจอร์นี้ได้ — เป็นสโคปแยกจาก AI backend proxy รอบนี้</div>
+    <div class="draft-note" id="enhance-unavailable-note">ปุ่มนี้ปิดใช้งานถาวรในรอบนี้ — ตอนนี้อัปโหลดภาพจริงได้แล้ว (เก็บผ่าน Cloudflare Worker + R2) แต่ยังไม่มี endpoint ที่เรียก AI มาปรับภาพจริง (ต้องเลือกโมเดล AI ปรับภาพก่อน เป็นสโคปแยกจากงานอัปโหลดรอบนี้)</div>
   </div>
 
   <div class="step">
@@ -133,7 +137,9 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 let currentProfile = null;
+let uploadedImageUrl = null;
 
+// ใช้ URL เดียวกับ AI proxy — /upload-image อยู่บน Worker ตัวเดียวกัน (ดู cf-worker/README.md)
 function hasAiProxy(){
   return typeof window.LSH_AI_PROXY_URL !== 'undefined'
     && window.LSH_AI_PROXY_URL
@@ -142,12 +148,13 @@ function hasAiProxy(){
 
 (function(){
   if(!hasAiProxy()){
-    ['caption-btn', 'story-btn', 'seo-btn', 'translate-btn'].forEach(function(id){
+    ['caption-btn', 'story-btn', 'seo-btn', 'translate-btn', 'select-file-btn'].forEach(function(id){
       document.getElementById(id).disabled = true;
     });
     ['ai-unavailable-caption', 'ai-unavailable-story', 'ai-unavailable-seo', 'ai-unavailable-translate'].forEach(function(id){
       document.getElementById(id).hidden = false;
     });
+    document.getElementById('upload-box').insertAdjacentHTML('beforeend', '<div class="draft-note" style="margin-top:var(--space-sm)">อัปโหลดภาพยังใช้ไม่ได้ — Worker เดียวกับ AI backend ยังไม่ได้ deploy (ดู <code>cf-worker/README.md</code>)</div>');
   }
 })();
 
@@ -296,8 +303,52 @@ onAuthStateChanged(auth, async function(user){
 });
 
 window.selectFile = function(){
-  document.getElementById('upload-box').innerHTML = '✓ เลือกไฟล์แล้ว: photo.jpg';
+  document.getElementById('image-file-input').click();
 };
+
+document.getElementById('image-file-input').addEventListener('change', async function(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // เลือกไฟล์เดิมซ้ำได้อีกครั้งหลังเลือกแล้ว
+  if(!file) return;
+
+  const errEl = document.getElementById('upload-error');
+  const box = document.getElementById('upload-box');
+  errEl.style.display = 'none';
+
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if(ALLOWED.indexOf(file.type) === -1){
+    errEl.textContent = 'รองรับเฉพาะไฟล์ภาพ JPEG/PNG/WEBP/GIF เท่านั้น';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(file.size > 5 * 1024 * 1024){
+    errEl.textContent = 'ไฟล์ใหญ่เกินไป (จำกัดไม่เกิน 5MB)';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  box.innerHTML = 'กำลังอัปโหลด...';
+  try{
+    var user = auth.currentUser;
+    if(!user) throw new Error('ต้องเข้าสู่ระบบก่อนอัปโหลดภาพ');
+    var idToken = await user.getIdToken();
+    var res = await fetch(window.LSH_AI_PROXY_URL + '/upload-image', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': file.type },
+      body: file,
+    });
+    var data = await res.json();
+    if(!data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    uploadedImageUrl = data.url;
+    box.innerHTML = '<img class="upload-preview" src="' + uploadedImageUrl + '" alt="ภาพที่อัปโหลด"><div>✓ อัปโหลดแล้ว — <button class="btn btn-secondary" id="select-file-btn" style="margin-top:0" onclick="selectFile()">เปลี่ยนภาพ</button></div>';
+  }catch(err){
+    console.error('อัปโหลดภาพไม่สำเร็จ', err);
+    uploadedImageUrl = null;
+    errEl.textContent = 'อัปโหลดไม่สำเร็จ: ' + err.message;
+    errEl.style.display = 'block';
+    box.innerHTML = 'ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" id="select-file-btn" onclick="selectFile()">เลือกไฟล์</button>';
+  }
+});
 
 window.saveContent = async function(status){
   if(!currentProfile || currentProfile.role !== 'community' || currentProfile.status !== 'อนุมัติแล้ว') return;
@@ -323,6 +374,7 @@ window.saveContent = async function(status){
       title: title,
       bodyTh: caption,
       caption: caption,
+      imageUrl: uploadedImageUrl,
       communityId: currentProfile.id,
       communityName: currentProfile.name,
       status: status,

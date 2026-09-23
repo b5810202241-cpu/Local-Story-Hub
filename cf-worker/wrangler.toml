@@ -13,3 +13,11 @@ FIREBASE_WEB_API_KEY = "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU"
 
 # OPENROUTER_API_KEY and FIREBASE_SERVICE_ACCOUNT_JSON are secrets, NOT set here —
 # see README.md ("wrangler secret put").
+
+# R2 bucket for community-uploaded images (BL-001 prerequisite) — chosen over Firebase Storage
+# because Firebase Storage now requires the paid Blaze plan even within free-tier usage, and this
+# project has already committed to not requiring a credit card (same reasoning as Workers vs Cloud
+# Functions above). Bucket itself must be created once by the user — see README.md.
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "lsh-community-images"

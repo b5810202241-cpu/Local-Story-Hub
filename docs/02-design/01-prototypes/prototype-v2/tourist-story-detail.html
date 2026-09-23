@@ -176,7 +176,7 @@ async function loadContent(){
         return false;
       }
       const data = snap.data();
-      content = { title: data.title, body: data.bodyTh || data.caption, communityName: data.communityName, typeLabel: 'คอนเทนต์ชุมชน' };
+      content = { title: data.title, body: data.bodyTh || data.caption, communityName: data.communityName, typeLabel: 'คอนเทนต์ชุมชน', imageUrl: data.imageUrl || null };
     }
   }catch(e){
     console.error('โหลดเรื่องราวไม่สำเร็จ', e);
@@ -196,7 +196,17 @@ function showError(msg){
 function renderContent(){
   document.getElementById('loading-view').hidden = true;
   document.getElementById('content-view').hidden = false;
-  document.getElementById('hero-label').textContent = 'ภาพ' + content.title;
+  const heroEl = document.getElementById('hero-label');
+  heroEl.innerHTML = '';
+  if(content.imageUrl){
+    const img = document.createElement('img');
+    img.src = content.imageUrl;
+    img.alt = content.title || '';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:inherit;';
+    heroEl.appendChild(img);
+  }else{
+    heroEl.textContent = 'ภาพ' + content.title; // ยังไม่มีภาพจริง (ผลงานนิสิต หรือคอนเทนต์ชุมชนที่อัปโหลดก่อน 2026-09-23) — คงพื้นหลัง gradient แบบ mockup ไว้
+  }
   document.getElementById('content-title').textContent = content.title;
   document.getElementById('content-type-tag').textContent = content.typeLabel;
   document.getElementById('content-community').textContent = content.communityName;

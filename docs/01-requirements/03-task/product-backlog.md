@@ -14,8 +14,8 @@
   - Given ผู้ใช้ไม่พอใจผลลัพธ์ที่ AI ปรับ When เลือกใช้ภาพต้นฉบับ Then ระบบยังโพสต์ภาพต้นฉบับได้
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.1)
-- **Status**: ยังไม่เริ่ม
-- **หมายเหตุ**: **อัปเดต 2026-09-23 (Part 3 — AI backend proxy)** — ยังไม่ implement เพราะหน้า `community-create-content.html` ไม่มีระบบอัปโหลดภาพจริงเลย (ปุ่ม "เลือกไฟล์" เป็น placeholder) ต้องสร้างระบบอัปโหลดภาพจริง (เช่น Firebase Storage) ก่อนถึงจะทำ endpoint ปรับภาพจริงได้ — เป็นงานคนละสโคปจาก AI backend proxy ที่ทำเสร็จแล้วสำหรับ BL-002–005 ด้านล่าง
+- **Status**: ทำบางส่วน
+- **หมายเหตุ**: **อัปเดต 2026-09-23 (Part 3 — AI backend proxy)** — ยังไม่ implement เพราะหน้า `community-create-content.html` ไม่มีระบบอัปโหลดภาพจริงเลย (ปุ่ม "เลือกไฟล์" เป็น placeholder) ต้องสร้างระบบอัปโหลดภาพจริง (เช่น Firebase Storage) ก่อนถึงจะทำ endpoint ปรับภาพจริงได้ — เป็นงานคนละสโคปจาก AI backend proxy ที่ทำเสร็จแล้วสำหรับ BL-002–005 ด้านล่าง **อัปเดต 2026-09-23 (รอบสอง — ทำ prerequisite เสร็จ)**: implement ระบบอัปโหลดภาพจริงแล้ว ใช้ **Cloudflare R2** แทน Firebase Storage (เหตุผล: Firebase Storage บังคับอัปเกรดแผน Blaze ผูกบัตรเครดิตแม้ใช้ไม่เกิน free tier — ผู้ใช้เลือกทางเลือกนี้เองหลังถูกถาม ดู `docs/05-log/index.md`) — เพิ่ม endpoint `POST /upload-image` + `GET /image/<key>` ใน `cf-worker/`, field `imageUrl` ใหม่ใน `CommunityContent`, แสดงผลจริงแล้วที่ `tourist-story-detail.html` **แต่ AI ปรับภาพจริง (image-to-image) ยังไม่ implement** (ต้องเลือกโมเดล AI ปรับภาพก่อน เป็นสโคปแยก) — ทดสอบ round-trip เต็มรูปแบบผ่าน local `wrangler dev` แล้ว (login จริง, อัปโหลด PNG จริง, ดึงกลับมาเทียบไบต์ตรง 100%, ยืนยัน validation ทุกเคส) **แต่ยังไม่ได้ทดสอบบน Cloudflare จริง** เพราะ Worker ยังไม่ deploy จริง (ต้องสร้าง R2 bucket ก่อนด้วย ดู `cf-worker/README.md`) — เปลี่ยนสถานะจาก "ยังไม่เริ่ม" เป็น "ทำบางส่วน"
 
 ### BL-002: คิดแคปชันจาก Keyword ด้วย AI
 - **Epic**: การสร้างคอนเทนต์ด้วย AI สำหรับชุมชน

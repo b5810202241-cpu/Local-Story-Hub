@@ -14,6 +14,31 @@
 
 ## บันทึก
 
+### 2026-09-23 — Implement ระบบอัปโหลดภาพจริงสำหรับ BL-001 (prerequisite) — เลือก Cloudflare R2
+
+ก่อนเริ่มโค้ด ถามผู้ใช้ก่อนว่าจะเก็บไฟล์ภาพที่อัปโหลดจริงด้วยวิธีไหน เพราะเจอจุดตัดสินใจเชิง
+สถาปัตยกรรมที่กระทบ scope — Firebase Storage (ตัวเลือกปกติที่คู่กับ Firestore) ตอนนี้บังคับอัปเกรด
+เป็นแผน Blaze (ผูกบัตรเครดิต) แม้ใช้ไม่เกิน free tier ซึ่งขัดกับการตัดสินใจเดิมของผู้ใช้ที่เลือก
+Cloudflare Workers แทน Firebase Cloud Functions ด้วยเหตุผลเดียวกัน (ไม่ต้องการผูกบัตร) — เสนอ 4
+ทางเลือก (Cloudflare R2 ผ่าน Worker เดิม / Firebase Storage / เก็บ base64 ใน Firestore / ยังไม่ตัดสินใจ)
+ผู้ใช้เลือก **Cloudflare R2 ผ่าน Worker เดิม**
+
+Implement แล้ว: เพิ่ม R2 bucket binding (`IMAGES_BUCKET`) ใน `cf-worker/wrangler.toml`, endpoint
+`POST /upload-image` (ต้อง login, จำกัดชนิดไฟล์ JPEG/PNG/WEBP/GIF, ไม่เกิน 5MB) และ `GET /image/<key>`
+(public โดยตั้งใจ) ใน `cf-worker/src/index.js`, แก้ `community-create-content.html` ให้มีปุ่มเลือกไฟล์
+จริง อัปโหลดผ่าน endpoint ใหม่ แล้วบันทึก URL ลง field `imageUrl` ใหม่ใน `CommunityContent`, แสดงผล
+ภาพจริงที่ `tourist-story-detail.html` (แทน hero placeholder เดิมเมื่อมี `imageUrl`) — ยังไม่ได้เพิ่ม
+รูปในการ์ดผลการค้นหาที่ `tourist-search-results.html`/`published-works.html` (ตั้งใจจำกัดสโคปรอบนี้)
+
+ทดสอบ round-trip เต็มรูปแบบผ่าน local `wrangler dev` แล้ว (R2 จำลองแบบ local ได้เองโดยไม่ต้อง login
+Cloudflare) — login จริงด้วยบัญชี `u001@example.com` ผ่าน Firebase Auth REST API, อัปโหลดไฟล์ PNG จริง
+ผ่าน `POST /upload-image`, ดึงกลับผ่าน `GET /image/<key>` แล้วเทียบไบต์ตรงกับต้นฉบับ 100%, ยืนยัน
+`Content-Type`/`Cache-Control` headers ถูกต้อง, และยืนยันกรณีปฏิเสธครบ (ไม่มี token, token ปลอม,
+content-type ผิด, ไฟล์เกิน 5MB) — **ยังไม่ได้ทดสอบบน Cloudflare จริง** เพราะ Worker ยังไม่ได้ deploy
+และยังไม่ได้สร้าง R2 bucket จริง (ทั้งสองเป็นขั้นตอนที่ผู้ใช้ต้องทำเอง เหมือน AI Backend Proxy เดิม
+ดู `cf-worker/README.md`) — ปุ่ม "✨ ให้ AI ปรับภาพให้สวย" (image-to-image) ยังปิดใช้งานต่อไป เพราะเป็น
+งานคนละสโคป ต้องเลือกโมเดล AI ปรับภาพก่อนถึงจะทำต่อได้ — ดูสถานะเต็มที่ [[../01-requirements/03-task/product-backlog|BL-001]]
+
 ### 2026-09-23 — Retest BL-013 dropdown ชุมชนจริงด้วยบัญชีนิสิตจริง (ปิดสนิท)
 
 ต่อจากรอบก่อนหน้าที่ deploy `firestore.rules` ขึ้น production แล้วแต่ยังไม่มี credential ทดสอบ — รอบนี้ login จริงด้วยบัญชี `u001@example.com` (student, สถานะอนุมัติแล้ว) ผ่าน `student-publish.html` บน production แล้ว reload หน้าใหม่ทั้งหมด (ไม่ใช่แค่ cache เดิม) ยืนยันว่า dropdown "เลือกชุมชนที่เกี่ยวข้อง" ดึงรายชื่อชุมชนจริงจาก `users` (`role: 'community'`, `status: 'อนุมัติแล้ว'`) ได้ปกติ ไม่พบ `Missing or insufficient permissions.` หรือ console error ใดๆ — ปิด [[../01-requirements/03-task/product-backlog|BL-013]] เป็น "เสร็จแล้ว" เต็มรูปแบบ

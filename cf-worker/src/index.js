@@ -10,6 +10,11 @@
 // that's Node-only and unavailable on Workers). One action (summarize-pending) additionally
 // requires role=teacher, checked via a Firestore REST self-read using the caller's own ID
 // token (already permitted by LSH/firestore.rules: users/{uid} read allowed for the owner).
+//
+// Also hosts /upload-image + /image/<key> (BL-001 prerequisite — community image storage via
+// R2, see the block above `handleImageUpload` for why R2 instead of Firebase Storage) and
+// /log-access (BL-014 — see the block above `writeAccessLog`). Not a dedicated "AI" worker
+// anymore in practice; the name (`lsh-ai-proxy`) is just historical at this point.
 
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 const JWKS_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -230,10 +235,82 @@ function corsHeaders(origin, env) {
   const isAllowed = allowed.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin || '');
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : allowed[0],
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
   };
+}
+
+// ---- Community image upload (BL-001 prerequisite, R2) ----
+//
+// Stored in Cloudflare R2 instead of Firebase Storage — Firebase Storage now requires the paid
+// Blaze plan even for free-tier-sized usage, and this project already avoided Blaze once for the
+// same reason (see Cloud Functions vs Workers decision above). R2's free tier (10GB storage,
+// no card required) matches the constraint. Images are served back through this same Worker
+// (GET /image/<key>) rather than a public bucket URL, so there is exactly one place that knows
+// the bucket exists.
+
+const ALLOWED_IMAGE_TYPES = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+};
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+
+// POST /upload-image — requires the same Firebase ID token auth as /ai/* (no anonymous uploads,
+// unlike /log-access). Raw image bytes in the request body, Content-Type identifies the format.
+async function handleImageUpload(request, env, cors) {
+  if (!env.IMAGES_BUCKET) {
+    return json({ ok: false, error: 'ยังไม่ได้ตั้งค่า R2 bucket (IMAGES_BUCKET) — ดู cf-worker/README.md' }, 503, cors);
+  }
+
+  const authHeader = request.headers.get('Authorization') || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return json({ ok: false, error: 'ต้อง login ก่อนอัปโหลดภาพ' }, 401, cors);
+
+  let uid;
+  try {
+    uid = (await verifyFirebaseIdToken(idToken, env.FIREBASE_PROJECT_ID)).uid;
+  } catch (e) {
+    return json({ ok: false, error: 'ยืนยันตัวตนไม่สำเร็จ: ' + e.message }, 401, cors);
+  }
+
+  const contentType = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+  const ext = ALLOWED_IMAGE_TYPES[contentType];
+  if (!ext) {
+    return json({ ok: false, error: 'รองรับเฉพาะไฟล์ภาพ JPEG/PNG/WEBP/GIF เท่านั้น' }, 415, cors);
+  }
+
+  const bytes = await request.arrayBuffer();
+  if (bytes.byteLength === 0) return json({ ok: false, error: 'ไฟล์ว่างเปล่า' }, 400, cors);
+  if (bytes.byteLength > MAX_IMAGE_BYTES) {
+    return json({ ok: false, error: 'ไฟล์ใหญ่เกินไป (จำกัดไม่เกิน 5MB)' }, 413, cors);
+  }
+
+  // uid is part of the key purely for namespacing/debugging (who uploaded what) — not a secret,
+  // same as Firestore uids already being visible throughout this app.
+  const key = 'community/' + uid + '/' + Date.now() + '-' + crypto.randomUUID() + '.' + ext;
+  await env.IMAGES_BUCKET.put(key, bytes, { httpMetadata: { contentType } });
+
+  const workerOrigin = new URL(request.url).origin;
+  return json({ ok: true, url: workerOrigin + '/image/' + key }, 200, cors);
+}
+
+// GET /image/<key> — deliberately public/unauthenticated. Uploaded images back published
+// community content, which is already public-readable elsewhere in this app (e.g. published-works.html
+// requires no login) — gating image bytes behind auth here would just break those pages.
+async function serveImage(request, env, url) {
+  if (!env.IMAGES_BUCKET) return new Response('R2 bucket not configured', { status: 503 });
+  const key = decodeURIComponent(url.pathname.replace(/^\/image\//, ''));
+  const object = await env.IMAGES_BUCKET.get(key);
+  if (!object) return new Response('Not found', { status: 404 });
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  headers.set('Access-Control-Allow-Origin', '*');
+  return new Response(object.body, { headers });
 }
 
 function json(body, status, extraHeaders) {
@@ -380,9 +457,20 @@ export default {
     const cors = corsHeaders(origin, env);
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-    if (request.method !== 'POST') return json({ ok: false, error: 'method not allowed' }, 405, cors);
 
     const url = new URL(request.url);
+
+    // GET /image/<key> — public image delivery, sits outside the POST-only gate below.
+    if (request.method === 'GET' && url.pathname.startsWith('/image/')) {
+      return serveImage(request, env, url);
+    }
+
+    if (request.method !== 'POST') return json({ ok: false, error: 'method not allowed' }, 405, cors);
+
+    // POST /upload-image — requires auth (checked inside), but is its own endpoint, not an /ai/* action.
+    if (url.pathname === '/upload-image') {
+      return handleImageUpload(request, env, cors);
+    }
 
     // BL-014 — Access Log: fired on every page load, logged-in or not, so it lives outside the
     // /ai/ ID-token-required routing below. Client never sends ip/user_account_id itself (both

@@ -28,11 +28,32 @@ Firebase (Cloud Functions บังคับต้องอัปเกรดเ
 | `seo` | ชุมชน (`community-create-content.html`) | `{ text }` | FR-1.4 |
 | `story-suggestion` | ชุมชน (`community-create-content.html`) | `{ topic }` | FR-1.5 |
 
-**FR-1.1 (ปรับภาพให้สวยด้วย AI) ยังไม่ implement ในรอบนี้** — ตัว `community-create-content.html`
-ไม่มีระบบอัปโหลดภาพจริงเลย (ปุ่ม "เลือกไฟล์" เป็นแค่ placeholder ที่ตั้งชื่อไฟล์ปลอม ไม่มีการอัปโหลด
-จริงขึ้น Storage) การทำ endpoint ปรับภาพจริงต้องมีระบบอัปโหลดภาพจริงก่อน (Firebase Storage หรือ
-เทียบเท่า) ซึ่งเป็นงานคนละสโคปจาก "AI backend proxy" — ปุ่มนี้ยังคงปิดใช้งานต่อไปพร้อมข้อความ
-อธิบายเหตุผลที่ชัดเจน ไม่ใช่ของปลอม
+**FR-1.1 (ปรับภาพให้สวยด้วย AI) ยังไม่ implement เต็มรูปแบบ** — ตอนนี้มีระบบอัปโหลดภาพจริงแล้ว
+(ดู `POST /upload-image` ด้านล่าง, เพิ่ม 2026-09-23) แต่ endpoint ที่เรียก AI มาปรับภาพจริง
+(image-to-image) ยังไม่ implement เพราะต้องตัดสินใจเพิ่ม (เลือกโมเดล AI ปรับภาพ, ต้นทุนต่อครั้ง)
+ซึ่งเป็นคนละสโคปจากงานอัปโหลด — ปุ่ม "✨ ให้ AI ปรับภาพให้สวย" ใน `community-create-content.html`
+ยังปิดใช้งานต่อไปพร้อมข้อความอธิบายเหตุผลที่ชัดเจน ไม่ใช่ของปลอม
+
+### `POST /upload-image` + `GET /image/<key>` (เพิ่ม 2026-09-23 — BL-001 prerequisite)
+
+อัปโหลด/ดึงรูปภาพจริงที่ชุมชนอัปโหลดใน `community-create-content.html` — เก็บบน **Cloudflare R2**
+แทน Firebase Storage เพราะ Firebase Storage บังคับอัปเกรดเป็นแผน Blaze (ผูกบัตรเครดิต) แม้ใช้ไม่
+เกิน free tier ก็ตาม เหตุผลเดียวกับที่เลือก Cloudflare Workers แทน Firebase Cloud Functions ไปแล้ว
+ก่อนหน้านี้ — R2 free tier ให้ 10GB เก็บฟรีไม่ต้องผูกบัตร (ผู้ใช้ควรตรวจสอบในแดชบอร์ด Cloudflare
+ของตัวเองอีกครั้งตอน deploy จริง เผื่อเงื่อนไขเปลี่ยนไปจากตอนเขียนเอกสารนี้)
+
+- **`POST /upload-image`** — ต้องแนบ `Authorization: Bearer <Firebase ID token>` เหมือน `/ai/*`
+  (ไม่ใช่ anonymous เหมือน `/log-access`) body เป็นไบต์ไฟล์ภาพดิบ ไม่ใช่ JSON, header
+  `Content-Type` ต้องเป็น `image/jpeg` / `image/png` / `image/webp` / `image/gif` เท่านั้น
+  จำกัดขนาดไม่เกิน 5MB — คืนค่า `{ ok: true, url: "https://<worker>/image/<key>" }`
+- **`GET /image/<key>`** — **ไม่บังคับ login** (ตั้งใจ) เพราะรูปภาพประกอบคอนเทนต์ที่เผยแพร่แล้ว
+  ต้องดูได้แบบ public เหมือนหน้าอื่นที่ไม่ต้อง login (เช่น `published-works.html`) — cache
+  `max-age=31536000, immutable` เพราะแต่ละ key ไม่ถูก overwrite ซ้ำ (อัปโหลดใหม่ = key ใหม่เสมอ)
+
+**ต้องสร้าง R2 bucket เองก่อน deploy** (ดูคำสั่งในหัวข้อ "Deploy จริง" ด้านล่าง) — ต่างจาก secret
+ตรงที่ bucket binding (`IMAGES_BUCKET` → `lsh-community-images`) กำหนดไว้ใน `wrangler.toml` แล้ว
+(commit เข้า repo ได้ปกติ ไม่ใช่ความลับ) แค่ตัว bucket ต้องมีอยู่จริงบน Cloudflare ก่อน `wrangler deploy`
+ถึงจะ bind สำเร็จ
 
 response ทุก endpoint: `{ ok: true, result: "..." }` หรือ `{ ok: false, error: "..." }`
 
@@ -97,6 +118,7 @@ npm install
 npx wrangler login          # เปิดเบราว์เซอร์ให้ login ด้วยบัญชี Cloudflare ของคุณ (สมัครฟรีได้ที่ dash.cloudflare.com ถ้ายังไม่มี — ไม่ต้องผูกบัตร)
 npx wrangler secret put OPENROUTER_API_KEY            # แปะ API key จริงจาก https://openrouter.ai/keys ตอนถูกถาม
 npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON # แปะเนื้อหาไฟล์ JSON ทั้งไฟล์ (ดูวิธีขอด้านบน § /log-access)
+npx wrangler r2 bucket create lsh-community-images    # สร้าง R2 bucket ครั้งเดียว (ดูหัวข้อ /upload-image ด้านบน) — ต้องมีก่อน deploy ถึงจะ bind สำเร็จ
 npx wrangler deploy
 ```
 
@@ -149,3 +171,6 @@ npx wrangler dev
   (ไม่รับ prompt สำเร็จรูปจาก client) กันคนยิง endpoint ตรงไปสั่งให้ AI ทำงานนอกสโคป
 - CORS จำกัดเฉพาะ origin ใน `ALLOWED_ORIGINS` (ตั้งค่าใน `wrangler.toml`) บวก `localhost` (ทุก
   port) สำหรับตอน dev เท่านั้น
+- `/upload-image` ต้องมี ID token ที่ valid เหมือน `/ai/*` (กันคนนอกยิงอัปโหลดตรงเข้ามาใช้ quota
+  ฟรีของ R2), เช็ค `Content-Type` เทียบ allowlist ภาพจริงเท่านั้น (JPEG/PNG/WEBP/GIF) และจำกัด
+  ขนาดไม่เกิน 5MB ต่อไฟล์ — `/image/<key>` เปิด public โดยตั้งใจ (ดูเหตุผลในหัวข้อ endpoint ด้านบน)

@@ -25,7 +25,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`users`** — field: `name`, `email`, `role`
   - **`status`, `approverId`, `approverName`, `rejectionReason`** — เพิ่ม 2026-09-12 (BL-019/BL-020) เฉพาะบัญชี `role: student` เท่านั้น — `status` มี 3 ค่า: `รออนุมัติ` / `อนุมัติแล้ว` / `ไม่อนุมัติ` บัญชีที่สมัครเองต้องรอ `อนุมัติแล้ว` ก่อนถึงจะส่งผลงานได้ (`LSHRequests.create` เช็คเงื่อนไขนี้ใน `firestore.rules` ด้วย) บัญชี `role: teacher` (u004) ไม่มี field เหล่านี้ (provision โดย admin ถือว่า approved ทันที)
 - **`role: community`** *(เพิ่ม 2026-09-23)* — บัญชีชุมชนใช้ `users` collection เดียวกับนิสิต (ไม่แยก collection) มี `status`/`approverId`/`approverName`/`rejectionReason` ชุดเดียวกับนิสิตทุกประการ บวก field เพิ่ม **`contactInfo`** (ข้อมูลยืนยันตัวตน — ชื่อผู้ติดต่อ+เบอร์โทร ตาม Business Rule BL-022)
-- **`CommunityContent`** *(เพิ่ม 2026-09-23)* — คอนเทนต์ของชุมชน: `title`, `bodyTh`, `caption`, `communityId`/`communityName` (denormalized), `status` (`เผยแพร่แล้ว` เท่านั้น — สร้างแล้วเผยแพร่ทันที ไม่มีสถานะฉบับร่าง เพราะไม่มี path ให้ community แก้ไข/เผยแพร่ฉบับร่างของตนเองใน `firestore.rules`), `createdAt`, `updatedAt`
+- **`CommunityContent`** *(เพิ่ม 2026-09-23)* — คอนเทนต์ของชุมชน: `title`, `bodyTh`, `caption`, `imageUrl` *(เพิ่ม 2026-09-23 รอบสอง — BL-001 prerequisite, ดูหัวข้อ "Community Image Upload" ด้านล่าง; `null` ได้ถ้ายังไม่อัปโหลดภาพ)*, `communityId`/`communityName` (denormalized), `status` (`เผยแพร่แล้ว` เท่านั้น — สร้างแล้วเผยแพร่ทันที ไม่มีสถานะฉบับร่าง เพราะไม่มี path ให้ community แก้ไข/เผยแพร่ฉบับร่างของตนเองใน `firestore.rules`), `createdAt`, `updatedAt`
 - **`ContentEditRequests`** *(เพิ่ม 2026-09-23)* — คำขอแก้ไขคอนเทนต์ที่เผยแพร่แล้ว: `contentId`, `contentTitle`, `communityId`/`communityName`, `proposedChanges`/`originalValues` (`{title, bodyTh}`), `status` (`รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`), `rejectionReason`, `approverId`/`approverName`, `createdAt` — ชุมชนแก้ไข/ยกเลิกคำขอขณะ `รอพิจารณา` ไม่ได้ (ไม่มี `allow update` ให้ community ใน `firestore.rules` เลย)
 - **`touristAccounts`** *(เพิ่ม 2026-09-22/23)* — บัญชีนักท่องเที่ยว: `displayName`, `email`, `role: 'tourist'`, `createdAt` — **แยก collection จาก `users` โดยเจตนา** (ไม่ใช่ `role: community` ที่ใช้ `users` ร่วมกับนิสิต) เพราะนักท่องเที่ยว**ไม่มีสถานะ pending/approved เลย** สมัครเสร็จใช้งานได้ทันที — `uid` เดียวกันอาจมีทั้ง `users` doc (ถ้าเป็นนิสิต/ชุมชนด้วย) และ `touristAccounts` doc พร้อมกันได้ คนละ collection
 - **`Reviews`** *(เพิ่ม 2026-09-23)* — รีวิวของนักท่องเที่ยว: `contentId`, `contentType` (`student`/`community` — ระบุว่าเนื้อหามาจาก `LSHRequests` หรือ `CommunityContent`), `contentTitle`, `touristId`/`touristName`, `text`, `createdAt` — อ่านได้แบบ public ไม่ต้อง login, เขียนต้อง login เท่านั้น (Decision Log 2026-08-28), immutable (ไม่มี update/delete)
@@ -105,6 +105,36 @@ npx wrangler deploy
 หลัง deploy จะได้ URL รูปแบบ `https://lsh-ai-proxy.<subdomain>.workers.dev` — เอาไปตั้งใน
 `docs/02-design/01-prototypes/prototype-v2/ai-assist-config.js` (แทนที่ placeholder) แล้ว
 `firebase deploy --only hosting` ใหม่อีกครั้ง
+
+## Community Image Upload — BL-001 prerequisite (เพิ่ม 2026-09-23 รอบสอง)
+
+`community-create-content.html` มีระบบอัปโหลดภาพจริงแล้ว (แทนปุ่ม "เลือกไฟล์" placeholder เดิม)
+— เก็บบน **Cloudflare R2** ผ่าน Worker เดียวกับ AI Backend Proxy ด้านบน (`cf-worker/`, endpoint
+`POST /upload-image` + `GET /image/<key>`) **เลือก R2 แทน Firebase Storage เพราะ Firebase Storage
+บังคับอัปเกรดเป็นแผน Blaze (ผูกบัตรเครดิต) แม้ใช้ไม่เกิน free tier** — เหตุผลเดียวกับที่เลือก
+Cloudflare Workers แทน Firebase Cloud Functions ไปแล้วก่อนหน้านี้ (ดูหัวข้อ AI Backend Proxy)
+
+**สถาปัตยกรรม**: อัปโหลดต้องแนบ Firebase ID token เหมือนปุ่ม AI ทุกปุ่ม (ไม่ใช่ anonymous เหมือน
+`/log-access`) จำกัดเฉพาะไฟล์ JPEG/PNG/WEBP/GIF ไม่เกิน 5MB — ไฟล์ที่อัปโหลดสำเร็จบันทึก URL ไว้ที่
+field `imageUrl` ของเอกสาร `CommunityContent` (ดูหัวข้อ Firestore Seed Script ด้านบน) ภาพเสิร์ฟกลับ
+แบบ public ไม่ต้อง login (`GET /image/<key>`) เพราะคอนเทนต์ที่เผยแพร่แล้วต้องดูได้แบบ public อยู่แล้ว
+เหมือนหน้าอื่น — แสดงผลจริงแล้วที่ `tourist-story-detail.html` (แทนที่ hero placeholder เดิมเมื่อมี
+`imageUrl`) ส่วน `tourist-search-results.html`/`published-works.html` **ยังไม่ได้เพิ่มรูปในการ์ด
+ผลการค้นหา** (ยังคงเป็น text-only เหมือนเดิม ไม่ใช่ regression แค่ยังไม่ได้ทำ)
+
+**ต้องสร้าง R2 bucket เองก่อน deploy** (`npx wrangler r2 bucket create lsh-community-images` —
+ดูรายละเอียดเต็มที่ `cf-worker/README.md`) binding (`IMAGES_BUCKET`) กำหนดไว้ใน `cf-worker/wrangler.toml`
+แล้ว ไม่ใช่ secret
+
+**สถานะ ณ 2026-09-23**: โค้ดฝั่ง Worker + client เสร็จแล้ว ทดสอบ round-trip เต็มรูปแบบผ่าน local
+`wrangler dev` แล้ว (R2 จำลองแบบ local ได้เองโดยไม่ต้อง login Cloudflare) — login จริงด้วยบัญชี
+`u001@example.com`, อัปโหลดไฟล์ PNG จริงผ่าน `POST /upload-image`, ดึงกลับผ่าน `GET /image/<key>`
+แล้วเทียบไบต์ตรงกับต้นฉบับ 100%, ยืนยัน `Content-Type`/`Cache-Control` headers ถูกต้อง, และยืนยัน
+กรณีปฏิเสธทั้งหมดทำงานถูก (ไม่มี token, token ปลอม, content-type ผิด, ไฟล์เกิน 5MB) **แต่ยังไม่ได้
+ทดสอบบน Cloudflare จริง** เพราะ Worker ยังไม่ได้ deploy ขึ้นจริง (รอผู้ใช้ทำตามขั้นตอนเดียวกับ AI
+Backend Proxy ด้านบน บวกขั้นตอนสร้าง R2 bucket) **ปุ่ม "✨ ให้ AI ปรับภาพให้สวย" (image-to-image
+enhancement) ยังไม่ implement** — เป็นงานคนละสโคปจากงานอัปโหลดรอบนี้ ต้องเลือกโมเดล AI ปรับภาพก่อน
+ถึงจะทำต่อได้ (ดู BL-001 ใน product-backlog.md)
 
 ## Access Log — BL-014 (เพิ่ม 2026-09-23)
 
