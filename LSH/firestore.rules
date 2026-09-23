@@ -104,11 +104,15 @@ service cloud.firestore {
     }
 
     match /Bookmarks/{bookmarkId} {
-      allow read: if request.auth != null && resource.data.touristId == request.auth.uid;
+      // Ownership is checked against the deterministic doc ID ({touristId}_{contentType}_{contentId})
+      // rather than resource.data, because clients call getDoc() to check bookmark status BEFORE the
+      // doc exists (not-yet-bookmarked) — referencing resource.data on a non-existent doc denies the read.
+      allow read: if request.auth != null && bookmarkId.split('_')[0] == request.auth.uid;
       allow create: if request.auth != null
-                    && request.resource.data.touristId == request.auth.uid;
+                    && request.resource.data.touristId == request.auth.uid
+                    && bookmarkId == request.auth.uid + '_' + request.resource.data.contentType + '_' + request.resource.data.contentId;
       allow update: if false;
-      allow delete: if request.auth != null && resource.data.touristId == request.auth.uid;
+      allow delete: if request.auth != null && bookmarkId.split('_')[0] == request.auth.uid;
     }
 
     match /ConsentRecords/{recordId} {

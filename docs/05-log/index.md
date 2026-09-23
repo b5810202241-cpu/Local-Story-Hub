@@ -664,3 +664,23 @@ Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น
 **พบไฟล์นอกสโคปที่ควรตรวจสอบภายหลัง**: `prototype-v4/community-register.html` มีอยู่ (ซ้ำกับ `prototype-v3`/`prototype-v2` — ไม่แน่ใจที่มา) ไม่ได้แตะเพราะเป็นสโคปของระบบชุมชน (Part 1) ไม่ใช่นักท่องเที่ยว
 
 อัปเดตสถานะ BL-008/009/011/012/015/016/017 เป็น "เสร็จแล้ว" (BL-010 ยังไม่เริ่ม — ไม่มีข้อมูลพิกัดจริง) ใน [[../01-requirements/03-task/product-backlog|product-backlog]], เพิ่ม mapping ใน [[../02-design/02-technical/architecture|architecture.md]], อัปเดต [[../02-design/02-technical/ACL|ACL.md]] § สถานะการบังคับใช้ ให้ตรงกับ backend จริง
+
+### 2026-09-23 — รีวิว + แก้บั๊ก + deploy + ทดสอบ end-to-end ระบบนักท่องเที่ยว (ต่อจาก Part 2 ด้านบน)
+
+ผู้ประสานงานรีวิวโค้ดก่อน deploy — พบช่องโหว่ 1 จุดใน `firestore.rules` (คล้ายรูปแบบเดียวกับบั๊ก draft ของ Part 1): rule ของ `Bookmarks` เดิมเช็คสิทธิ์ `read`/`delete` จาก `resource.data.touristId` — แต่ `tourist-story-detail.html` เรียก `getDoc()` เพื่อเช็คว่า "บันทึกไว้แล้วหรือยัง" **ก่อน**ที่เอกสารจะถูกสร้าง (ผู้ใช้ยังไม่เคยกดบันทึก) ทำให้ `resource` เป็น `null` และการอ้างอิง `resource.data.touristId` ทำให้ rule ปฏิเสธเสมอ (`permission-denied`) แทนที่จะได้ "ไม่พบเอกสาร" ตามปกติ — ปุ่ม "บันทึกสถานที่โปรด" จะพังตั้งแต่ครั้งแรกที่กดสำหรับทุกคน
+
+**แก้ไข**: เปลี่ยนเงื่อนไขสิทธิ์ของ `Bookmarks.read`/`delete` ให้เช็คจาก **document ID** แทน (`bookmarkId.split('_')[0] == request.auth.uid` — ใช้ประโยชน์จากรูปแบบ id ที่กำหนดตายตัวอยู่แล้วคือ `{touristId}_{contentType}_{contentId}`) ซึ่งไม่ต้องพึ่งว่าเอกสารมีอยู่จริงหรือไม่ พร้อมเพิ่มเงื่อนไขใน `create` ให้ตรวจว่า `bookmarkId` ต้องตรงกับรูปแบบที่คำนวณจาก field จริงเสมอ (กัน id ปลอม)
+
+**Deploy**: `firebase deploy --only firestore:rules` ขึ้น production แล้ว (ยืนยันกับผู้ใช้ก่อน)
+
+**ทดสอบ end-to-end ผ่าน headless Chromium จริง** (`npx playwright` script ตรง ต่อ Firestore/Auth จริงของ `lsh-nammon` เพราะ Playwright MCP ยังเชื่อมต่อไม่กลับมา) ด้วยบัญชีทดสอบ `qa-tourist-20260923@example.com`:
+1. สมัครบัญชีนักท่องเที่ยวใหม่ → เข้าใช้งานได้ทันที ไม่ต้องรออนุมัติ (redirect ไปหน้าค้นหาทันที ตรงตาม ACL.md)
+2. หน้าค้นหาแสดงคอนเทนต์ที่รวมทั้งงานนิสิต (`LSHRequests`) และคอนเทนต์ชุมชน (`CommunityContent`) ปนกันถูกต้อง (ทดสอบด้วยคอนเทนต์ชุมชนที่สร้างไว้ตอนทดสอบ Part 1)
+3. เปิดหน้ารายละเอียด → เช็คสถานะบันทึกสถานที่ครั้งแรก **ไม่มี permission-denied แล้ว** (bug fix ยืนยันผล) → กดบันทึกสำเร็จ → reload หน้าเห็นสถานะ "บันทึกแล้ว" คงอยู่ → กดยกเลิกสำเร็จ (ลบเอกสารจริง)
+4. เขียนรีวิวสำเร็จ ขึ้นในรายการรีวิวทันทีหลังโพสต์
+5. กดยินยอม consent banner สำเร็จ ไม่มี error (เขียน `ConsentRecords` จริง)
+6. logout แล้ว login ซ้ำด้วยบัญชีเดิมสำเร็จ
+
+ไม่พบ JS error หรือ permission-denied ใดๆ ตลอด flow — **ระบบนักท่องเที่ยวใช้งานได้จริงครบสมบูรณ์แล้ว** เก็บบัญชี/รีวิว/บันทึกสถานที่ทดสอบไว้ตามธรรมเนียมเดิม (ไม่ลบข้อมูลทดสอบทิ้ง)
+
+Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น `origin/main` แล้ว — **Part 2/5 เสร็จสมบูรณ์**
