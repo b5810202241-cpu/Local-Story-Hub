@@ -163,12 +163,15 @@ enhancement) ยังไม่ implement** — เป็นงานคนล�
   ที่อนุญาตอยู่แล้ว (ต่างจาก `update` ที่จำกัด — ดู `LSH/firestore.rules`) field `location` ที่มีอยู่
   จึงไม่ถูกแก้ไขภายหลังผ่าน edit-request flow (BL-023) เหมือนกับ `imageUrl` (ตั้งครั้งเดียวตอนสร้าง)
 
-**สถานะ ณ 2026-09-23**: ทดสอบ end-to-end จริงผ่าน local server + Playwright แล้ว (login จริงด้วย
+**สถานะ ณ 2026-09-23**: ทดสอบ end-to-end จริงผ่าน local server + Playwright ก่อน (login จริงด้วย
 `u001@example.com`, ปักหมุดจริง, ส่งจริงลง `LSHRequests`, อาจารย์อนุมัติจริง, ยืนยันว่า
 `tourist-story-detail.html`/`tourist-search-results.html`/`published-works.html` อ่านและแสดงพิกัด
-ที่ปักไว้ถูกต้องครบทุกหน้า) — deploy ได้ทันทีไม่มีขั้นตอนที่ผู้ใช้ต้องทำเพิ่ม (ต่างจาก AI proxy/R2 —
-Leaflet ไม่ต้องมี secret หรือ deploy แยก) BL-010 ปิดสถานะเป็น "เสร็จแล้ว" ตาม Acceptance Criteria
-(ปักหมุดตำแหน่งเดียว ไม่รวมเส้นทาง/นำทาง ตามขอบเขตที่อาจารย์ยืนยัน)
+ที่ปักไว้ถูกต้องครบทุกหน้า) — **deploy ขึ้น Firebase Hosting จริงแล้ว** (`firebase deploy --only
+hosting,firestore:rules`) และ retest ซ้ำบน production จริงผ่านครบเหมือนกัน (พบระหว่างทางว่ารอบ
+regression QA แรกทดสอบก่อน deploy จึงไม่พบ UI เลย — ไม่ใช่บั๊กโค้ด แค่ยังไม่ได้ deploy ดู
+`docs/03-testing/02-test-result/20260923-test-run-regression-full.md` และ TC-006 ใน test-plan.md)
+BL-010 ปิดสถานะเป็น "เสร็จแล้ว" ตาม Acceptance Criteria (ปักหมุดตำแหน่งเดียว ไม่รวมเส้นทาง/นำทาง
+ตามขอบเขตที่อาจารย์ยืนยัน) ยืนยันใช้งานได้จริงบน production แล้ว ไม่ใช่แค่ local
 
 ## Access Log — BL-014 (เพิ่ม 2026-09-23)
 
