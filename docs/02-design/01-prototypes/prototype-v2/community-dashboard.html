@@ -186,7 +186,7 @@ function startListening(){
   unsubEdits = onSnapshot(editsQuery, function(snapshot){
     latestEditByContentId = {};
     snapshot.forEach(function(d){
-      const data = d.data();
+      const data = Object.assign({ id: d.id }, d.data());
       const existing = latestEditByContentId[data.contentId];
       const t = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0;
       const existingT = existing && existing.createdAt && existing.createdAt.toMillis ? existing.createdAt.toMillis() : -1;
@@ -225,7 +225,8 @@ window.renderOwn = function(){
         actionCell = '<a class="btn btn-secondary" href="community-request-edit.html?contentId=' + c.id + '">ขอแก้ไข</a>';
       }
     }
-    return '<tr><td>' + escapeHtml(c.title) + '</td><td><span class="status ' + statusClass + '">' + escapeHtml(c.status) + '</span></td><td>' + actionCell + '</td></tr>';
+    const editIdAttr = latestEdit ? ' data-edit-id="' + escapeHtml(latestEdit.id) + '"' : '';
+    return '<tr data-content-id="' + escapeHtml(c.id) + '"' + editIdAttr + '><td>' + escapeHtml(c.title) + '</td><td><span class="status ' + statusClass + '">' + escapeHtml(c.status) + '</span></td><td>' + actionCell + '</td></tr>';
   }).join('');
 };
 

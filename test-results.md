@@ -6,9 +6,9 @@
 - Automated: `npx playwright test --reporter=list` (`tests/published-works.spec.js`, รัน 3 browser: chromium/firefox/webkit)
 - Manual QA: agent ขับเบราว์เซอร์จริงผ่าน Playwright MCP ไล่ทุก test case ใน [`docs/03-testing/01-test-plan/test-plan.md`](docs/03-testing/01-test-plan/test-plan.md) (regression เต็มรูปแบบ ทดสอบซ้ำทุกแถวแม้เคย "ผ่าน" มาก่อน) — รายละเอียดดิบเต็มทุก TC อยู่ที่ [`docs/03-testing/02-test-result/20260923-test-run-regression-full.md`](docs/03-testing/02-test-result/20260923-test-run-regression-full.md)
 
-**ผลรวม:** automated 3/3 ผ่าน · security (ถาวร) **2/2 ผ่าน (หลังแก้บั๊กจริง 1 ตัว)** · manual **26 ผ่าน** / 0 ไม่ผ่าน / 9 บล็อก / 2 ข้าม จาก 37 test case (36 `TC-XXX` + `TC-M-001`)
+**ผลรวม:** automated 3/3 ผ่าน · security (ถาวร) **4/4 ผ่าน (หลังแก้บั๊กจริง 2 ตัว)** · manual **26 ผ่าน** / 0 ไม่ผ่าน / 9 บล็อก / 2 ข้าม จาก 37 test case (36 `TC-XXX` + `TC-M-001`)
 
-> 🔒 **พบ + แก้บั๊กความปลอดภัยจริง (2026-09-23, รอบถัดมาอีกครั้ง)**: เขียนเทสต์ความปลอดภัยถาวร 2 ตัวเพิ่ม (`tests/security-*.spec.js`) — ตัวที่สอง (cross-user) ไม่ผ่านรอบแรกจริง เพราะ `LSHRequests.read` rule เดิมเปิดให้ผู้ใช้ login คนไหนก็ได้อ่านผลงานที่ยังไม่อนุมัติของคนอื่นได้หมด (ไม่ใช่แค่เจ้าของ/อาจารย์ตามที่ตั้งใจ) — แก้ `LSH/firestore.rules` ให้แคบลงแล้ว deploy จริง, retest ผ่านทั้งระดับ UI และระดับ Firestore rules (permission-denied จริง) ดูรายละเอียดในหัวข้อ "เทสต์ความปลอดภัยถาวร" ด้านล่าง
+> 🔒 **พบ + แก้บั๊กความปลอดภัยจริง 2 รายการ (2026-09-23)**: เขียนเทสต์ความปลอดภัยถาวร 4 ตัว (`tests/security-*.spec.js`) ครอบคลุม `LSHRequests`, `ContentEditRequests`, `CommunityContent` — พบว่า **2 ใน 3 collection มี rule เดิมเปิดกว้างเกินไปจริง** (`request.auth != null` เฉยๆ ไม่จำกัดเจ้าของ/อาจารย์): `LSHRequests.read` และ `ContentEditRequests.read` แก้ทั้งคู่แล้ว deploy จริง retest ผ่านทั้งระดับ UI และระดับ Firestore rules (permission-denied จริง) — ส่วน `CommunityContent.read` ตรวจแล้วมี pattern เดียวกันแต่**ไม่รั่วจริงในทางปฏิบัติ** เพราะ `create`/`update` rule กันไม่ให้มีสถานะอื่นนอกจาก "เผยแพร่แล้ว" อยู่แล้ว (เทสต์ตัวที่ 4 ล็อก invariant นี้ไว้แทน) ดูรายละเอียดในหัวข้อ "เทสต์ความปลอดภัยถาวร" ด้านล่าง
 
 > ✅ **อัปเดตหลัง deploy (2026-09-23, รอบถัดมา)**: รอบ regression แรกพบว่า TC-006 (BL-010 ปักหมุดตำแหน่ง) ไม่ผ่าน เพราะ**โค้ด BL-010 ที่ implement เสร็จแล้วในเซสชันนี้ (commit `4e14352`) ยังไม่เคย deploy ขึ้น Firebase Hosting จริง** — ต่างจาก `git commit`/`git push` ซึ่งเป็นคนละขั้นตอนกับ `firebase deploy --only hosting` **ไม่ใช่บั๊กในโค้ด** รัน `firebase deploy --only hosting,firestore:rules` แล้ว retest TC-006 ซ้ำผ่าน browser จริงบน production ผ่านสมบูรณ์ (ปักหมุด → ส่ง → อนุมัติ → แสดงแผนที่พร้อมหมุด + ลิงก์ Google Maps พิกัดแม่นยำถูกต้องครบ) — รายละเอียดเต็มอยู่ในหัวข้อ "เคสที่แก้ไขแล้ว" ด้านล่าง
 
@@ -26,13 +26,31 @@
 |---|---|---|---|---|
 | S1 | `tests/security-unauth-review-list-blocked.spec.js` | ไม่ login แล้วเปิด `admin-review-student-work.html` (หน้ารวมผลงาน/บัญชี/คำขอแก้ไขของอาจารย์) — ต้องอ่านข้อมูลไม่ได้เลย ทุก container ต้องว่างเปล่า | ✅ ผ่าน (รอบแรกไม่ผ่านเพราะ**เทสต์เขียนผิด** — selector `.card` กว้างไปแมตช์ element เปล่าที่ไม่เกี่ยวกับข้อมูลรั่ว แก้เทสต์แล้วผ่าน) | 20:48 UTC |
 | S2 | `tests/security-cross-user-pending-work-blocked.spec.js` | นิสิต A ส่งผลงานใหม่ (รอพิจารณา) → นิสิต B login คนละบัญชีพยายามเปิดตรงๆ ผ่าน URL — ต้องเปิดไม่ได้ทั้งระดับ UI และระดับ Firestore (permission-denied จริง) | ✅ ผ่าน (รอบแรกไม่ผ่านเพราะ**โค้ดผิดจริง** — ดูหัวข้อ "บั๊กความปลอดภัยที่พบ+แก้" ด้านล่าง) | 20:49 UTC |
+| S3 | `tests/security-cross-community-edit-request-blocked.spec.js` | ชุมชน A ส่งคำขอแก้ไขคอนเทนต์ (รอพิจารณา) → ชุมชน B login คนละบัญชีพยายามอ่านตรงๆ ผ่าน Firestore SDK (ไม่มีหน้า UI ให้เปิดตรงๆ เหมือน LSHRequests) — ต้องถูก permission-denied | ✅ ผ่าน (รอบแรกไม่ผ่านเพราะ**โค้ดผิดจริง** — บั๊กเดียวกับ S2 แต่คนละ collection ดูด้านล่าง) | 22:24 UTC |
+| S4 | `tests/security-community-content-no-draft-state.spec.js` | (ไม่ใช่เทสต์บล็อกการอ่าน — CommunityContent ไม่มี state ส่วนตัวให้ทดสอบจริง) ล็อก invariant: พยายาม create เอกสารสถานะอื่นที่ไม่ใช่ "เผยแพร่แล้ว" ตรงๆ ต้องถูกปฏิเสธเสมอ | ✅ ผ่าน | 22:20 UTC |
 
-### บั๊กความปลอดภัยที่พบ+แก้ — LSHRequests.read เปิดกว้างเกินไป (ความรุนแรง: สูง)
+### บั๊กความปลอดภัยที่พบ+แก้ #1 — LSHRequests.read เปิดกว้างเกินไป (ความรุนแรง: สูง)
 
 - **ผลที่คาด**: นิสิต B ที่ login (คนละบัญชีจาก A) เปิดผลงานที่ A ยังไม่ได้รับอนุมัติไม่ได้ — Firestore ต้องปฏิเสธการอ่านตั้งแต่ต้น
 - **ผลจริง (ก่อนแก้)**: `LSH/firestore.rules` เดิมของ `LSHRequests` คือ `allow read: if request.auth != null || resource.data.status == 'อนุมัติ';` — เงื่อนไข `request.auth != null` หมายถึง "login แล้วคนไหนก็ได้" ไม่ได้เช็คว่าต้องเป็นเจ้าของ (`requesterId`) หรือ role=`teacher` เลย นิสิต B จึงอ่านเอกสารของ A ได้จริงทาง Firestore (ยืนยันด้วย console ไม่มี `permission-denied` เลย) เว็บแค่ซ่อนไม่แสดงผลด้วย JS ฝั่ง client เท่านั้น — **ข้อมูลรั่วจริงที่ชั้นสิทธิ์**
 - **วิธีแก้**: แก้ rule เป็น `allow read: if resource.data.status == 'อนุมัติ' || (request.auth != null && (resource.data.requesterId == request.auth.uid || getRole() == 'teacher'));` deploy ขึ้น production แล้ว (`firebase deploy --only firestore:rules`)
 - **ตรวจ regression**: รันเทสต์ทั้งหมด (automated 3 + security 2) ซ้ำพร้อมกันหลังแก้ → ผ่านหมด, ตรวจเพิ่มด้วย browser จริงว่าอาจารย์ (`u004@example.com`) ยังเห็นผลงานรอพิจารณาในหน้า `admin-review-student-work.html` ตามปกติ (ไม่กระทบ BL-018 approve/reject flow)
+
+### บั๊กความปลอดภัยที่พบ+แก้ #2 — ContentEditRequests.read เปิดกว้างเกินไป (ความรุนแรง: สูง)
+
+- **ผลที่คาด**: ชุมชน B ที่ login (คนละบัญชีจาก A) อ่านคำขอแก้ไขคอนเทนต์ของ A ที่ยังไม่พิจารณาไม่ได้
+- **ผลจริง (ก่อนแก้)**: rule เดิมคือ `allow read: if request.auth != null;` เฉยๆ — ไม่เช็คเจ้าของหรือ role เลย ยืนยันด้วยการยิง `getDoc()` ตรงๆ จากบัญชี B สำเร็จ (`ok:true`) อ่านได้ทั้ง `proposedChanges`/`originalValues`/`rejectionReason` ของชุมชน A ครบ
+- **วิธีแก้**: แก้ rule เป็น `allow read: if request.auth != null && (resource.data.communityId == request.auth.uid || getRole() == 'teacher');` deploy ขึ้น production แล้ว
+- **ผลข้างเคียงที่ต้องแก้เพิ่ม**: rule ที่แคบลงทำให้ query เดิมใน `community-request-edit.html` (เช็คคำขอค้างก่อนส่งใหม่ — กรองแค่ `contentId`+`status`) ถูก Firestore ปฏิเสธทั้ง query เลย เพราะ list query ต้องพิสูจน์ rule ได้จาก where-clause ของตัวเอง ไม่ใช่แค่ per-document เหมือน `get()` — แก้โดยเพิ่ม `where('communityId', '==', currentProfile.id)` เข้าไปด้วย แล้ว deploy hosting ซ้ำ
+- **ตรวจ regression**: รันเทสต์ทั้งหมด (automated 3 + security 4) พร้อมกันหลังแก้ → ผ่านหมด, ตรวจเพิ่มด้วย browser จริงว่าอาจารย์ยังเห็นคำขอแก้ไขของทุกชุมชนในหน้า `admin-review-student-work.html` ตามปกติ (ไม่กระทบ BL-023 approve/reject flow)
+
+### ทำไม CommunityContent.read ไม่ต้องแก้ (ตรวจสอบแล้ว ไม่ใช่ปล่อยผ่าน)
+
+Rule เดิม (`request.auth != null || resource.data.status == 'เผยแพร่แล้ว'`) มี pattern เปิดกว้างแบบ
+เดียวกับสองบั๊กข้างต้น แต่ตรวจ `LSH/firestore.rules` แล้วพบว่า `create` บังคับ `status ==
+'เผยแพร่แล้ว'` เสมอ และ `update` จำกัดแค่ field `['title','bodyTh','caption','updatedAt']` (ไม่มี
+`status`) — **ไม่มีทางที่เอกสารในคอลเลกชันนี้จะมีสถานะอื่นได้เลยผ่านแอป** จึงไม่มีข้อมูลส่วนตัวให้รั่ว
+จริงในทางปฏิบัติตอนนี้ — S4 ล็อก invariant นี้ไว้แทนที่จะพยายามแก้ rule ที่ยังไม่มีอะไรให้แก้จริง
 - **ยังไม่ได้แก้ (นอกสโคปรอบนี้ — ยังไม่มีเทสต์ยืนยัน)**: พบรูปแบบเดียวกัน (`request.auth != null` กว้างเกินไป) ใน `CommunityContent.read` และ `ContentEditRequests.read` ด้วย — `CommunityContent` ยังไม่กระทบจริงเพราะสถานะปัจจุบันมีแค่ `เผยแพร่แล้ว` แต่ `ContentEditRequests` มีความเสี่ยงเดียวกัน ควรพิจารณาเพิ่มเทสต์ในรอบถัดไป
 
 ## Manual QA — หมวดนักท่องเที่ยว (TC-001–TC-008)
@@ -142,9 +160,17 @@
 `qa-community-approve-lsh@example.com`, `u001@example.com`) — รายละเอียดครบใน
 [`docs/03-testing/02-test-result/20260923-test-run-regression-full.md`](docs/03-testing/02-test-result/20260923-test-run-regression-full.md)
 
+**เพิ่มเติมจากรอบเขียนเทสต์ความปลอดภัย S3/S4** (บัญชีชุมชนทดสอบ `AUTOTEST-SECURITY-*`/`DEBUG-*`
+หลายบัญชี อีเมลรูปแบบ `autotest-security-*@lsh-nammon.test`/`debug-*@lsh-nammon.test`, รหัสผ่าน
+`AutoTestCommunity1234!`) — ส่วนใหญ่ยัง**ค้างสถานะ "รออนุมัติ" ไม่ได้อนุมัติ** (เกิดจากการ debug
+test ซ้ำหลายรอบระหว่างพัฒนาเทสต์ ก่อนจะเจอวิธีเช็คที่เสถียร) ปล่อยไว้ตามกฎ QA (ไม่มี UI ลบบัญชีให้ใช้)
+— แนะนำให้ผู้ประสานงานพิจารณาปฏิเสธ (ไม่อนุมัติ) บัญชีเหล่านี้ทิ้งเพื่อความสะอาดของหน้า
+`admin-review-student-work.html`
+
 ## ขั้นตอนต่อไปที่แนะนำ
 
 1. ~~Deploy hosting~~ — **ทำแล้ว** (`firebase deploy --only hosting,firestore:rules`) BL-010 ใช้งานได้จริงบน production แล้ว ยืนยันด้วย retest TC-006 ผ่าน — BL-001 (ระบบอัปโหลดภาพ) ก็ขึ้น production แล้วเช่นกัน แต่ยังใช้จริงไม่ได้จนกว่าจะ deploy Cloudflare Worker (คนละขั้นตอน ต้องทำเอง)
 2. TC-001–TC-003 (consent banner) ควรทดสอบซ้ำด้วย browser profile ใหม่ที่ไม่มี consent state ค้าง เพื่อยืนยันพฤติกรรมจริงอีกครั้ง (ยังไม่ได้ทำ)
 3. Deploy Cloudflare Worker (AI backend + image upload endpoint) เมื่อพร้อม — จะปลดบล็อก TC-005, TC-012–015 และทำให้ TC-010/011 ทดสอบระบบอัปโหลดได้จริง (ส่วน AI ปรับภาพยังต้องรอ implement เพิ่มเติมอยู่ดี)
-4. พิจารณาเพิ่มเทสต์ความปลอดภัยแบบเดียวกันให้ `ContentEditRequests` (รูปแบบ rule เดิม `request.auth != null` กว้างเกินไปเหมือนกัน — ยังไม่ได้ยืนยันว่ารั่วจริงหรือไม่ เพราะยังไม่มีเทสต์)
+4. ~~เพิ่มเทสต์ความปลอดภัยให้ ContentEditRequests/CommunityContent~~ — **ทำแล้ว** (S3, S4) พบ+แก้บั๊กจริงใน ContentEditRequests แล้ว — ครบทุก collection ที่มี pattern `request.auth != null` กว้างเกินไปแล้ว ไม่มีเหลือให้ตรวจเพิ่ม
+5. เก็บกวาดบัญชีชุมชนทดสอบที่ค้าง "รออนุมัติ" จากการ debug เทสต์ S3/S4 (ดูหัวข้อ "ข้อมูลทดสอบที่ทิ้งไว้ในระบบ" ด้านบน)

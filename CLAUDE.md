@@ -56,37 +56,67 @@ Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm i
 
 **สถานะ `firestore.rules` ณ 2026-09-23**: เพิ่ม rule ของ `CommunityContent`/`ContentEditRequests` และเปิด `users.create` ให้ role `community` แล้ว **deploy ขึ้น production จริงแล้ว** (`firebase deploy --only firestore:rules`) และทดสอบผ่าน browser จริงครบ flow (สมัครชุมชน → อาจารย์อนุมัติ → ชุมชนสร้าง/เผยแพร่คอนเทนต์ → ขอแก้ไข → อาจารย์อนุมัติคำขอแก้ไข) ไม่พบ permission-denied — ดู `docs/05-log/index.md` วันที่ 2026-09-23 (ระบบชุมชน)
 
-## เทสต์ความปลอดภัยอัตโนมัติ (เพิ่ม 2026-09-23)
+## เทสต์ความปลอดภัยอัตโนมัติ (เพิ่ม 2026-09-23, ขยายรอบสอง)
 
-นอกจาก `tests/published-works.spec.js` (สโมค เทสต์เดิม) มีเทสต์ความปลอดภัย 2 ตัวที่ **ห้ามลบ/ข้าม**
+นอกจาก `tests/published-works.spec.js` (สโมค เทสต์เดิม) มีเทสต์ความปลอดภัย 4 ตัวที่ **ห้ามลบ/ข้าม**
 เก็บไว้ถาวรใน `tests/` รันด้วย `npx playwright test`:
 
 - **`tests/security-unauth-review-list-blocked.spec.js`** — ไม่ login แล้วเปิด
-  `admin-review-student-work.html` (หน้ารวมผลงาน/บัญชี/คำขอแก้ไขของอาจารย์) ต้องอ่านข้อมูลไม่ได้เลย
-  เช็คทุก container ที่มีข้อมูลจริง (`#pending-list`, `#pending-accounts-list`,
-  `#pending-edits-list`, ตารางประวัติ/Access Log) ต้องว่างเปล่า ไม่ใช่แค่ parent ถูกซ่อนด้วย CSS
-- **`tests/security-cross-user-pending-work-blocked.spec.js`** — นิสิต A ส่งผลงานใหม่ (สถานะ
-  "รอพิจารณา") → นิสิต B (login คนละบัญชี) พยายามเปิดผลงานนั้นตรงๆ ผ่าน URL ต้องเปิดไม่ได้ **ทั้งสอง
-  ระดับ**: (1) UI ไม่แสดงเนื้อหาของ A ให้ B เห็น (2) Firestore **ต้องปฏิเสธการอ่านจริง**
-  (permission-denied ใน console) ไม่ใช่แค่ client ฝั่ง B อ่านสำเร็จแล้วซ่อนด้วย JS เฉยๆ — เช็คระดับ
-  (2) เพิ่มเพราะเคยพบว่า rule เดิมรั่วจริงแม้ UI จะดูเหมือนผ่าน (ดูด้านล่าง)
+  `admin-review-student-work.html` ต้องอ่านข้อมูลไม่ได้เลย เช็คทุก container ที่มีข้อมูลจริง
+  (`#pending-list`, `#pending-accounts-list`, `#pending-edits-list`, ตารางประวัติ/Access Log)
+  ต้องว่างเปล่า ไม่ใช่แค่ parent ถูกซ่อนด้วย CSS
+- **`tests/security-cross-user-pending-work-blocked.spec.js`** — นิสิต A ส่งผลงานใหม่ (รอพิจารณา)
+  → นิสิต B (login คนละบัญชี) เปิดตรงๆ ผ่าน URL ต้องเปิดไม่ได้ทั้งระดับ UI และระดับ Firestore
+  (permission-denied จริง ไม่ใช่แค่ client ซ่อนด้วย JS) — พบ+แก้บั๊กจริงใน `LSHRequests.read`
+- **`tests/security-cross-community-edit-request-blocked.spec.js`** — ชุมชน A ส่งคำขอแก้ไขคอนเทนต์
+  (รอพิจารณา) → ชุมชน B (login คนละบัญชี) พยายามอ่านตรงๆ ผ่าน Firestore SDK (ไม่มีหน้า UI ให้เปิดตรงๆ
+  เหมือน LSHRequests จึงเช็คที่ระดับ rule โดยตรงด้วย `page.evaluate` เรียก `getDoc()`) ต้องถูก
+  `permission-denied` — พบ+แก้บั๊กจริงใน `ContentEditRequests.read` (รูปแบบเดียวกับ LSHRequests)
+- **`tests/security-community-content-no-draft-state.spec.js`** — ไม่ใช่เทสต์ "บล็อกการอ่าน" แบบสอง
+  ตัวข้างต้น (เพราะ `CommunityContent` ไม่มี state ส่วนตัวให้ทดสอบจริงในทางปฏิบัติ — ดูเหตุผลด้านล่าง)
+  แต่ล็อก **invariant** ที่ทำให้ `CommunityContent.read` ที่ยังเปิดกว้างอยู่ (`request.auth != null`)
+  ปลอดภัยอยู่ได้: พยายาม `create` เอกสารสถานะอื่นที่ไม่ใช่ `เผยแพร่แล้ว` ตรงๆ ต้องถูกปฏิเสธเสมอ
 
-ใช้บัญชีสาธิต `u002@example.com`/`u003@example.com` (นิสิตที่อนุมัติแล้ว) แทนการสมัครใหม่ — อีเมล
-ไม่ใช่ความลับ (มีอยู่แล้วใน `LSH/scripts/seed-firestore.js` ที่ commit ไว้) ส่วนรหัสผ่านอ่านจาก
-`LSH/DEMO_CREDENTIALS.md` (gitignored) ผ่าน `tests/helpers/demo-credentials.js` — **ห้าม hardcode
-รหัสผ่านในไฟล์ `.spec.js` ที่ commit เด็ดขาด** ต้องมี `LSH/DEMO_CREDENTIALS.md` ในเครื่องก่อนรันเทสต์
-สองตัวนี้ (เทสต์จะ throw error ชัดเจนถ้าไม่มีไฟล์)
+ใช้บัญชีสาธิต `u002@example.com`/`u003@example.com`/`u004@example.com` (นิสิต/อาจารย์ที่มีอยู่แล้ว)
+แทนการสมัครใหม่เมื่อทำได้ — อีเมลไม่ใช่ความลับ (มีอยู่แล้วใน `LSH/scripts/seed-firestore.js` ที่
+commit ไว้) ส่วนรหัสผ่านอ่านจาก `LSH/DEMO_CREDENTIALS.md` (gitignored) ผ่าน
+`tests/helpers/demo-credentials.js` — **ห้าม hardcode รหัสผ่านสาธิตในไฟล์ `.spec.js` ที่ commit
+เด็ดขาด** ต้องมี `LSH/DEMO_CREDENTIALS.md` ในเครื่องก่อนรันเทสต์ที่ต้อง login (throw error ชัดเจนถ้า
+ไม่มีไฟล์) — สองเทสต์ระดับชุมชน (cross-community-edit-request, community-content-no-draft-state)
+สมัครบัญชีชุมชนทดสอบใหม่สดๆ ทุกครั้งที่รัน (รหัสผ่านคงที่ `AutoTestCommunity1234!` ในไฟล์ได้ปกติ
+เพราะไม่ใช่รหัสสาธิตของ u001-u004 ไม่ใช่ความลับที่ต้องปกปิด)
 
-`student-publish.html`'s รายการ "ผลงานที่เคยส่งของคุณ" มี `data-id="<doc id>"` ต่อ 1 รายการ (เพิ่ม
-2026-09-23) เพื่อให้เจ้าของอ่าน id ผลงานตัวเองได้จาก DOM โดยตรง (ใช้ในเทสต์ตัวที่สองด้านบน) — ไม่ใช่
-ช่องโหว่เพราะเป็น id ของผลงานตัวเองที่เจ้าของอ่านได้อยู่แล้วผ่าน query ปกติ
+`student-publish.html`'s รายการ "ผลงานที่เคยส่งของคุณ" มี `data-id="<doc id>"` และ
+`community-dashboard.html`'s ตารางคอนเทนต์ของตัวเองมี `data-content-id`/`data-edit-id` ต่อแถว (เพิ่ม
+2026-09-23) เพื่อให้เจ้าของอ่าน id ของตัวเองได้จาก DOM โดยตรง (ใช้ในเทสต์ข้างต้น) — ไม่ใช่ช่องโหว่
+เพราะเป็น id ที่เจ้าของอ่านได้อยู่แล้วผ่าน query ปกติ
 
-**บั๊กจริงที่เทสต์ตัวที่สองพบ (ก่อนแก้)**: `LSHRequests.read` rule เดิมเช็คแค่ `request.auth != null`
-(login แล้วคนไหนก็ได้) ไม่ได้จำกัดว่าต้องเป็นเจ้าของหรือ role=teacher — นิสิต B ที่ login อยู่จึงอ่าน
-ผลงาน "รอพิจารณา"/"ไม่อนุมัติ" ของนิสิต A ได้จริงผ่าน Firestore แม้หน้าเว็บจะซ่อนไม่แสดงให้เห็นก็ตาม
-(rule รั่ว ไม่ใช่แค่ UI) แก้แล้วให้แคบลงเหลือ owner/teacher/public-approved เท่านั้น deploy ขึ้น
-production แล้ว retest ผ่านทั้งสองระดับ — ตรวจสอบว่าไม่กระทบฟีเจอร์อื่น (นิสิตอ่านผลงานตัวเอง,
-อาจารย์อ่านทุกอัน, public อ่านที่อนุมัติแล้ว) ยืนยันผ่านครบ
+**บั๊กจริงที่พบ+แก้ (2 รายการ, รูปแบบเดียวกัน)**:
+
+1. `LSHRequests.read` — เดิมเช็คแค่ `request.auth != null` (login แล้วคนไหนก็ได้) นิสิต B จึงอ่าน
+   ผลงาน "รอพิจารณา"/"ไม่อนุมัติ" ของนิสิต A ได้จริงผ่าน Firestore แม้หน้าเว็บจะซ่อนไม่แสดงก็ตาม
+2. `ContentEditRequests.read` — เดิมเช็คแค่ `request.auth != null` เหมือนกัน ชุมชน B จึงอ่านคำขอ
+   แก้ไข (รวม `proposedChanges`) ของชุมชน A ได้จริง — ยืนยันด้วยการยิง `getDoc()` ตรงๆ สำเร็จ
+   (`ok:true`) ก่อนแก้
+
+ทั้งสองแก้ให้แคบลงเหลือ owner/teacher (+public-approved เฉพาะ LSHRequests) เท่านั้น deploy ขึ้น
+production แล้ว retest ผ่านทั้งสองระดับครบ — ตรวจสอบว่าไม่กระทบฟีเจอร์อื่น (นิสิต/ชุมชนอ่านของตัวเอง,
+อาจารย์อ่านทุกอัน, public อ่านที่อนุมัติ/เผยแพร่แล้ว) ยืนยันผ่านครบ **ผลข้างเคียงที่ต้องแก้เพิ่ม**:
+rule ที่แคบลงของ `ContentEditRequests` ทำให้ query เดิมใน `community-request-edit.html` (เช็คคำขอ
+ค้างก่อนส่งใหม่ กรองแค่ `contentId`+`status` ไม่มี `communityId`) ถูก Firestore ปฏิเสธทั้ง query เลย
+(list query ต้องพิสูจน์ rule ได้จาก where-clause ของ query เอง ไม่ใช่แค่ per-document เหมือน get())
+แก้โดยเพิ่ม `where('communityId', '==', currentProfile.id)` เข้าไปในนั้นด้วย
+
+**ทำไม `CommunityContent.read` ไม่แก้** (ตรวจสอบแล้วว่าไม่จำเป็นในทางปฏิบัติตอนนี้): `create` rule
+บังคับ `status == 'เผยแพร่แล้ว'` เสมอ และ `update` จำกัดแค่ field `['title','bodyTh','caption',
+'updatedAt']` (ไม่มี `status`) — จึง**ไม่มีทางที่เอกสารในคอลเลกชันนี้จะมีสถานะอื่นได้เลยผ่านแอป** rule
+ที่กว้างจึงยังไม่รั่วอะไรจริงตอนนี้ (เทสต์ตัวที่ 4 ล็อก invariant นี้ไว้ — ถ้าวันไหนมีคนเพิ่ม
+path ให้สร้างสถานะอื่นได้ เทสต์จะพังทันทีเป็นสัญญาณเตือนให้กลับมาแก้ rule แบบเดียวกับสองข้อบน)
+
+**หมายเหตุ debug ระหว่างเขียนเทสต์กลุ่มนี้ (เผื่อเจอซ้ำ)**: query ที่มี `where` filter (เช่น
+`pending-accounts-list`) บางครั้ง `onSnapshot` ค้างส่ง "from cache" นานผิดปกติหลัง reload แม้แอปนี้
+ไม่ได้เปิด IndexedDB persistence เลยก็ตาม (สาเหตุที่แท้จริงยังไม่ชัด) — วิธีเช็คที่เชื่อถือได้กว่าคือ
+`getDoc()` เอกสารเดี่ยวตรงๆ ผ่าน `page.evaluate` แทนการอ่านจากพฤติกรรม UI/query
 
 ## Firebase Hosting (เพิ่ม 2026-09-11)
 
