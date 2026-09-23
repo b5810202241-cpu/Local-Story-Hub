@@ -838,3 +838,15 @@ deploy ในรอบนี้ (fork ตามกฎเดิมของ Part 
 spec.md ให้ครบ" แล้ว** (ชุมชน, นักท่องเที่ยว, AI backend, [ข้าม notification], Access Log) เหลือ
 ขั้นตอน deploy จริงที่ต้องทำโดยผู้ประสานงาน (`firestore.rules`) และผู้ใช้ (`wrangler` ทั้งหมด, ตั้งค่า
 TTL policy) ตามที่ระบุไว้ในแต่ละ Part
+
+### 2026-09-23 — จำกัดสิทธิ์การเขียน AccessLogs ให้แคบลง (follow-up ของ Part 5)
+
+ผู้ประสานงานรีวิวโค้ด Part 5 ก่อน deploy — พบว่ากลไกเขียน `AccessLogs` เดิม (`getServiceAccountAccessToken()`) ขอ OAuth2 access token ที่มี scope `https://www.googleapis.com/auth/datastore` ซึ่ง **บายพาส `firestore.rules` ไปเลยทั้งระบบ** (เข้าถึงได้ทุก collection ไม่ใช่แค่ `AccessLogs`) — ถ้า Worker secret หลุด ผลกระทบคือเข้าถึงข้อมูลทั้งฐานข้อมูลได้หมด เสนอทางเลือกให้ผู้ใช้ 2 ทาง (คงแบบเดิม deploy ได้ทันที / แก้ให้จำกัดสิทธิ์แคบลงแต่ต้องทำเพิ่ม) ผู้ใช้เลือก **แก้ให้จำกัดสิทธิ์แคบลง**
+
+**แก้ไข**: เปลี่ยนจาก OAuth2 Datastore-scope token เป็น **Firebase custom token สำหรับ uid คงที่ `access-log-worker`** (ไม่ตรงกับ uid จริงของผู้ใช้คนไหนเลย) แลกเป็น ID token จริงผ่าน `signInWithCustomToken` แล้วใช้ ID token นั้นเขียน Firestore — วิธีนี้**ยังผ่าน `firestore.rules` ตามปกติ** ไม่ได้ bypass เหมือนเดิม โดยแก้ `LSH/firestore.rules` ให้ `AccessLogs.create` อนุญาตเฉพาะ `request.auth.uid == 'access-log-worker'` เท่านั้น (ไม่มีสิทธิ์อื่นเลยในทั้งระบบสำหรับ uid นี้) — เพิ่ม env var ใหม่ `FIREBASE_WEB_API_KEY` (public key ไม่ใช่ secret ใส่ใน `wrangler.toml` ตรงๆ ได้) สำหรับเรียก `signInWithCustomToken`
+
+**ความเสี่ยงที่ยังเหลืออยู่ (บันทึกไว้ให้ชัดเจน ไม่ปิดบัง)**: private key เดิมที่ใช้เซ็น custom token ยังสามารถเซ็นให้ uid ไหนก็ได้ในทางเทคนิค (ไม่ได้ผูกกับ `access-log-worker` โดยเนื้อแท้ของ token minting) — ถ้า `FIREBASE_SERVICE_ACCOUNT_JSON` หลุดจริง คนร้ายยังปลอมเป็น uid อื่น (เช่น อาจารย์) ได้ แล้วใช้สิทธิ์เท่าที่ `firestore.rules` อนุญาตให้ role นั้น ไม่ใช่ "ได้แค่เขียน AccessLogs" เป๊ะๆ 100% — แต่แคบกว่าการ bypass ทั้งระบบมาก เพราะยังต้องอิงสิทธิ์ตาม rule ของ uid ที่ปลอมเสมอ ไม่ใช่เข้าถึงข้อมูลทุกอย่างแบบไม่มีเงื่อนไข
+
+**ทดสอบผ่าน local `wrangler dev`**: สร้าง throwaway self-signed keypair ด้วย `openssl` (ไม่ใช่ service account จริง) → เรียก `/log-access` ทั้งแบบมี/ไม่มี Authorization header → ตอบ `{ok:true}` เร็ว (fire-and-forget ทำงานถูกต้อง) → เห็น error `INVALID_CUSTOM_TOKEN` จาก `identitytoolkit.googleapis.com` จริง (ยืนยันว่า pipeline เซ็น JWT + เรียก Google endpoint ถูกต้องทั้งหมด รอแค่ service account จริงถึงจะสำเร็จ) — ทดสอบ bearer token ปลอมด้วย ยืนยันว่ายัง log ต่อแบบ anonymous ได้โดยไม่ crash
+
+อัปเดต `cf-worker/README.md`, `.dev.vars.example`, `wrangler.toml` ให้ตรงกับกลไกใหม่ — ยังไม่ deploy (รอผู้ใช้ทำ `wrangler secret put`/`deploy` เหมือนเดิม, ผู้ประสานงานจะ deploy `firestore.rules` ที่แก้แล้ว)

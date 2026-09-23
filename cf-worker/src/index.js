@@ -86,20 +86,30 @@ async function getFirestoreUserRole(idToken, projectId, uid) {
   return roleField ? (roleField.stringValue || null) : null;
 }
 
-// ---- Privileged Firestore access via a Google service account (BL-014 — /log-access only) ----
+// ---- Firestore access for anonymous /log-access writes (BL-014) — fixed-uid custom token ----
 //
 // Every other endpoint here writes Firestore using the CALLER's own Firebase ID token, so
 // firestore.rules still governs what gets written (least privilege). Access Log entries break
 // that pattern: they must be recorded even for anonymous/guest page views that carry no ID
-// token at all. Instead of loosening firestore.rules to allow open writes (which anyone could
-// then hit directly, not just this Worker), AccessLogs.create is `if false` for normal clients,
-// and only this privileged path — a service account exchanged for an OAuth2 access token via
-// the JWT-bearer flow — can write it. This bypasses firestore.rules entirely, the same way
-// `firebase-admin` already does for `LSH/scripts/seed-firestore.js`. The service account key
-// must be scoped to the "Cloud Datastore User" IAM role only (least privilege), stored as the
-// Worker secret FIREBASE_SERVICE_ACCOUNT_JSON — never in git, never sent to the browser.
+// token at all.
+//
+// First attempt (superseded, see git history) minted a Google OAuth2 access token scoped to
+// `https://www.googleapis.com/auth/datastore` — that bypasses firestore.rules ENTIRELY, for
+// every collection, not just AccessLogs. If the Worker secret ever leaked, the blast radius was
+// "read/write the whole database." Replaced with a narrower mechanism: sign a Firebase **custom
+// token** for one fixed, non-human uid ('access-log-worker' — cannot collide with a real Firebase
+// Auth uid, which Firebase always generates as a longer random string), exchange it for a normal
+// ID token via signInWithCustomToken, and use THAT to write — meaning firestore.rules still
+// applies. AccessLogs.create is scoped to exactly this one uid (see LSH/firestore.rules), and
+// that uid has no other permission anywhere else in the rules file. If FIREBASE_SERVICE_ACCOUNT_JSON
+// leaks, the worst a holder of the underlying signing key could still do is craft custom tokens
+// for OTHER existing uids too (a real residual risk — see cf-worker/README.md) — but they cannot
+// touch collections this fixed uid was never granted access to. Signing still uses the same
+// service account private key as before (custom token minting is self-signed, no separate IAM
+// role needed beyond possessing the key), stored as the Worker secret FIREBASE_SERVICE_ACCOUNT_JSON.
 
-let saTokenCache = null; // { token, expiresAt }
+const ACCESS_LOG_WORKER_UID = 'access-log-worker';
+let workerIdTokenCache = null; // { token, expiresAt }
 
 function pemToPkcs8ArrayBuffer(pem) {
   const b64 = pem
@@ -125,10 +135,16 @@ function base64UrlEncode(input) {
   return bin.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-async function getServiceAccountAccessToken(env) {
-  if (saTokenCache && saTokenCache.expiresAt > Date.now() + 60000) return saTokenCache.token;
+// Signs a Firebase custom token for ACCESS_LOG_WORKER_UID and exchanges it for a real ID token
+// via signInWithCustomToken — the result is a normal Firebase Auth session for that one fixed
+// uid, fully governed by firestore.rules (unlike a raw Google OAuth2 access token).
+async function getWorkerIdToken(env) {
+  if (workerIdTokenCache && workerIdTokenCache.expiresAt > Date.now() + 60000) return workerIdTokenCache.token;
   if (!env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     throw new Error('ยังไม่ได้ตั้งค่า FIREBASE_SERVICE_ACCOUNT_JSON (ดู cf-worker/README.md)');
+  }
+  if (!env.FIREBASE_WEB_API_KEY) {
+    throw new Error('ยังไม่ได้ตั้งค่า FIREBASE_WEB_API_KEY (ดู cf-worker/README.md)');
   }
 
   let sa;
@@ -142,10 +158,11 @@ async function getServiceAccountAccessToken(env) {
   const header = { alg: 'RS256', typ: 'JWT' };
   const claims = {
     iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/datastore',
-    aud: 'https://oauth2.googleapis.com/token',
+    sub: sa.client_email,
+    aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
     iat: nowSec,
     exp: nowSec + 3600,
+    uid: ACCESS_LOG_WORKER_UID,
   };
   const unsigned = base64UrlEncode(JSON.stringify(header)) + '.' + base64UrlEncode(JSON.stringify(claims));
 
@@ -153,20 +170,24 @@ async function getServiceAccountAccessToken(env) {
     'pkcs8', pemToPkcs8ArrayBuffer(sa.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']
   );
   const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
-  const assertion = unsigned + '.' + base64UrlEncode(signature);
+  const customToken = unsigned + '.' + base64UrlEncode(signature);
 
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + assertion,
-  });
+  const res = await fetch(
+    'https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=' + env.FIREBASE_WEB_API_KEY,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: customToken, returnSecureToken: true }),
+    }
+  );
   const data = await res.json();
   if (!res.ok) {
-    throw new Error('ขอ access token จาก Google ไม่สำเร็จ: ' + (data.error_description || data.error || res.status));
+    throw new Error('แลก custom token เป็น ID token ไม่สำเร็จ: ' + (data.error && data.error.message || res.status));
   }
 
-  saTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000 };
-  return data.access_token;
+  const expiresInSec = Number(data.expiresIn) || 3600;
+  workerIdTokenCache = { token: data.idToken, expiresAt: Date.now() + expiresInSec * 1000 };
+  return data.idToken;
 }
 
 const RETENTION_DAYS = 90;
@@ -179,7 +200,7 @@ const RETENTION_DAYS = 90;
 // field เพื่อไม่ให้ความหมายของ `timestamp` ปนกับกลไกลบอัตโนมัติ — ดูขั้นตอนตั้งค่า TTL policy จริงที่
 // cf-worker/README.md
 async function writeAccessLog(env, { ip, userAgent, action, uid }) {
-  const accessToken = await getServiceAccountAccessToken(env);
+  const workerIdToken = await getWorkerIdToken(env);
   const url = 'https://firestore.googleapis.com/v1/projects/' + env.FIREBASE_PROJECT_ID
     + '/databases/(default)/documents/AccessLogs';
   const now = new Date();
@@ -194,7 +215,7 @@ async function writeAccessLog(env, { ip, userAgent, action, uid }) {
   };
   const res = await fetch(url, {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + workerIdToken, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields }),
   });
   if (!res.ok) {

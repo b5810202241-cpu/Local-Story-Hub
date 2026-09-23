@@ -127,12 +127,17 @@ service cloud.firestore {
     }
 
     match /AccessLogs/{logId} {
-      // เพิ่ม 2026-09-23 (Part 5 — BL-014). เขียนได้จากทาง Cloudflare Worker (`cf-worker`)
-      // ผ่าน service account เท่านั้น ซึ่งข้าม rule ชุดนี้ไปเลยเพราะเป็น privileged access
-      // (เหมือน firebase-admin ที่ LSH/scripts/seed-firestore.js ใช้) — `if false` ที่นี่แค่
-      // ปิดกั้นไม่ให้ client ปกติเขียนตรงได้ ไม่ได้ปิดกั้น Worker เอง
+      // เพิ่ม 2026-09-23 (Part 5 — BL-014), แก้ 2026-09-23 (จำกัดสิทธิ์แคบลง): เขียนได้เฉพาะ
+      // uid คงที่ 'access-log-worker' เท่านั้น (Cloudflare Worker แลก Firebase custom token
+      // เป็น ID token ของ uid นี้ก่อนเขียนเสมอ — ดู cf-worker/src/index.js) ผ่าน rule ปกติ
+      // ไม่ได้ bypass เหมือนเดิม — uid นี้ไม่มีสิทธิ์อื่นเลยนอกจาก create ที่นี่ จึงต่อให้ Worker
+      // secret หลุด ผลกระทบก็จำกัดอยู่แค่เขียน AccessLogs เท่านั้น ไม่ใช่เข้าถึงฐานข้อมูลทั้งหมด
       allow read: if request.auth != null && getRole() == 'teacher';
-      allow create, update, delete: if false;
+      allow create: if request.auth != null
+                    && request.auth.uid == 'access-log-worker'
+                    && request.resource.data.keys().hasOnly(
+                         ['timestamp', 'ip_address', 'user_agent', 'action', 'user_account_id', 'expires_at']);
+      allow update, delete: if false;
     }
 
     match /{document=**} {

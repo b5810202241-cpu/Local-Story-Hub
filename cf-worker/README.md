@@ -56,20 +56,33 @@ login เลย (พ.ร.บ. คอมพิวเตอร์บังคั�
 
 Payload จาก client มีแค่ `{ action }` (ข้อความสั้นๆ บอกว่ากำลังดูหน้าไหน เช่น `view:tourist-home-consent.html`)
 
-**เขียนด้วยสิทธิ์ service account แทน ID token ของผู้เรียก** (ต่างจาก endpoint อื่นทั้งหมดในไฟล์นี้)
-เพราะผู้เรียกอาจไม่มี ID token เลย (anonymous) — ดูเหตุผลเต็มที่คอมเมนต์บนสุดของ `src/index.js`
-ส่วน "Privileged Firestore access" การเขียนแบบนี้ **บายพาส `firestore.rules` ไปเลย** เหมือนที่
-`firebase-admin`/`LSH/scripts/seed-firestore.js` ทำอยู่แล้ว — `firestore.rules` จึงปิด
-`AccessLogs.create` ไว้ที่ `if false` สำหรับ client ปกติ (กันไม่ให้ client เขียนตรงได้นอกจาก
-Worker นี้เท่านั้น), เปิด `read` ให้เฉพาะ role=`teacher` (Data Controller ตาม Business Rule ที่
-ปิดแล้วใน `20260822-01-it-log-pdpa-consent.md`)
+**เขียนด้วย ID token ของ uid คงที่ `access-log-worker` แทน ID token ของผู้เรียก** (ต่างจาก
+endpoint อื่นทั้งหมดในไฟล์นี้ที่ใช้ token ของผู้เรียกเอง) เพราะผู้เรียกอาจไม่มี ID token เลย
+(anonymous) — Worker เซ็น **Firebase custom token** สำหรับ uid นี้ด้วย private key ของ service
+account แล้วแลกเป็น ID token จริงผ่าน `signInWithCustomToken` (ดูเหตุผลเต็มที่คอมเมนต์บนสุดของ
+`src/index.js` ส่วน "Firestore access for anonymous /log-access writes")
+
+⚠️ **แก้ไข 2026-09-23 (จำกัดสิทธิ์แคบลงจากการออกแบบรอบแรก)**: เดิมทีเดียวใช้ OAuth2 access token
+ที่มี scope `datastore` ซึ่ง **บายพาส `firestore.rules` ไปเลยทั้งระบบ** (เหมือนที่
+`firebase-admin`/`LSH/scripts/seed-firestore.js` ทำ) — ผู้ประสานงานรีวิวแล้วเห็นว่าเสี่ยงเกินไป
+(secret หลุด = เข้าถึงทั้งฐานข้อมูลได้) จึงเปลี่ยนมาใช้วิธีนี้แทน: การเขียนยังผ่าน
+`firestore.rules` ตามปกติ เพียงแต่ authenticate เป็น uid พิเศษที่ไม่ตรงกับผู้ใช้จริงคนไหนเลย
+(`access-log-worker`) ซึ่ง rule อนุญาตให้ทำได้แค่ `create` บน `AccessLogs` เท่านั้น ไม่มีสิทธิ์อื่น
+เลยในทั้งระบบ — ถ้า secret หลุด ผลกระทบจึงจำกัดอยู่แค่ "เขียน AccessLogs ปลอมได้" ไม่ใช่
+"เข้าถึง/แก้ไขข้อมูลทุกอย่างในฐานข้อมูล" **ความเสี่ยงที่ยังเหลืออยู่**: private key เดียวกันนี้ใช้
+เซ็น custom token ได้ (ในทางเทคนิค) สำหรับ uid ไหนก็ได้ ไม่ใช่แค่ `access-log-worker` — ถ้า key
+หลุดจริง คนร้ายสามารถปลอมเป็น uid อื่น (เช่น uid ของอาจารย์) แล้วใช้สิทธิ์เท่าที่ `firestore.rules`
+อนุญาตให้ role นั้นทำได้ ไม่ใช่ "แค่เขียน AccessLogs" เป๊ะๆ ตามที่ตั้งใจ 100% — แต่ยังแคบกว่าการ
+บายพาส rule ทั้งระบบมาก เพราะยังต้องอิงกับสิทธิ์ที่ rule กำหนดไว้ต่อ uid นั้นเสมอ ไม่ใช่เข้าถึงได้
+ทุกอย่างแบบไม่มีเงื่อนไข — เก็บ `FIREBASE_SERVICE_ACCOUNT_JSON` เป็นความลับอย่างเข้มงวดเหมือนเดิม
 
 **ต้องมี secret เพิ่ม 1 ตัว**: `FIREBASE_SERVICE_ACCOUNT_JSON` — service account key (คนละตัวกับ
-`LSH/serviceAccountKey.json` เดิมที่ใช้ตอน seed ข้อมูล จะสร้างใหม่หรือใช้ตัวเดิมก็ได้ **แต่แนะนำ
-สร้างใหม่แล้วจำกัดสิทธิ์แค่ "Cloud Datastore User" เท่านั้น** ตามหลัก least privilege — ไม่ต้องใช้
-สิทธิ์ระดับ Editor/Owner) วิธีขอ: Firebase Console → โปรเจกต์ `lsh-nammon` → ⚙️ Project Settings →
-Service Accounts → Generate new private key → ดาวน์โหลดไฟล์ JSON แล้วตั้งเป็น secret (ดูขั้นตอน
-`wrangler secret put` ด้านล่าง — วางเนื้อหาไฟล์ JSON ทั้งไฟล์เป็นสตริงเดียวตอนถูกถาม)
+`LSH/serviceAccountKey.json` เดิมที่ใช้ตอน seed ข้อมูล จะสร้างใหม่หรือใช้ตัวเดิมก็ได้) วิธีขอ:
+Firebase Console → โปรเจกต์ `lsh-nammon` → ⚙️ Project Settings → Service Accounts → Generate new
+private key → ดาวน์โหลดไฟล์ JSON แล้วตั้งเป็น secret (ดูขั้นตอน `wrangler secret put` ด้านล่าง —
+วางเนื้อหาไฟล์ JSON ทั้งไฟล์เป็นสตริงเดียวตอนถูกถาม) — **ต้องมีอีก var 1 ตัวที่ไม่ใช่ secret**:
+`FIREBASE_WEB_API_KEY` ตั้งไว้ใน `wrangler.toml` แล้ว (ค่าเดียวกับ `apiKey` ใน
+`docs/02-design/01-prototypes/prototype-v2/firebase-config.js` — เป็น public key ไม่ใช่ความลับ)
 
 ### response ทุก endpoint
 

@@ -6,5 +6,10 @@ compatibility_date = "2024-11-01"
 FIREBASE_PROJECT_ID = "lsh-nammon"
 AI_MODEL = "google/gemini-2.5-flash-lite"
 ALLOWED_ORIGINS = "https://lsh-nammon.web.app"
+# Firebase Web API key — the SAME public value already embedded in
+# docs/02-design/01-prototypes/prototype-v2/firebase-config.js (client-side, not a secret).
+# Needed to exchange a signed custom token for a real ID token (signInWithCustomToken).
+FIREBASE_WEB_API_KEY = "AIzaSyCaCs4tLsRi2IA9sr4nyoWV2jDirxFjVcU"
 
-# OPENROUTER_API_KEY is a secret, NOT set here — see README.md ("wrangler secret put").
+# OPENROUTER_API_KEY and FIREBASE_SERVICE_ACCOUNT_JSON are secrets, NOT set here —
+# see README.md ("wrangler secret put").
