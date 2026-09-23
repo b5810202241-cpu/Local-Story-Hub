@@ -1071,5 +1071,7 @@ query `users` ที่ `role=='community' && status=='อนุมัติแ�
 browser จริงด้วยบัญชีนิสิตจริงหลัง deploy (ไม่มี credential ทดสอบในเซสชันนี้) — แนะนำให้ผู้ใช้คลิก
 ทดสอบ dropdown ใน `student-publish.html` เองอีกครั้งหนึ่ง
 
-**ยังไม่ deploy hosting** — โค้ด client-side ของทั้ง 4 รายการ (BL-007/009/010/013) อยู่ใน `main` แล้ว
-แต่ยังไม่ขึ้น `https://lsh-nammon.web.app/` จริงจนกว่าจะรัน `firebase deploy --only hosting`
+**อัปเดต 2026-09-23 (ผู้ใช้รัน `firebase deploy --only hosting` เอง)**: deploy hosting ขึ้น production
+สำเร็จแล้ว (`https://lsh-nammon.web.app/`) — โค้ด client-side ของทั้ง 4 รายการ (BL-007/009/010/013)
+เป็นเวอร์ชันที่ใช้งานจริงบนเว็บแล้วตอนนี้ ครบทั้ง firestore.rules + hosting ปิดรอบ "สร้างระบบตาม
+BL-007/009/010/013 แบบขนาน" สมบูรณ์
