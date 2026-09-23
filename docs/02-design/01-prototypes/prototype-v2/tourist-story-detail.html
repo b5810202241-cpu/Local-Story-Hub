@@ -71,7 +71,12 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
     <p style="color:var(--color-bark)" id="content-community"></p>
 
     <p class="story-text" id="content-body"></p>
-    <p class="en-note">คำแปลภาษาอังกฤษ (FR-2.2) จะพร้อมใช้งานเมื่อเชื่อมต่อ AI backend จริง (อยู่ระหว่างดำเนินการ) — ตอนนี้แสดงเฉพาะภาษาไทยต้นฉบับ</p>
+    <div class="en-note">
+      <button class="btn btn-secondary" id="translate-btn" onclick="translateContent()" style="height:36px;padding:0 var(--space-md);font-size:14px;">🌐 แปลเป็นภาษาอังกฤษ</button>
+      <div class="field-error" id="translate-guest-note" style="margin-top:var(--space-xs);">ต้อง<a href="#" id="translate-login-link">เข้าสู่ระบบ/สมัครบัญชี</a>ก่อน จึงจะใช้ AI แปลภาษาได้ (ป้องกันการเรียกใช้ AI ฟรีจากภายนอก) — ข้อความต้นฉบับภาษาไทยด้านบนอ่านได้โดยไม่ต้อง login เสมอ</div>
+      <p class="submit-error" id="translate-error" style="display:none"></p>
+      <p id="translate-result" style="display:none;margin-top:var(--space-sm);white-space:pre-wrap;"></p>
+    </div>
 
     <div class="map-box">
       <h2>หมุดหมายเดินทาง</h2>
@@ -99,6 +104,7 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
 </main>
 
 <script src="firebase-config.js"></script>
+<script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -193,6 +199,7 @@ onAuthStateChanged(auth, async function(user){
     formInner.hidden = true;
     document.getElementById('review-login-link').href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
     renderBookmarkButton();
+    updateTranslateUi();
     return;
   }
 
@@ -214,6 +221,7 @@ onAuthStateChanged(auth, async function(user){
     formInner.hidden = true;
     document.getElementById('review-login-link').href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
     renderBookmarkButton();
+    updateTranslateUi();
     return;
   }
 
@@ -226,7 +234,79 @@ onAuthStateChanged(auth, async function(user){
   guestPrompt.hidden = true;
   formInner.hidden = false;
   renderBookmarkButton();
+  updateTranslateUi();
 });
+
+function hasAiProxy(){
+  return typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+}
+
+// เรียก AI ผ่าน Cloudflare Worker proxy (เพิ่ม 2026-09-23, Part 3) — บังคับ login ก่อนใช้เสมอ
+// (แม้เนื้อหาต้นฉบับอ่านได้แบบ public) กันคนนอกเรียกใช้ AI quota ฟรีโดยไม่ผ่านบัญชีจริง
+async function callAiProxy(action, payload){
+  if(!hasAiProxy()) throw new Error('AI backend ยังไม่พร้อมใช้งาน (ยังไม่ได้ deploy Cloudflare Worker หรือยังไม่ตั้งค่า URL ใน ai-assist-config.js)');
+  if(!currentTourist) throw new Error('ต้องเข้าสู่ระบบก่อนใช้งานฟีเจอร์ AI นี้');
+  var idToken = await auth.currentUser.getIdToken();
+  var controller = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; controller.abort(); }, 20000);
+  try{
+    var res = await fetch(window.LSH_AI_PROXY_URL + '/ai/' + action, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var data = await res.json();
+    if(!data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data.result;
+  }catch(e){
+    if(timedOut) throw new Error('หมดเวลารอคำตอบจาก AI (เกิน 20 วินาที) ลองใหม่อีกครั้ง');
+    throw e;
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
+
+function updateTranslateUi(){
+  var btn = document.getElementById('translate-btn');
+  var guestNote = document.getElementById('translate-guest-note');
+  var loginLink = document.getElementById('translate-login-link');
+  loginLink.href = 'tourist-login.html?redirect=' + encodeURIComponent(selfUrl);
+  if(!hasAiProxy()){
+    btn.disabled = true;
+    guestNote.style.display = 'none';
+    return;
+  }
+  if(!currentTourist){
+    btn.disabled = true;
+    guestNote.style.display = 'block';
+  }else{
+    btn.disabled = false;
+    guestNote.style.display = 'none';
+  }
+}
+
+window.translateContent = async function(){
+  var btn = document.getElementById('translate-btn');
+  var errEl = document.getElementById('translate-error');
+  var resultEl = document.getElementById('translate-result');
+  errEl.style.display = 'none';
+  var original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังแปล...'; resultEl.style.display = 'none';
+  try{
+    var result = await callAiProxy('translate', { text: content.body || '' });
+    resultEl.textContent = result;
+    resultEl.style.display = 'block';
+  }catch(e){
+    console.error('AI translate failed', e);
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'block';
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
+};
 
 function getBookmarkDocId(){
   if(!currentTourist) return null;

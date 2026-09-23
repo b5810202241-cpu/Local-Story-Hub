@@ -115,7 +115,7 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
     <h2>AI สรุปภาพรวมผลงานที่รอพิจารณา</h2>
     <p class="hint" style="margin:0 0 var(--space-md)">อ่านผลงานที่รอพิจารณาทั้งหมด สรุปภาพรวมให้อ่านง่ายก่อนตรวจทีละชิ้น แล้วบันทึกสรุปนี้ลง Firestore (collection <code>AiSummaries</code>) พร้อมจด log การทำงานไว้</p>
     <button type="button" class="btn btn-primary" id="ai-summary-btn" onclick="aiSummarizePending()">🤖 ให้ AI สรุปภาพรวมผลงานที่รอพิจารณา</button>
-    <div class="draft-note" id="ai-summary-unavailable" hidden>DRAFT — ฟีเจอร์นี้เป็น local demo เท่านั้น ยังไม่ได้ตั้งค่าคีย์จริงใน <code>ai-assist-config.js</code> (ดู README ของ prototype-v2)</div>
+    <div class="draft-note" id="ai-summary-unavailable" hidden>AI backend (Cloudflare Worker) ยังไม่ได้ deploy หรือยังไม่ได้ตั้งค่า URL จริงใน <code>ai-assist-config.js</code> (ดู <code>cf-worker/README.md</code>)</div>
     <div id="ai-summary-box" hidden style="margin:var(--space-md) 0">
       <span class="ai-badge" id="ai-summary-label">🤖 สรุปโดย AI — โปรดตรวจสอบก่อนใช้งาน (บันทึกลง Firestore แล้ว)</span>
       <div class="card" id="ai-summary-result" style="white-space:pre-wrap"></div>
@@ -164,14 +164,44 @@ let latestPendingWorks = [];
 let latestPendingEdits = [];
 
 (function(){
-  var hasRealKey = typeof window.OPENROUTER_CONFIG !== 'undefined'
-    && window.OPENROUTER_CONFIG.apiKey
-    && window.OPENROUTER_CONFIG.apiKey.indexOf('YOUR_') === -1;
-  if(!hasRealKey){
+  var hasProxy = typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+  if(!hasProxy){
     document.getElementById('ai-summary-btn').disabled = true;
     document.getElementById('ai-summary-unavailable').hidden = false;
   }
 })();
+
+// เรียก AI ผ่าน Cloudflare Worker proxy แทนการเรียก OpenRouter ตรงจาก browser (เพิ่ม 2026-09-23,
+// Part 3) — Worker เช็คเพิ่มด้วยว่า role ต้องเป็น teacher เท่านั้นถึงจะเรียก summarize-pending ได้
+async function callAiProxy(action, payload){
+  var hasProxy = typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+  if(!hasProxy) throw new Error('AI backend ยังไม่พร้อมใช้งาน (ยังไม่ได้ deploy Cloudflare Worker หรือยังไม่ตั้งค่า URL ใน ai-assist-config.js)');
+  var user = auth.currentUser;
+  if(!user) throw new Error('ต้องเข้าสู่ระบบก่อนใช้งานฟีเจอร์ AI นี้');
+  var idToken = await user.getIdToken();
+  var controller = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; controller.abort(); }, 20000);
+  try{
+    var res = await fetch(window.LSH_AI_PROXY_URL + '/ai/' + action, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var data = await res.json();
+    if(!data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data.result;
+  }catch(e){
+    if(timedOut) throw new Error('หมดเวลารอคำตอบจาก AI (เกิน 20 วินาที) ลองใหม่อีกครั้ง');
+    throw e;
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
 
 window.doLogin = async function(){
   const email = document.getElementById('login-email').value.trim();
@@ -589,17 +619,6 @@ function withTimeout(promise, ms, timeoutMessage){
   ]);
 }
 
-function logAiAction(logData){
-  // ไม่ await — การบันทึก log ต้องไม่ทำให้ปุ่มค้างถ้า Firestore ช้า/ไม่ตอบสนอง
-  addDoc(collection(db, 'AiAssistLogs'), Object.assign({
-    requesterId: currentProfile ? currentProfile.id : null,
-    requesterName: currentProfile ? currentProfile.name : null,
-    createdAt: serverTimestamp(),
-  }, logData)).catch(function(logErr){
-    console.error('บันทึก log การใช้ AI ไม่สำเร็จ', logErr);
-  });
-}
-
 window.aiSummarizePending = async function(){
   if(!currentProfile || currentProfile.role !== 'teacher') return;
 
@@ -619,40 +638,12 @@ window.aiSummarizePending = async function(){
   btn.textContent = 'กำลังให้ AI สรุป...';
   box.hidden = true;
 
-  var listText = works.map(function(w, i){
-    return (i + 1) + '. ชื่อผลงาน: ' + (w.title || '(ไม่ระบุ)')
-      + ' | ผู้ส่ง: ' + (w.requesterName || '(ไม่ระบุ)')
-      + ' | ชุมชน: ' + (w.community || '(ไม่ระบุ)')
-      + ' | คำอธิบาย: ' + (w.Content || '(ไม่มี)');
-  }).join('\n');
-
-  var prompt = 'ต่อไปนี้คือรายการผลงานของนิสิตที่รอการพิจารณาจากอาจารย์ทั้งหมด ' + works.length + ' รายการ:\n\n'
-    + listText + '\n\n'
-    + 'ช่วยสรุปภาพรวมสั้นๆ เป็นภาษาไทย (ไม่เกิน 6-8 บรรทัด) ให้อาจารย์อ่านก่อนตรวจทีละชิ้น '
-    + 'เช่น มีกี่รายการ กระจายไปชุมชนไหนบ้าง มีธีม/ประเด็นร่วมอะไรที่น่าสนใจ ตอบเฉพาะเนื้อหาสรุปเท่านั้น ห้ามมีคำนำ';
-
-  var timeoutController = new AbortController();
-  var timedOut = false;
-  var timeoutId = setTimeout(function(){ timedOut = true; timeoutController.abort(); }, 15000);
+  var worksPayload = works.map(function(w){
+    return { title: w.title, requesterName: w.requesterName, community: w.community, content: w.Content };
+  });
 
   try{
-    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      signal: timeoutController.signal,
-      headers: {
-        'Authorization': 'Bearer ' + window.OPENROUTER_CONFIG.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: window.OPENROUTER_CONFIG.model,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    var data = await res.json();
-    if(!res.ok){
-      throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
-    }
-    var summaryText = data.choices[0].message.content.trim();
+    var summaryText = await callAiProxy('summarize-pending', { works: worksPayload });
     var sourceRequestIds = works.map(function(w){ return w.id; });
 
     resultEl.style.color = '';
@@ -666,7 +657,6 @@ window.aiSummarizePending = async function(){
         summaryText: summaryText,
         sourceCount: works.length,
         sourceRequestIds: sourceRequestIds,
-        model: window.OPENROUTER_CONFIG.model,
         generatedBy: currentProfile.id,
         generatedByName: currentProfile.name,
         createdAt: serverTimestamp(),
@@ -674,27 +664,12 @@ window.aiSummarizePending = async function(){
       10000,
       'บันทึกสรุปลง Firestore ไม่สำเร็จ (หมดเวลารอเกิน 10 วินาที)'
     );
-
-    logAiAction({
-      level: 2, action: 'summarize-pending',
-      model: window.OPENROUTER_CONFIG.model,
-      sourceCount: works.length, sourceRequestIds: sourceRequestIds,
-      success: true, resultText: summaryText, errorMessage: null,
-    });
   }catch(e){
-    var message = timedOut ? 'หมดเวลารอคำตอบจาก AI (เกิน 15 วินาที) ลองใหม่อีกครั้ง' : e.message;
     console.error('AI summarize failed', e);
     resultEl.style.color = '#A13D2C';
-    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + message + ' (ยังไม่ได้บันทึกอะไรลงฐานข้อมูล)';
+    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message + ' (ยังไม่ได้บันทึกอะไรลงฐานข้อมูล)';
     labelEl.hidden = true;
-    logAiAction({
-      level: 2, action: 'summarize-pending',
-      model: window.OPENROUTER_CONFIG.model,
-      sourceCount: works.length, sourceRequestIds: works.map(function(w){ return w.id; }),
-      success: false, resultText: null, errorMessage: message,
-    });
   }finally{
-    clearTimeout(timeoutId);
     box.hidden = false;
     btn.disabled = false;
     btn.textContent = originalText;

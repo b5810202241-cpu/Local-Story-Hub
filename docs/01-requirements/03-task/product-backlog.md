@@ -15,6 +15,7 @@
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.1)
 - **Status**: ยังไม่เริ่ม
+- **หมายเหตุ**: **อัปเดต 2026-09-23 (Part 3 — AI backend proxy)** — ยังไม่ implement เพราะหน้า `community-create-content.html` ไม่มีระบบอัปโหลดภาพจริงเลย (ปุ่ม "เลือกไฟล์" เป็น placeholder) ต้องสร้างระบบอัปโหลดภาพจริง (เช่น Firebase Storage) ก่อนถึงจะทำ endpoint ปรับภาพจริงได้ — เป็นงานคนละสโคปจาก AI backend proxy ที่ทำเสร็จแล้วสำหรับ BL-002–005 ด้านล่าง
 
 ### BL-002: คิดแคปชันจาก Keyword ด้วย AI
 - **Epic**: การสร้างคอนเทนต์ด้วย AI สำหรับชุมชน
@@ -23,7 +24,7 @@
   - Given ผู้ใช้ป้อน Keyword อย่างน้อย 1 คำ When กดให้ AI คิดแคปชัน Then ระบบแสดงแคปชันที่แนะนำให้เลือกหรือแก้ไขก่อนใช้จริง
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.2)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — ปุ่ม "ให้ AI คิดแคปชัน" ใน `community-create-content.html` เรียกผ่าน Cloudflare Worker proxy `cf-worker/` (action `caption`) แทน OpenRouter ตรงจาก browser — ทดสอบ auth/routing ผ่าน local `wrangler dev` แล้ว รอผู้ประสานงาน deploy Worker จริง + ตั้งค่า `ai-assist-config.js` ก่อนใช้งานจริงได้)
 
 ### BL-003: แปลภาษาเนื้อหาด้วย AI
 - **Epic**: การสร้างคอนเทนต์ด้วย AI สำหรับชุมชน
@@ -32,7 +33,7 @@
   - Given เนื้อหาภาษาไทยที่ชุมชนเขียนไว้ When เลือกให้ระบบแปลเป็นภาษาอังกฤษ Then ระบบแสดงคำแปลคู่กับต้นฉบับให้ตรวจสอบก่อนเผยแพร่
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.3)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — ปุ่มแปลไทย→อังกฤษเรียกผ่าน Cloudflare Worker proxy `cf-worker/` (action `translate`) ใช้ทั้งฝั่งชุมชน (`community-create-content.html`) และนักท่องเที่ยว (`tourist-story-detail.html` — บังคับ login ก่อนใช้เสมอ กันคนนอกเรียก AI ฟรี แม้เนื้อหาต้นฉบับอ่านได้แบบ public) รอผู้ประสานงาน deploy Worker จริงก่อนใช้งานจริงได้)
 - **หมายเหตุ**: **อัปเดต 2026-09-22** — ปิด Open Question แล้ว เป็นข้อความแปลอย่างเดียว ไม่มีเสียงพากย์ (text-to-speech) ในเวอร์ชันนี้ (ดู Business Rules ใน [[../01-spec/local-story-hub|local-story-hub]])
 
 ### BL-004: แนะนำคำสำคัญ SEO จากเนื้อหา Storytelling
@@ -42,7 +43,7 @@
   - Given เนื้อหา Storytelling ที่เขียนไว้ When ส่งให้ระบบวิเคราะห์ Then ระบบแสดงรายการคำสำคัญ/โครงสร้างที่แนะนำให้เลือกนำไปใช้
 - **Priority**: Should
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.4)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — ปุ่ม "ให้ AI แนะนำ SEO Keyword" ใน `community-create-content.html` เรียกผ่าน Cloudflare Worker proxy `cf-worker/` (action `seo`) รอผู้ประสานงาน deploy Worker จริงก่อนใช้งานจริงได้)
 - **หมายเหตุ**: **อัปเดต 2026-09-22** — ปิด Open Question แล้ว เป็นคำแนะนำ keyword ภายในระบบเท่านั้น ไม่เชื่อมกับ search engine จริง (ดู Business Rules ใน [[../01-spec/local-story-hub|local-story-hub]])
 
 ### BL-005: แนะนำวิธีเล่าเรื่อง (Content Suggestion)
@@ -52,7 +53,7 @@
   - Given ชุมชนระบุหัวข้อ/ประเด็นที่ต้องการเล่า When ขอคำแนะนำจาก AI Then ระบบแสดงแนวทาง/โครงเรื่องที่แนะนำให้นำไปปรับใช้
 - **Priority**: Should
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.5)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — ปุ่ม "ให้ AI แนะนำวิธีเล่าเรื่อง" ใน `community-create-content.html` เรียกผ่าน Cloudflare Worker proxy `cf-worker/` (action `story-suggestion`) รอผู้ประสานงาน deploy Worker จริงก่อนใช้งานจริงได้)
 
 ## Epic: ระบบจัดการข้อมูลชุมชน
 
@@ -63,7 +64,7 @@
   - Given ตัวแทนชุมชนล็อกอินแล้ว When เข้าหน้าจัดการข้อมูล Then เห็นคอนเทนต์/ข้อมูลของชุมชนตนเองทั้งหมดในที่เดียว
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.6)
-- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-dashboard.html`+`community-create-content.html`, เชื่อม Firestore จริง collection `CommunityContent`; ปุ่ม AI ยังปิดใช้งานชั่วคราวรอ Cloud Functions proxy; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-dashboard.html`+`community-create-content.html`, เชื่อม Firestore จริง collection `CommunityContent`; `firestore.rules` deploy จริงแล้วและทดสอบ end-to-end บน production ผ่านครบ — ปุ่ม AI 4/5 ปุ่มเชื่อม Cloudflare Worker proxy แล้ว (ดู BL-002–005), เหลือแค่ปรับภาพ (BL-001) ที่รอระบบอัปโหลดภาพจริงก่อน)
 - **หมายเหตุ**: **อัปเดต 2026-09-22** — ปิด Open Question แล้ว ขอบเขตครอบคลุมเฉพาะการจัดการ**คอนเทนต์** (เรื่องราว/สื่อ) ของชุมชนเท่านั้น ไม่รวมโปรไฟล์ชุมชน/แดชบอร์ดสรุปข้อมูล (ดู Business Rules ใน [[../01-spec/local-story-hub|local-story-hub]]) — คำขอแก้ไขคอนเทนต์นี้ต้องผ่านการอนุมัติจากอาจารย์ที่ปรึกษา/แอดมินก่อน (ดู BL-023)
 
 ## Epic: การใช้งานง่ายสำหรับชุมชน (Usability)
@@ -207,7 +208,7 @@
   - Given บัญชีชุมชนถูกปฏิเสธ (ไม่อนุมัติ) When พยายาม login Then ระบบไม่ให้เข้าใช้งาน และแจ้งเหตุผลที่ไม่อนุมัติ
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (ปัญหา "มิจฉาชีพแอบอ้าง" + Business Rule ใหม่ 2026-09-22)
-- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-register.html` ใช้ Firebase Auth จริง + `users` collection role=`community`, อนุมัติ/ไม่อนุมัติที่ `admin-review-student-work.html`; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-register.html` ใช้ Firebase Auth จริง + `users` collection role=`community`, อนุมัติ/ไม่อนุมัติที่ `admin-review-student-work.html`; `firestore.rules` deploy จริงแล้วและทดสอบ end-to-end บน production ผ่านครบ)
 - **หมายเหตุ**: เพิ่ม 2026-09-22 — ตอบ requirement ที่เคยคลุมเครือเกินกว่าจะแตกเป็น backlog (ดูหัวข้อ "Requirement ที่ยังคลุมเครือ..." ฉบับเดิม) รูปแบบเดียวกับ BL-019/BL-020 ของนิสิต **อัปเดต 2026-09-22 (รอบ 2)**: ปิดคำถามเรื่องข้อมูลยืนยันตัวตนแล้ว — ใช้ข้อมูลพื้นฐาน (ชื่อผู้ติดต่อ+เบอร์โทร) ไม่ต้องแนบเอกสาร (ดู Business Rules ใน local-story-hub.md)
 
 ### BL-023: อาจารย์ที่ปรึกษา/แอดมินอนุมัติคำขอแก้ไขข้อมูลชุมชน
@@ -219,7 +220,7 @@
   - Given มีคำขอแก้ไขรอพิจารณา When อาจารย์ที่ปรึกษา/แอดมินไม่อนุมัติ Then ระบบไม่นำการแก้ไขไปใช้ และแจ้งเหตุผลกลับไปยังชุมชน
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (Business Rule ใหม่ 2026-09-22 — สิทธิ์การเข้าถึงข้อมูลของชุมชนแบบใช้ร่วมกัน)
-- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-request-edit.html` + ส่วนอนุมัติใน `admin-review-student-work.html`, เชื่อม Firestore จริง collection `ContentEditRequests`; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-request-edit.html` + ส่วนอนุมัติใน `admin-review-student-work.html`, เชื่อม Firestore จริง collection `ContentEditRequests`; `firestore.rules` deploy จริงแล้วและทดสอบ end-to-end บน production ผ่านครบ)
 - **หมายเหตุ**: เพิ่ม 2026-09-22 — ขอบเขตของ "ข้อมูล" ที่ขอแก้ไขได้อ้างอิง BL-006 (เฉพาะคอนเทนต์) **อัปเดต 2026-09-22 (รอบ 2)**: ปิดคำถามเรื่องแก้ไขข้ามชุมชนแล้ว — ทำได้เฉพาะคอนเทนต์ของชุมชนตนเองเท่านั้น ไม่รองรับการขอแก้ไขคอนเทนต์ของชุมชนอื่น (ดู Business Rules ใน local-story-hub.md) **อัปเดต 2026-09-23**: ปิดคำถามเพิ่มเติมที่พบใน ACL.md แล้ว — ชุมชน**แก้ไข/ยกเลิกคำขอแก้ไขที่ส่งไปแล้วไม่ได้ขณะสถานะ "รอพิจารณา"** ต้องรอผลอนุมัติ/ไม่อนุมัติก่อนเสมอ (ดู [[../../02-design/02-technical/ACL|ACL.md]])
 
 ## Epic: การปฏิบัติตามกฎหมาย IT และ PDPA

@@ -134,7 +134,7 @@ textarea{min-height:80px;}
       <label for="desc" style="margin-top:var(--space-md)">คำอธิบายผลงาน</label>
       <textarea id="desc" placeholder="เล่าที่มาของผลงานสั้น ๆ"></textarea>
       <button type="button" class="btn btn-secondary" id="ai-assist-btn" style="margin-top:var(--space-sm)" onclick="aiAssistDesc()">✨ AI ช่วยปรับปรุงคำอธิบายผลงาน</button>
-      <div class="draft-note" id="ai-assist-unavailable" hidden>DRAFT — ฟีเจอร์นี้เป็น local demo เท่านั้น ยังไม่ได้ตั้งค่าคีย์จริงใน <code>ai-assist-config.js</code> (ดู README ของ prototype-v2)</div>
+      <div class="draft-note" id="ai-assist-unavailable" hidden>AI backend (Cloudflare Worker) ยังไม่ได้ deploy หรือยังไม่ได้ตั้งค่า URL จริงใน <code>ai-assist-config.js</code> (ดู <code>cf-worker/README.md</code>)</div>
       <div id="ai-assist-box" hidden style="margin-top:var(--space-sm)">
         <span class="ai-badge" id="ai-assist-label">🤖 ข้อเสนอจาก AI — โปรดตรวจสอบก่อนยืนยัน</span>
         <div class="info-note" id="ai-assist-result"></div>
@@ -341,25 +341,43 @@ window.publishWork = async function(){
 };
 
 (function(){
-  var hasRealKey = typeof window.OPENROUTER_CONFIG !== 'undefined'
-    && window.OPENROUTER_CONFIG.apiKey
-    && window.OPENROUTER_CONFIG.apiKey.indexOf('YOUR_') === -1;
-  if(!hasRealKey){
+  var hasProxy = typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+  if(!hasProxy){
     document.getElementById('ai-assist-btn').disabled = true;
     document.getElementById('ai-assist-unavailable').hidden = false;
   }
 })();
 
-async function logAiAssistUse(logData){
+// เรียก AI ผ่าน Cloudflare Worker proxy แทนการเรียก OpenRouter ตรงจาก browser (เพิ่ม 2026-09-23,
+// Part 3) — key ของ OpenRouter อยู่เป็น Worker secret เท่านั้น ไม่เคยส่งมาถึง browser เลย
+// การบันทึก log ลง AiAssistLogs ทำฝั่ง Worker เองแล้ว (ผ่าน Firestore REST ด้วย ID token เดียวกัน)
+async function callAiProxy(action, payload){
+  var hasProxy = typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+  if(!hasProxy) throw new Error('AI backend ยังไม่พร้อมใช้งาน (ยังไม่ได้ deploy Cloudflare Worker หรือยังไม่ตั้งค่า URL ใน ai-assist-config.js)');
+  var user = auth.currentUser;
+  if(!user) throw new Error('ต้องเข้าสู่ระบบก่อนใช้งานฟีเจอร์ AI นี้');
+  var idToken = await user.getIdToken();
+  var controller = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; controller.abort(); }, 20000);
   try{
-    await addDoc(collection(db, 'AiAssistLogs'), Object.assign({}, logData, {
-      requesterId: currentProfile ? currentProfile.id : null,
-      requesterName: currentProfile ? currentProfile.name : null,
-      createdAt: serverTimestamp(),
-    }));
-  }catch(logErr){
-    // ไม่ให้การบันทึก log ล้มเหลวไปกระทบผลลัพธ์ที่แสดงให้นิสิตเห็น
-    console.error('บันทึก log การใช้ AI ไม่สำเร็จ', logErr);
+    var res = await fetch(window.LSH_AI_PROXY_URL + '/ai/' + action, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var data = await res.json();
+    if(!data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data.result;
+  }catch(e){
+    if(timedOut) throw new Error('หมดเวลารอคำตอบจาก AI (เกิน 20 วินาที) ลองใหม่อีกครั้ง');
+    throw e;
+  }finally{
+    clearTimeout(timeoutId);
   }
 }
 
@@ -378,59 +396,21 @@ window.aiAssistDesc = async function(){
   btn.textContent = 'กำลังให้ AI ช่วย...';
   box.hidden = true;
 
-  var prompt = 'ช่วยเรียบเรียงคำอธิบายผลงานสั้น ๆ (ไม่เกิน 3-4 ประโยค) สำหรับเผยแพร่บนเว็บ Local Story Hub\n'
-    + 'ชื่อผลงาน: ' + (titleVal || '(ไม่ระบุ)') + '\n'
-    + 'ชุมชนที่เกี่ยวข้อง: ' + (communityVal || '(ไม่ระบุ)') + '\n'
-    + 'คำอธิบายฉบับร่างจากนิสิต: ' + (descVal || '(ยังไม่มี ให้ช่วยแต่งตัวอย่างจากชื่อผลงานและชุมชนแทน)') + '\n'
-    + 'ตอบเป็นภาษาไทย เฉพาะข้อความคำอธิบายเท่านั้น ห้ามมีคำนำหรือคำอธิบายเพิ่มเติม';
-
-  var timeoutController = new AbortController();
-  var timedOut = false;
-  var timeoutId = setTimeout(function(){ timedOut = true; timeoutController.abort(); }, 15000);
-
   try{
-    var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      signal: timeoutController.signal,
-      headers: {
-        'Authorization': 'Bearer ' + window.OPENROUTER_CONFIG.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: window.OPENROUTER_CONFIG.model,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+    var resultText = await callAiProxy('rewrite-description', {
+      title: titleVal, community: communityVal, draftDesc: descVal,
     });
-    var data = await res.json();
-    if(!res.ok){
-      throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
-    }
-    var resultText = data.choices[0].message.content.trim();
     resultEl.style.color = '';
     resultEl.textContent = resultText;
     labelEl.hidden = false;
     useBtn.hidden = false;
-    logAiAssistUse({ // ไม่ await — การบันทึก log ต้องไม่ทำให้ปุ่มค้างถ้า Firestore ช้า/ไม่ตอบสนอง
-      level: 1, action: 'rewrite-description',
-      title: titleVal, community: communityVal, draftDesc: descVal,
-      model: window.OPENROUTER_CONFIG.model,
-      success: true, resultText: resultText, errorMessage: null,
-    });
   }catch(e){
-    var message = timedOut ? 'หมดเวลารอคำตอบจาก AI (เกิน 15 วินาที) ลองใหม่อีกครั้ง' : e.message;
     console.error('AI assist failed', e);
     resultEl.style.color = '#A13D2C';
-    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + message;
+    resultEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
     labelEl.hidden = true;
     useBtn.hidden = true;
-    logAiAssistUse({
-      level: 1, action: 'rewrite-description',
-      title: titleVal, community: communityVal, draftDesc: descVal,
-      model: window.OPENROUTER_CONFIG.model,
-      success: false, resultText: null, errorMessage: message,
-    });
   }finally{
-    clearTimeout(timeoutId);
     box.hidden = false;
     btn.disabled = false;
     btn.textContent = originalText;

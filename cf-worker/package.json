@@ -1,0 +1,17 @@
+{
+  "name": "lsh-ai-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker — AI backend proxy for Local Story Hub (keeps the OpenRouter key server-side)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260921.1": true
+  }
+}

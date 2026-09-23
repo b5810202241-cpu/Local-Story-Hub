@@ -70,9 +70,11 @@ service cloud.firestore {
     match /AiAssistLogs/{logId} {
       allow read: if request.auth != null
                   && (request.auth.uid == resource.data.requesterId || getRole() == 'teacher');
+      // เพิ่ม 2026-09-23 (Part 3 — AI backend proxy): เดิมจำกัดแค่นิสิต/อาจารย์ ตอนนี้ปุ่ม AI
+      // มีให้ใช้ทั้งชุมชนและนักท่องเที่ยวด้วย (แปลภาษา/แคปชัน/SEO ฯลฯ) จึงเปิดให้ผู้ใช้ที่ login
+      // แล้วทุกบทบาทบันทึก log การใช้งานของตัวเองได้ (ยังบังคับ requesterId ต้องตรงกับ uid ผู้เขียนเสมอ)
       allow create: if request.auth != null
-                    && request.resource.data.requesterId == request.auth.uid
-                    && (isApprovedStudent() || getRole() == 'teacher');
+                    && request.resource.data.requesterId == request.auth.uid;
       allow update: if false;
       allow delete: if false;
     }

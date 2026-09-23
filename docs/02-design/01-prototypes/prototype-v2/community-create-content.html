@@ -71,23 +71,48 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
     <p class="hint">AI ปรับภาพให้สวยเหมาะกับการโพสต์ (FR-1.1)</p>
     <div class="upload-box" id="upload-box">ลากไฟล์ภาพมาวาง หรือ<br><button class="btn btn-secondary" style="margin-top:12px" onclick="selectFile()">เลือกไฟล์</button></div>
     <button class="btn btn-primary" id="enhance-btn" style="margin-top:var(--space-md)" disabled>✨ ให้ AI ปรับภาพให้สวย</button>
-    <div class="draft-note">จะเชื่อมต่อ AI backend จริงในรอบถัดไป (ต้องอัปเกรด Firebase เป็นแผน Blaze ก่อน) — ปิดใช้งานชั่วคราว</div>
+    <div class="draft-note">ปิดใช้งานถาวรในรอบนี้ — หน้านี้ยังไม่มีระบบอัปโหลดภาพจริง (ปุ่ม "เลือกไฟล์" ด้านบนเป็นแค่ placeholder) จึงยังไม่มีไฟล์ภาพจริงให้ AI ประมวลผล ต้องสร้างระบบอัปโหลดภาพ (เช่น Firebase Storage) ก่อนถึงจะทำฟีเจอร์นี้ได้ — เป็นสโคปแยกจาก AI backend proxy รอบนี้</div>
   </div>
 
   <div class="step">
     <h2><span class="step-num">2</span> คิดแคปชันด้วย AI</h2>
-    <p class="hint">ป้อนคำสำคัญ แล้วให้ AI ช่วยแต่งแคปชัน (FR-1.2) — ตอนนี้กรอกแคปชันเองก่อน</p>
+    <p class="hint">ป้อนคำสำคัญ แล้วให้ AI ช่วยแต่งแคปชัน (FR-1.2)</p>
     <label for="kw">คำสำคัญ (Keyword)</label>
     <input type="text" id="kw" placeholder="เช่น ทอผ้า, ภูมิปัญญา, แม่ฮ่องสอน">
-    <button class="btn btn-secondary" style="margin-top:var(--space-md)" disabled>✨ ให้ AI คิดแคปชัน</button>
-    <div class="draft-note">จะเชื่อมต่อ AI backend จริงในรอบถัดไป — ปิดใช้งานชั่วคราว</div>
+    <button class="btn btn-secondary" id="caption-btn" style="margin-top:var(--space-md)" onclick="aiCaption()">✨ ให้ AI คิดแคปชัน</button>
+    <div class="draft-note" id="ai-unavailable-caption" hidden>AI backend ยังไม่พร้อมใช้งาน (ดู <code>cf-worker/README.md</code>)</div>
+    <div class="submit-error" id="caption-error"></div>
     <label style="margin-top:var(--space-md)">แคปชัน/เนื้อหา (แก้ไขได้)</label>
     <textarea id="caption" placeholder="เล่าเรื่องราวของคอนเทนต์นี้..."></textarea>
   </div>
 
   <div class="step">
-    <h2><span class="step-num">3</span> AI แนะนำวิธีเล่าเรื่อง / SEO / แปลภาษา</h2>
-    <p class="hint">ปุ่ม AI ปรับภาพ/แคปชัน/แนะนำเรื่อง/SEO/แปลภาษา (FR-1.1–1.5) ทั้งหมดถูกปิดใช้งานชั่วคราวในรอบนี้ — ต้องอัปเกรด Firebase เป็นแผน Blaze แล้วทำ Cloud Functions proxy ก่อน (กันคีย์ AI รั่วจาก client-side) จะเชื่อมต่อจริงในรอบถัดไป</p>
+    <h2><span class="step-num">3</span> AI แนะนำวิธีเล่าเรื่อง</h2>
+    <p class="hint">บอกหัวข้อ/ประเด็นที่อยากเล่า ให้ AI ช่วยแนะนำแนวทาง (FR-1.5)</p>
+    <label for="story-topic">หัวข้อ/ประเด็น</label>
+    <input type="text" id="story-topic" placeholder="เช่น ประเพณีลอยกระทงของชุมชน">
+    <button class="btn btn-secondary" id="story-btn" style="margin-top:var(--space-md)" onclick="aiStorySuggestion()">✨ ให้ AI แนะนำวิธีเล่าเรื่อง</button>
+    <div class="draft-note" id="ai-unavailable-story" hidden>AI backend ยังไม่พร้อมใช้งาน (ดู <code>cf-worker/README.md</code>)</div>
+    <div class="submit-error" id="story-error"></div>
+    <div id="story-result" style="margin-top:var(--space-md);white-space:pre-wrap;display:none;background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);"></div>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">4</span> AI แนะนำ SEO Keyword</h2>
+    <p class="hint">ให้ AI วิเคราะห์แคปชัน/เนื้อหาด้านบนแล้วแนะนำคำสำคัญที่คนอาจใช้ค้นหา (FR-1.4)</p>
+    <button class="btn btn-secondary" id="seo-btn" onclick="aiSeoKeywords()">✨ ให้ AI แนะนำ SEO Keyword</button>
+    <div class="draft-note" id="ai-unavailable-seo" hidden>AI backend ยังไม่พร้อมใช้งาน (ดู <code>cf-worker/README.md</code>)</div>
+    <div class="submit-error" id="seo-error"></div>
+    <div id="seo-result" style="margin-top:var(--space-md);display:none;background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);"></div>
+  </div>
+
+  <div class="step">
+    <h2><span class="step-num">5</span> AI แปลภาษา (ไทย → อังกฤษ)</h2>
+    <p class="hint">แปลแคปชัน/เนื้อหาด้านบนเป็นภาษาอังกฤษให้นักท่องเที่ยวต่างชาติอ่านได้ (FR-1.3) — ข้อความแปลอย่างเดียว ไม่มีเสียงพากย์ (ตัดสินใจแล้ว 2026-09-22)</p>
+    <button class="btn btn-secondary" id="translate-btn" onclick="aiTranslate()">✨ ให้ AI แปลเป็นภาษาอังกฤษ</button>
+    <div class="draft-note" id="ai-unavailable-translate" hidden>AI backend ยังไม่พร้อมใช้งาน (ดู <code>cf-worker/README.md</code>)</div>
+    <div class="submit-error" id="translate-error"></div>
+    <div id="translate-result" style="margin-top:var(--space-md);white-space:pre-wrap;display:none;background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);"></div>
   </div>
 
   <div class="publish-bar">
@@ -97,6 +122,7 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
 </main>
 
 <script src="firebase-config.js"></script>
+<script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -107,6 +133,136 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 let currentProfile = null;
+
+function hasAiProxy(){
+  return typeof window.LSH_AI_PROXY_URL !== 'undefined'
+    && window.LSH_AI_PROXY_URL
+    && window.LSH_AI_PROXY_URL.indexOf('YOUR_SUBDOMAIN') === -1;
+}
+
+(function(){
+  if(!hasAiProxy()){
+    ['caption-btn', 'story-btn', 'seo-btn', 'translate-btn'].forEach(function(id){
+      document.getElementById(id).disabled = true;
+    });
+    ['ai-unavailable-caption', 'ai-unavailable-story', 'ai-unavailable-seo', 'ai-unavailable-translate'].forEach(function(id){
+      document.getElementById(id).hidden = false;
+    });
+  }
+})();
+
+// เรียก AI ผ่าน Cloudflare Worker proxy (เพิ่ม 2026-09-23, Part 3) — key ของ OpenRouter อยู่เป็น
+// Worker secret เท่านั้น ไม่เคยส่งมาถึง browser เลย log การใช้งานถูกบันทึกฝั่ง Worker เองแล้ว
+async function callAiProxy(action, payload){
+  if(!hasAiProxy()) throw new Error('AI backend ยังไม่พร้อมใช้งาน (ยังไม่ได้ deploy Cloudflare Worker หรือยังไม่ตั้งค่า URL ใน ai-assist-config.js)');
+  var user = auth.currentUser;
+  if(!user) throw new Error('ต้องเข้าสู่ระบบก่อนใช้งานฟีเจอร์ AI นี้');
+  var idToken = await user.getIdToken();
+  var controller = new AbortController();
+  var timedOut = false;
+  var timeoutId = setTimeout(function(){ timedOut = true; controller.abort(); }, 20000);
+  try{
+    var res = await fetch(window.LSH_AI_PROXY_URL + '/ai/' + action, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    var data = await res.json();
+    if(!data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data.result;
+  }catch(e){
+    if(timedOut) throw new Error('หมดเวลารอคำตอบจาก AI (เกิน 20 วินาที) ลองใหม่อีกครั้ง');
+    throw e;
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
+
+window.aiCaption = async function(){
+  var btn = document.getElementById('caption-btn');
+  var errEl = document.getElementById('caption-error');
+  errEl.style.display = 'none';
+  var keywords = document.getElementById('kw').value.trim();
+  if(!keywords){ errEl.textContent = 'กรุณากรอกคำสำคัญก่อน'; errEl.style.display = 'inline'; return; }
+  var original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังให้ AI คิดแคปชัน...';
+  try{
+    var result = await callAiProxy('caption', { keywords: keywords });
+    document.getElementById('caption').value = result;
+  }catch(e){
+    console.error('AI caption failed', e);
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'inline';
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
+};
+
+window.aiStorySuggestion = async function(){
+  var btn = document.getElementById('story-btn');
+  var errEl = document.getElementById('story-error');
+  var resultEl = document.getElementById('story-result');
+  errEl.style.display = 'none';
+  var topic = document.getElementById('story-topic').value.trim();
+  if(!topic){ errEl.textContent = 'กรุณากรอกหัวข้อ/ประเด็นก่อน'; errEl.style.display = 'inline'; return; }
+  var original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังให้ AI แนะนำ...'; resultEl.style.display = 'none';
+  try{
+    var result = await callAiProxy('story-suggestion', { topic: topic });
+    resultEl.textContent = result;
+    resultEl.style.display = 'block';
+  }catch(e){
+    console.error('AI story-suggestion failed', e);
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'inline';
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
+};
+
+window.aiSeoKeywords = async function(){
+  var btn = document.getElementById('seo-btn');
+  var errEl = document.getElementById('seo-error');
+  var resultEl = document.getElementById('seo-result');
+  errEl.style.display = 'none';
+  var text = document.getElementById('caption').value.trim();
+  if(!text){ errEl.textContent = 'กรุณากรอกแคปชัน/เนื้อหาในขั้นตอนที่ 2 ก่อน'; errEl.style.display = 'inline'; return; }
+  var original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังให้ AI วิเคราะห์...'; resultEl.style.display = 'none';
+  try{
+    var result = await callAiProxy('seo', { text: text });
+    resultEl.textContent = result;
+    resultEl.style.display = 'block';
+  }catch(e){
+    console.error('AI seo failed', e);
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'inline';
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
+};
+
+window.aiTranslate = async function(){
+  var btn = document.getElementById('translate-btn');
+  var errEl = document.getElementById('translate-error');
+  var resultEl = document.getElementById('translate-result');
+  errEl.style.display = 'none';
+  var text = document.getElementById('caption').value.trim();
+  if(!text){ errEl.textContent = 'กรุณากรอกแคปชัน/เนื้อหาในขั้นตอนที่ 2 ก่อน'; errEl.style.display = 'inline'; return; }
+  var original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังให้ AI แปล...'; resultEl.style.display = 'none';
+  try{
+    var result = await callAiProxy('translate', { text: text });
+    resultEl.textContent = result;
+    resultEl.style.display = 'block';
+  }catch(e){
+    console.error('AI translate failed', e);
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + e.message;
+    errEl.style.display = 'inline';
+  }finally{
+    btn.disabled = false; btn.textContent = original;
+  }
+};
 
 onAuthStateChanged(auth, async function(user){
   document.getElementById('page-view').hidden = true;

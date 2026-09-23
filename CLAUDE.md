@@ -31,6 +31,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`Reviews`** *(เพิ่ม 2026-09-23)* — รีวิวของนักท่องเที่ยว: `contentId`, `contentType` (`student`/`community` — ระบุว่าเนื้อหามาจาก `LSHRequests` หรือ `CommunityContent`), `contentTitle`, `touristId`/`touristName`, `text`, `createdAt` — อ่านได้แบบ public ไม่ต้อง login, เขียนต้อง login เท่านั้น (Decision Log 2026-08-28), immutable (ไม่มี update/delete)
 - **`Bookmarks`** *(เพิ่ม 2026-09-23)* — สถานที่โปรด: doc id = `{touristId}_{contentType}_{contentId}` (deterministic เพื่อ toggle ได้โดยไม่ต้อง query), field: `touristId`, `contentId`, `contentType`, `contentTitle`, `createdAt` — อ่าน/ลบได้เฉพาะเจ้าของเท่านั้น
 - **`ConsentRecords`** *(เพิ่ม 2026-09-22/23)* — หลักฐานการยินยอม PDPA: `user_account_id` (null ได้ถ้ายังไม่ login), `analytics_consent`/`marketing_consent` (เท่ากันเสมอ — single-toggle consent), `timestamp` — เขียนได้แม้ไม่ login (Consent เกิดขึ้นได้ก่อน login), ไม่มี operation อ่านคืน (`allow read: if false`)
+- **`AiAssistLogs`** — log ทุกครั้งที่เรียกใช้ AI: `action`, `requesterId`, `success`, `resultText`, `errorMessage`, `model`, `createdAt` *(เพิ่ม 2026-09-23)* — เดิมเขียนได้เฉพาะนิสิต/อาจารย์ ตอนนี้เปิดให้ทุก role ที่ login แล้ว (ชุมชน/นักท่องเที่ยวด้วย) เพราะปุ่ม AI ขยายไปทั้งสองฝั่งแล้ว (ดูหัวข้อ "AI Backend Proxy" ด้านล่าง) — เขียนจาก Cloudflare Worker ผ่าน Firestore REST API โดยใช้ ID token ของผู้เรียกเอง ไม่ใช่ client เขียนตรงอีกต่อไป
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
 - **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
@@ -65,6 +66,44 @@ firebase deploy --only hosting,firestore:rules
 รันจาก root ของ repo เท่านั้น (ไม่ใช่จาก `LSH/`) — เว็บที่ deploy แล้วอยู่ที่ `https://lsh-nammon.web.app/student-publish.html`, `https://lsh-nammon.web.app/admin-review-student-work.html`, และ `https://lsh-nammon.web.app/published-works.html` (หน้าสาธารณะ ไม่ต้อง login — เพิ่ม 2026-09-12) (ลิงก์อยู่ใน `README.md` ที่ root ด้วย)
 
 **Firebase web config แยกไฟล์แล้ว (เพิ่ม 2026-09-18):** `docs/02-design/01-prototypes/prototype-v2/firebase-config.js` เก็บค่า `firebaseConfig` (รวม `apiKey`) จริง — ไฟล์นี้ถูก `.gitignore` ไว้ที่ root ของ repo ไม่ขึ้น GitHub ทั้ง 3 หน้าจอ (`student-publish.html`, `admin-review-student-work.html`, `published-works.html`) โหลดไฟล์นี้ผ่าน `<script src="firebase-config.js">` ก่อน `initializeApp` เสมอ — มี `firebase-config.example.js` (มีค่า placeholder, commit เข้า repo) เป็น template ให้คัดลอก **`firebase deploy --only hosting` ยังทำงานได้ปกติ** เพราะ deploy อ่านจาก local filesystem ไม่ใช่จาก git ไฟล์นี้จึงถูก deploy ขึ้น Hosting จริงแม้จะไม่ถูก commit — ถ้า clone repo ใหม่ต้องสร้างไฟล์นี้เองก่อน deploy/รัน local ครั้งแรก
+
+## AI Backend Proxy — Cloudflare Worker (เพิ่ม 2026-09-23)
+
+ทุกปุ่ม AI ในระบบ (คิดแคปชัน/แนะนำวิธีเล่าเรื่อง/SEO/แปลภาษาฝั่งชุมชน+นักท่องเที่ยว, ช่วยร่างคำอธิบายผลงานนิสิต,
+สรุปภาพรวมงานของอาจารย์) เรียกผ่าน Cloudflare Worker ที่ `cf-worker/` แทนการเรียก OpenRouter API ตรงจาก
+browser แบบเดิม — **เลือก Cloudflare Workers แทน Firebase Cloud Functions เพราะผู้ใช้ไม่ต้องการผูกบัตร
+เครดิตกับ Firebase** (Cloud Functions บังคับต้องอัปเกรดเป็นแผน Blaze) ส่วน Cloudflare Workers free tier
+ใช้ได้โดยไม่ต้องผูกบัตร (100,000 requests/วัน)
+
+**สถาปัตยกรรม**: ทุก request ต้องแนบ Firebase ID token (`Authorization: Bearer <token>`) — Worker verify
+เองด้วย Web Crypto API (ไม่ใช้ Firebase Admin SDK เพราะเป็น Node-only ใช้บน Workers ไม่ได้), แล้วเรียก
+OpenRouter ด้วย key ที่เก็บเป็น Cloudflare secret เท่านั้น (ไม่เคยส่งถึง browser) — action `summarize-pending`
+ตรวจ role เพิ่มว่าต้อง `teacher` เท่านั้น โดยอ่าน `users/{uid}` ผ่าน Firestore REST API ด้วย ID token ของ
+ผู้เรียกเอง (ใช้สิทธิ์ self-read ที่มีอยู่แล้วใน `firestore.rules` ไม่ต้องมี service account เพิ่ม) — log ทุกครั้ง
+ลง `AiAssistLogs` ด้วยวิธีเดียวกัน (ดูรายละเอียด endpoint ทั้งหมดที่ `cf-worker/README.md`)
+
+**`ai-assist-config.js` ไม่ใช่ secret อีกต่อไป** (เพิ่ม 2026-09-23) — เดิมเก็บ OpenRouter API key จริง
+(client-side secret) ตอนนี้เก็บแค่ `window.LSH_AI_PROXY_URL` (URL ของ Worker ซึ่งไม่ใช่ความลับ ป้องกันด้วย
+การ verify ID token ข้างในตัว Worker เอง) — จึง**ลบออกจาก `.gitignore` และ `firebase.json` hosting.ignore
+แล้ว** commit + deploy ได้ตามปกติ
+
+**สถานะ ณ 2026-09-23**: โค้ด Worker และฝั่ง client เสร็จหมดแล้ว ทดสอบ auth verification/role gate/CORS/error
+handling ผ่าน local `wrangler dev` ครบ (ดู `docs/05-log/index.md`) **แต่ยังไม่ได้ deploy Worker จริงขึ้น
+Cloudflare** — `ai-assist-config.js` ที่ commit ไว้ยังเป็น placeholder URL อยู่ ทุกปุ่ม AI จะขึ้นข้อความ
+"AI backend ยังไม่พร้อมใช้งาน" จนกว่าจะ deploy จริงตามขั้นตอนนี้ (**ผู้ใช้ต้องทำเอง** เพราะต้อง login
+ด้วยบัญชี Cloudflare ของตัวเองผ่านเบราว์เซอร์):
+
+```bash
+cd cf-worker
+npm install
+npx wrangler login                              # เปิดเบราว์เซอร์ให้ login (สมัครฟรีได้ที่ dash.cloudflare.com ถ้ายังไม่มี — ไม่ต้องผูกบัตร)
+npx wrangler secret put OPENROUTER_API_KEY       # แปะ API key จริงจาก https://openrouter.ai/keys
+npx wrangler deploy
+```
+
+หลัง deploy จะได้ URL รูปแบบ `https://lsh-ai-proxy.<subdomain>.workers.dev` — เอาไปตั้งใน
+`docs/02-design/01-prototypes/prototype-v2/ai-assist-config.js` (แทนที่ placeholder) แล้ว
+`firebase deploy --only hosting` ใหม่อีกครั้ง
 
 ## Requirement intake → Spec → Product Backlog workflow
 

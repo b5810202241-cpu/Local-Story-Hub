@@ -684,3 +684,82 @@ Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น
 ไม่พบ JS error หรือ permission-denied ใดๆ ตลอด flow — **ระบบนักท่องเที่ยวใช้งานได้จริงครบสมบูรณ์แล้ว** เก็บบัญชี/รีวิว/บันทึกสถานที่ทดสอบไว้ตามธรรมเนียมเดิม (ไม่ลบข้อมูลทดสอบทิ้ง)
 
 Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น `origin/main` แล้ว — **Part 2/5 เสร็จสมบูรณ์**
+
+### 2026-09-23 — สร้าง AI backend proxy ด้วย Cloudflare Worker (Part 3/5 ของแผน "สร้างระบบตาม spec.md ให้ครบ")
+
+รอบนี้ทำเฉพาะ **AI backend proxy** ต่อจาก Part 1/2 (ชุมชน/นักท่องเที่ยว) — เปลี่ยนจากแผนเดิม Firebase
+Cloud Functions มาเป็น **Cloudflare Workers** เพราะผู้ใช้ไม่ต้องการผูกบัตรเครดิตกับ Firebase (Cloud
+Functions บังคับอัปเกรดเป็นแผน Blaze) ส่วน Cloudflare Workers free tier ใช้ได้โดยไม่ต้องผูกบัตร
+(100,000 requests/วัน)
+
+**สร้างใหม่**: `cf-worker/` (ที่ root) — `src/index.js`, `wrangler.toml`, `package.json`,
+`.dev.vars.example`, `.gitignore`, `README.md` (ขั้นตอน deploy เต็ม)
+
+**สถาปัตยกรรม Worker**:
+- 6 action ผ่าน endpoint เดียวกัน `POST /ai/<action>`: `caption` (FR-1.2), `translate` (FR-1.3),
+  `seo` (FR-1.4), `story-suggestion` (FR-1.5), `rewrite-description`/`summarize-pending` (ของเดิม
+  ฝั่งนิสิต/อาจารย์ ย้ายมาเรียกผ่าน Worker แทน) — prompt ของทุก action ประกอบขึ้นฝั่งเซิร์ฟเวอร์จาก
+  field ข้อมูลดิบเท่านั้น ไม่รับ prompt สำเร็จรูปจาก client
+- ทุก request ต้องแนบ Firebase ID token — verify เองด้วย Web Crypto API (RS256, เช็ค signature ผ่าน
+  JWKS ของ Firebase, `exp`/`aud`/`iss`) เพราะ Firebase Admin SDK เป็น Node-only ใช้บน Workers ไม่ได้
+- `summarize-pending` เช็ค role เพิ่มว่าต้องเป็น `teacher` เท่านั้น โดยอ่าน `users/{uid}` ผ่าน Firestore
+  REST API ด้วย ID token ของผู้เรียกเอง (ใช้สิทธิ์ self-read ที่มีอยู่แล้วใน `firestore.rules` ไม่ต้องมี
+  service account เพิ่มเลย)
+- log ทุกครั้งลง `AiAssistLogs` ด้วยวิธีเดียวกัน (Firestore REST + ID token ของผู้เรียก) แทนที่ client
+  เขียนเอง
+- **FR-1.1 (ปรับภาพให้สวย) ไม่ implement ในรอบนี้** — `community-create-content.html` ไม่มีระบบอัปโหลด
+  ภาพจริงเลย (ปุ่ม "เลือกไฟล์" เป็น placeholder) การทำ endpoint ปรับภาพจริงต้องมีระบบอัปโหลดภาพก่อน
+  (เช่น Firebase Storage) ซึ่งเป็นคนละสโคป — ปุ่มนี้ยังปิดใช้งานถาวรพร้อมข้อความอธิบายเหตุผลชัดเจน
+
+**แก้ไฟล์ client**: `student-publish.html`, `admin-review-student-work.html` (เปลี่ยนจากเรียก OpenRouter
+ตรงเป็นเรียกผ่าน Worker), `community-create-content.html` (เปิดใช้งาน 4/5 ปุ่ม AI จริง — คิดแคปชัน/
+แนะนำวิธีเล่าเรื่อง/SEO/แปลภาษา, ปุ่มปรับภาพยังปิดถาวร), `tourist-story-detail.html` (เพิ่มปุ่มแปล
+ไทย→อังกฤษใหม่ — **บังคับ login ก่อนใช้เสมอ** แม้เนื้อหาต้นฉบับอ่านได้แบบ public เพื่อกันคนนอกเรียกใช้
+AI quota ฟรี เป็นการตัดสินใจ implementation ที่ทำเองโดยไม่ต้องถามผู้ใช้เพิ่ม)
+
+**`ai-assist-config.js` ไม่ใช่ secret อีกต่อไป**: เดิมเก็บ OpenRouter API key จริง (client-side secret)
+ตอนนี้เก็บแค่ `window.LSH_AI_PROXY_URL` (URL ของ Worker ไม่ใช่ความลับ ป้องกันด้วยการ verify ID token
+ในตัว Worker เอง) — ลบออกจาก `.gitignore` และ `firebase.json` hosting.ignore แล้ว, เขียนไฟล์ใหม่ทั้ง
+`ai-assist-config.js`/`.example.js` ให้ตรงกับรูปแบบใหม่ (placeholder URL เดียวกันทั้งคู่ เพราะไม่มี
+secret ให้แยกอีกต่อไป)
+
+**พบและแก้บั๊กระหว่างทดสอบ**: การเขียน log แบบ fire-and-forget (`logAiAssistUse`) ไม่ได้ห่อด้วย
+`ctx.waitUntil()` — Cloudflare Workers อาจฆ่า promise ที่ยังค้างอยู่ทันทีที่ response ถูกส่งกลับไปแล้ว
+ถ้าไม่ทำแบบนี้ (พบจาก best practice ของ Cloudflare เอง ไม่ใช่จากการ reproduce บั๊กจริงใน local `wrangler
+dev` — local mode อาจไม่ได้บังคับ isolate teardown เข้มงวดเท่า production) แก้โดยเพิ่ม `ctx` เป็น
+parameter ที่ 3 ของ `fetch()` handler แล้วห่อทุกจุดที่เรียก `logAiAssistUse` ด้วย `ctx.waitUntil(...)`
+
+**แก้ `LSH/firestore.rules`**: เปิด `AiAssistLogs.create` ให้ผู้ใช้ที่ login แล้ว**ทุก role**เขียน log
+ของตัวเองได้ (เดิมจำกัดแค่นิสิต/อาจารย์ — ตอนนี้ปุ่ม AI ขยายไปฝั่งชุมชน/นักท่องเที่ยวด้วยแล้ว) — **ยัง
+ไม่ deploy** รอผู้ประสานงาน (เหมือน Part 1/2)
+
+**ทดสอบผ่าน local `wrangler dev` + headless Chromium จริง** (ไม่ใช้ OpenRouter key จริง — ทดสอบ
+auth/routing/error-handling เท่านั้น เพราะเครื่องนี้ไม่มี key จริง):
+- Auth reject path: ไม่แนบ token → 401 "ต้อง login ก่อน", token ปลอม → 401 "ยืนยันตัวตนไม่สำเร็จ"
+- Token จริงจากบัญชีสาธิต (teacher u004, community/tourist test account ที่สร้างไว้ตอนทดสอบ Part 1/2):
+  ผ่าน auth verification ครบ ไปถึงขั้นเรียก OpenRouter จริง (fail เฉพาะเพราะ placeholder key — "User not
+  found." จาก OpenRouter เอง ไม่ใช่ error จากฝั่งเรา) — role gate ของ `summarize-pending` ทำงานถูกต้อง
+  (teacher ผ่าน, community โดน 403 "ใช้ได้เฉพาะบทบาท teacher เท่านั้น")
+- CORS preflight (`OPTIONS`) ตอบถูกต้องสำหรับทั้ง production origin และ `localhost` ทุก port
+- ปุ่ม AI ทั้ง 4 ปุ่มใน `community-create-content.html` + ปุ่มแปลใน `tourist-story-detail.html`: ทดสอบ
+  ผ่าน browser จริง (local http-server ชี้ `ai-assist-config.js` ไปที่ `wrangler dev` local ชั่วคราว
+  แล้ว revert กลับเป็น placeholder ก่อน commit) — ปุ่มเรียก Worker ถูก endpoint, แสดง error message ที่
+  เข้าใจง่ายเมื่อ AI ตอบไม่สำเร็จ (ไม่ใช่ error ดิบ), guest เห็นปุ่มแปลถูก disable + ข้อความอธิบายถูกต้อง,
+  หลัง login ปุ่มเปิดใช้งานถูกต้อง — ไม่มี JS error ใดๆ ตลอดการทดสอบ
+- ยืนยันด้วยว่าการเขียน `AiAssistLogs` จาก community/tourist token ยังถูก**ปฏิเสธ**ตาม rule ที่ deploy
+  อยู่จริงตอนนี้ (ของเดิม จำกัดแค่นิสิต/อาจารย์) ตรงตามคาด — จะเขียนได้เมื่อผู้ประสานงาน deploy rules
+  ใหม่ที่แก้ไว้ในรอบนี้แล้วเท่านั้น
+
+**อัปเดตสถานะ**: BL-002/003/004/005 → เสร็จแล้ว (BL-001 ยังไม่เริ่ม พร้อมเหตุผล) ใน
+[[../01-requirements/03-task/product-backlog|product-backlog]] (แก้ไปพร้อมกับหมายเหตุ "ยังไม่ deploy
+rules" ที่ล้าหลังของ BL-006/022/023 จาก Part 1 ให้ตรงกับความจริงด้วยในตัว), เพิ่ม component + Decision
+Log ใน [[../02-design/02-technical/architecture|architecture.md]], เพิ่มหัวข้อ "AI Backend Proxy" ใน
+[[../../CLAUDE|CLAUDE.md]] พร้อมขั้นตอน deploy เต็ม, อัปเดต `spec.md` ทุกจุดที่เกี่ยวกับสถานะ AI
+
+**สิ่งที่ผู้ใช้ต้องทำเองก่อนใช้งานจริงได้** (agent/ผู้ประสานงานทำแทนไม่ได้ ต้อง login ด้วยบัญชี
+Cloudflare ของผู้ใช้เอง): `wrangler login` → `wrangler secret put OPENROUTER_API_KEY` → `wrangler
+deploy` → เอา URL ที่ได้ไปตั้งใน `ai-assist-config.js` แทน placeholder → deploy hosting ใหม่ (ดู
+`cf-worker/README.md` สำหรับคำสั่งเต็ม)
+
+**Part 3/5 เสร็จสมบูรณ์ในส่วนที่ทำได้โดยไม่ต้อง deploy จริง** — เหลือ 2 อย่างที่ผู้ประสานงาน/ผู้ใช้ต้อง
+ทำต่อ: (1) ผู้ประสานงาน deploy `firestore.rules` ที่แก้ไว้ (2) ผู้ใช้ deploy Cloudflare Worker เอง
