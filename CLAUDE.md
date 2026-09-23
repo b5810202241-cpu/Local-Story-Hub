@@ -50,11 +50,43 @@ Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm i
 
 **สำคัญ — role ของอาจารย์ใน Firestore คือ `teacher` ไม่ใช่ `admin`**: ต่างจาก entity `UserAccount` เชิงแนวคิดที่ใช้ `role: admin` (ดูหัวข้อก่อนหน้า) โค้ด client-side และ security rules ทั้งหมดเช็คเทียบกับ `teacher` เพราะต้องทำงานกับข้อมูลจริง — ถ้าจะเพิ่ม role อื่นในอนาคต ตรวจให้ตรงกับค่าจริงใน Firestore เสมอ อย่าเดาจาก entity เชิงแนวคิด
 
-**Security Rules จริงอยู่ที่ `LSH/firestore.rules`** — เดิม deploy ด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account (ตอนนั้นยังไม่มี `firebase.json`) ตอนนี้มี `firebase.json` แล้ว (ดูหัวข้อ Firebase Hosting ด้านล่าง) จึงใช้ `firebase deploy --only firestore:rules` ได้ปกติเช่นกัน — ทั้งสองวิธี deploy ไปที่ ruleset เดียวกัน บังคับ: `read` บน `LSHRequests` เปิดเป็น **public (ไม่ต้อง login)** เฉพาะเอกสารที่ `status='อนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-021 — เอกสารอื่นยังต้อง login) `create` บน `LSHRequests` ต้อง login + เป็นนิสิตที่บัญชี `status='อนุมัติแล้ว'` เท่านั้น + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของหรือ role=`teacher`, `create` บน `users/{uid}` ทำได้เฉพาะเจ้าของ (สมัครบัญชีเอง) และบังคับ `role='student'`+`status='รออนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-019/BL-020), `update` บน `users` จำกัดเฉพาะ role=`teacher` และแก้ได้แค่ field `status`/`approverId`/`approverName`/`rejectionReason` — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำ (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11 และ 2026-09-12)
+**Security Rules จริงอยู่ที่ `LSH/firestore.rules`** — เดิม deploy ด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account (ตอนนั้นยังไม่มี `firebase.json`) ตอนนี้มี `firebase.json` แล้ว (ดูหัวข้อ Firebase Hosting ด้านล่าง) จึงใช้ `firebase deploy --only firestore:rules` ได้ปกติเช่นกัน — ทั้งสองวิธี deploy ไปที่ ruleset เดียวกัน บังคับ: `read` บน `LSHRequests` เปิดเป็น **public (ไม่ต้อง login)** เฉพาะเอกสารที่ `status='อนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-021) เอกสารอื่น (`รอพิจารณา`/`ไม่อนุมัติ`) อ่านได้เฉพาะเจ้าของ (`requesterId == uid`) หรือ role=`teacher` เท่านั้น (**แก้ 2026-09-23** — เดิมเงื่อนไขคือแค่ "login แล้ว" เฉยๆ ทำให้ผู้ใช้ที่ login คนไหนก็ได้อ่านผลงานที่ยังไม่อนุมัติของคนอื่นได้หมด เป็นบั๊กจริงที่พบจาก `tests/security-cross-user-pending-work-blocked.spec.js` ดูรายละเอียดในหัวข้อ "เทสต์ความปลอดภัยอัตโนมัติ" ด้านล่าง) `create` บน `LSHRequests` ต้อง login + เป็นนิสิตที่บัญชี `status='อนุมัติแล้ว'` เท่านั้น + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของหรือ role=`teacher`, `create` บน `users/{uid}` ทำได้เฉพาะเจ้าของ (สมัครบัญชีเอง) และบังคับ `role='student'`+`status='รออนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-019/BL-020), `update` บน `users` จำกัดเฉพาะ role=`teacher` และแก้ได้แค่ field `status`/`approverId`/`approverName`/`rejectionReason` — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำ (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11 และ 2026-09-12)
 
 ดูรายละเอียดการบังคับใช้สิทธิ์ตามบทบาทที่ `docs/02-design/02-technical/ACL.md` และการ implement ที่ `docs/02-design/01-prototypes/prototype-v2/README.md`
 
 **สถานะ `firestore.rules` ณ 2026-09-23**: เพิ่ม rule ของ `CommunityContent`/`ContentEditRequests` และเปิด `users.create` ให้ role `community` แล้ว **deploy ขึ้น production จริงแล้ว** (`firebase deploy --only firestore:rules`) และทดสอบผ่าน browser จริงครบ flow (สมัครชุมชน → อาจารย์อนุมัติ → ชุมชนสร้าง/เผยแพร่คอนเทนต์ → ขอแก้ไข → อาจารย์อนุมัติคำขอแก้ไข) ไม่พบ permission-denied — ดู `docs/05-log/index.md` วันที่ 2026-09-23 (ระบบชุมชน)
+
+## เทสต์ความปลอดภัยอัตโนมัติ (เพิ่ม 2026-09-23)
+
+นอกจาก `tests/published-works.spec.js` (สโมค เทสต์เดิม) มีเทสต์ความปลอดภัย 2 ตัวที่ **ห้ามลบ/ข้าม**
+เก็บไว้ถาวรใน `tests/` รันด้วย `npx playwright test`:
+
+- **`tests/security-unauth-review-list-blocked.spec.js`** — ไม่ login แล้วเปิด
+  `admin-review-student-work.html` (หน้ารวมผลงาน/บัญชี/คำขอแก้ไขของอาจารย์) ต้องอ่านข้อมูลไม่ได้เลย
+  เช็คทุก container ที่มีข้อมูลจริง (`#pending-list`, `#pending-accounts-list`,
+  `#pending-edits-list`, ตารางประวัติ/Access Log) ต้องว่างเปล่า ไม่ใช่แค่ parent ถูกซ่อนด้วย CSS
+- **`tests/security-cross-user-pending-work-blocked.spec.js`** — นิสิต A ส่งผลงานใหม่ (สถานะ
+  "รอพิจารณา") → นิสิต B (login คนละบัญชี) พยายามเปิดผลงานนั้นตรงๆ ผ่าน URL ต้องเปิดไม่ได้ **ทั้งสอง
+  ระดับ**: (1) UI ไม่แสดงเนื้อหาของ A ให้ B เห็น (2) Firestore **ต้องปฏิเสธการอ่านจริง**
+  (permission-denied ใน console) ไม่ใช่แค่ client ฝั่ง B อ่านสำเร็จแล้วซ่อนด้วย JS เฉยๆ — เช็คระดับ
+  (2) เพิ่มเพราะเคยพบว่า rule เดิมรั่วจริงแม้ UI จะดูเหมือนผ่าน (ดูด้านล่าง)
+
+ใช้บัญชีสาธิต `u002@example.com`/`u003@example.com` (นิสิตที่อนุมัติแล้ว) แทนการสมัครใหม่ — อีเมล
+ไม่ใช่ความลับ (มีอยู่แล้วใน `LSH/scripts/seed-firestore.js` ที่ commit ไว้) ส่วนรหัสผ่านอ่านจาก
+`LSH/DEMO_CREDENTIALS.md` (gitignored) ผ่าน `tests/helpers/demo-credentials.js` — **ห้าม hardcode
+รหัสผ่านในไฟล์ `.spec.js` ที่ commit เด็ดขาด** ต้องมี `LSH/DEMO_CREDENTIALS.md` ในเครื่องก่อนรันเทสต์
+สองตัวนี้ (เทสต์จะ throw error ชัดเจนถ้าไม่มีไฟล์)
+
+`student-publish.html`'s รายการ "ผลงานที่เคยส่งของคุณ" มี `data-id="<doc id>"` ต่อ 1 รายการ (เพิ่ม
+2026-09-23) เพื่อให้เจ้าของอ่าน id ผลงานตัวเองได้จาก DOM โดยตรง (ใช้ในเทสต์ตัวที่สองด้านบน) — ไม่ใช่
+ช่องโหว่เพราะเป็น id ของผลงานตัวเองที่เจ้าของอ่านได้อยู่แล้วผ่าน query ปกติ
+
+**บั๊กจริงที่เทสต์ตัวที่สองพบ (ก่อนแก้)**: `LSHRequests.read` rule เดิมเช็คแค่ `request.auth != null`
+(login แล้วคนไหนก็ได้) ไม่ได้จำกัดว่าต้องเป็นเจ้าของหรือ role=teacher — นิสิต B ที่ login อยู่จึงอ่าน
+ผลงาน "รอพิจารณา"/"ไม่อนุมัติ" ของนิสิต A ได้จริงผ่าน Firestore แม้หน้าเว็บจะซ่อนไม่แสดงให้เห็นก็ตาม
+(rule รั่ว ไม่ใช่แค่ UI) แก้แล้วให้แคบลงเหลือ owner/teacher/public-approved เท่านั้น deploy ขึ้น
+production แล้ว retest ผ่านทั้งสองระดับ — ตรวจสอบว่าไม่กระทบฟีเจอร์อื่น (นิสิตอ่านผลงานตัวเอง,
+อาจารย์อ่านทุกอัน, public อ่านที่อนุมัติแล้ว) ยืนยันผ่านครบ
 
 ## Firebase Hosting (เพิ่ม 2026-09-11)
 

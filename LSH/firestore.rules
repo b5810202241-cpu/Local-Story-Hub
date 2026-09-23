@@ -66,7 +66,16 @@ service cloud.firestore {
     }
 
     match /LSHRequests/{requestId} {
-      allow read: if request.auth != null || resource.data.status == 'อนุมัติ';
+      // แก้ 2026-09-23 (เทสต์ความปลอดภัยพบ): เดิม `request.auth != null` เพียงเงื่อนไขเดียวเปิดให้
+      // "ผู้ใช้ที่ login แล้วคนไหนก็ได้" (นิสิตคนอื่น, ชุมชน, นักท่องเที่ยว) อ่านผลงานที่ยัง
+      // "รอพิจารณา"/"ไม่อนุมัติ" ของคนอื่นได้หมด ไม่ได้จำกัดว่าต้องเป็นเจ้าของหรือ role=teacher —
+      // ยืนยันด้วย tests/security-cross-user-pending-work-blocked.spec.js ว่ารั่วจริงที่ชั้นสิทธิ์
+      // (ไม่ใช่แค่ทดสอบผิด) แก้ให้แคบลงเหลือ: public อ่านได้เฉพาะที่อนุมัติแล้ว, ผู้ใช้ login อ่าน
+      // ได้เฉพาะของตัวเอง (ให้เจ้าของเช็คสถานะ/เหตุผลไม่อนุมัติผลงานตัวเองได้ตามเดิม — BL-018) หรือ
+      // role=teacher (ต้องเห็นทุกอันเพื่อตรวจ)
+      allow read: if resource.data.status == 'อนุมัติ'
+                  || (request.auth != null
+                      && (resource.data.requesterId == request.auth.uid || getRole() == 'teacher'));
       allow create: if request.auth != null
                     && isApprovedStudent()
                     && request.resource.data.requesterId == request.auth.uid

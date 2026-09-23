@@ -443,7 +443,7 @@ async function loadMySubmissions(){
       const reasonHtml = (it.status === 'ไม่อนุมัติ' && it.rejectionReason)
         ? '<div class="submission-reason">เหตุผลที่ไม่อนุมัติ: ' + escapeHtml(it.rejectionReason) + '</div>'
         : '';
-      return '<div class="submission-item"><strong>' + escapeHtml(it.title) + '</strong> '
+      return '<div class="submission-item" data-id="' + escapeHtml(it.id) + '"><strong>' + escapeHtml(it.title) + '</strong> '
         + '<span class="status ' + statusClass + '">' + escapeHtml(it.status) + '</span>'
         + reasonHtml + '</div>';
     }).join('');
