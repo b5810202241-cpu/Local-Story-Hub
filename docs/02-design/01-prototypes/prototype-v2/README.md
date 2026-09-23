@@ -132,6 +132,22 @@ Implement ตาม [[../../../01-requirements/01-spec/20260912-02-public-view-s
 
 **ทดสอบแล้ว (2026-09-12):** เปิดหน้าโดยไม่ login เห็นผลงานที่อนุมัติแล้วถูกต้อง, ค้นหากรองตามชุมชนทำงานถูกต้อง — ทดสอบยิง request ตรงข้าม UI 2 กรณี: (1) อ่านเอกสารที่ยังไม่อนุมัติโดยตรงด้วย id, (2) list ทั้ง collection โดยไม่กรอง `status` **rules บล็อกจริงทั้งสองกรณี**
 
+### ฝั่งชุมชน — เชื่อม Firebase จริง (เพิ่ม 2026-09-23) — แทนที่ mockup `localStorage` ของ [[../prototype-v3/README|prototype-v3]]
+
+Implement ตาม BL-006, BL-022, BL-023 — หน้าใหม่ 4 หน้า + ส่วนขยายใน `admin-review-student-work.html`:
+
+- **`community-register.html`** — สมัคร/เข้าสู่ระบบชุมชน (Firebase Auth จริง) เหมือน pattern ของ `student-publish.html` ทุกประการ ต่างที่: role=`community`, มีฟิลด์เพิ่ม "ข้อมูลยืนยันตัวตน" (`contactInfo` — ชื่อผู้ติดต่อ+เบอร์โทร ไม่ต้องแนบเอกสาร ตาม Business Rule 2026-09-22) บันทึกลง `users` collection เดียวกับนิสิต (ต่างแค่ `role`) — อนุมัติแล้วนำทางไป `community-dashboard.html` อัตโนมัติ
+- **`community-dashboard.html`** — แสดงคอนเทนต์ของชุมชนตนเอง (query `CommunityContent` where `communityId==uid`) + คอนเทนต์ชุมชนอื่นแบบ read-only (where `status=='เผยแพร่แล้ว'`, กรอง `communityId!=uid` ฝั่ง client) ค้นหาแบบ live ทั้ง 2 ตาราง real-time ผ่าน `onSnapshot` ปุ่ม "ขอแก้ไข" ปรากฏเฉพาะคอนเทนต์เผยแพร่แล้วที่ไม่มีคำขอค้าง (เช็คจาก `ContentEditRequests` แบบ realtime)
+- **`community-create-content.html`** — สร้าง/เผยแพร่คอนเทนต์จริงลง `CommunityContent` — **ปุ่ม AI ทั้งหมด (ปรับภาพ/แคปชัน/แนะนำเรื่อง/SEO/แปลภาษา) ปิดใช้งานชั่วคราวในรอบนี้** (แสดงข้อความ "จะเชื่อมต่อ AI backend จริงในรอบถัดไป") เพราะต้องรอ Cloud Functions proxy (Firebase แผน Blaze) ก่อนถึงจะเรียก AI จากฝั่งเซิร์ฟเวอร์ได้อย่างปลอดภัย
+- **`community-request-edit.html`** — อ่านคอนเทนต์จาก `CommunityContent` ตรวจสิทธิ์จริง (ต้องเป็นเจ้าของ + สถานะเผยแพร่แล้ว + ไม่มีคำขอค้าง) ส่งคำขอเข้า `ContentEditRequests` — **ส่งแล้วแก้ไข/ยกเลิกไม่ได้จนกว่าอาจารย์จะพิจารณา** (ตัดสินใจ 2026-09-23, บังคับด้วย `firestore.rules` ที่ไม่มี `allow update` ให้ community เลย)
+- **`admin-review-student-work.html`** — เพิ่มส่วน "บัญชีผู้ใช้ใหม่ที่รออนุมัติ" ให้ครอบคลุมทั้งนิสิต+ชุมชน (query เดิมตัด filter `role` ออก), เพิ่มส่วน "คำขอแก้ไขข้อมูลชุมชนที่รอพิจารณา" พร้อม diff เดิม/ใหม่ — อนุมัติแล้ว update ทั้ง `ContentEditRequests.status` และ field `title`/`bodyTh`/`caption`/`updatedAt` ของ `CommunityContent` เอกสารเดิมในคราวเดียว, เพิ่มตารางประวัติคำขอแก้ไขที่พิจารณาแล้ว
+
+**Firestore collection ใหม่**: `CommunityContent`, `ContentEditRequests` (ดู field เต็มที่ [[../../02-technical/architecture|architecture.md]] § Mapping) — `users` ขยายให้รองรับ `role: 'community'` (field เพิ่ม `contactInfo`)
+
+**`LSH/firestore.rules`**: เพิ่ม `isApprovedCommunity()`, เปิด `users.create` ให้ role `community` ได้ (เดิมอนุญาตแค่ `student`), เพิ่ม `match /CommunityContent/...` (create เฉพาะเจ้าของที่อนุมัติแล้ว, update เฉพาะ teacher จำกัด field) และ `match /ContentEditRequests/...` (create เฉพาะเจ้าของที่อนุมัติแล้ว, update เฉพาะ teacher จำกัด field — **ไม่มี rule ให้ community update/delete เอกสารตนเองเลย** ตามการตัดสินใจปิดคำถามเรื่องแก้ไข/ยกเลิกคำขอ 2026-09-23) — **ยังไม่ได้ deploy กฎนี้ขึ้น project จริง** ต้องรัน `firebase deploy --only firestore:rules` ก่อนฟีเจอร์นี้จะเขียนข้อมูลจริงสำเร็จ
+
+**ทดสอบแล้วบางส่วน (2026-09-23, ผ่าน local http-server + Playwright)**: หน้า login/register แสดงผลถูกต้อง, validate ฟอร์มสมัครบัญชี (ช่องว่าง) ทำงานถูกต้อง, ทั้ง 3 หน้าที่ต้อง login (`community-dashboard.html`, `community-create-content.html`, `community-request-edit.html`) redirect กลับ `community-register.html` ถูกต้องเมื่อยังไม่ login, ไม่มี JS error บนทุกหน้า (รวม `admin-review-student-work.html` ที่แก้ไข) — **ยังไม่ได้ทดสอบ flow เขียนข้อมูลจริงแบบ end-to-end** (สมัคร→อนุมัติ→สร้าง/แก้ไขคอนเทนต์→อนุมัติคำขอแก้ไข) เพราะ `firestore.rules` ที่แก้ในรอบนี้ยังไม่ถูก deploy ขึ้น production (เครื่องมือทดสอบนี้ไม่มีสิทธิ์ deploy เอง) — **ต้อง deploy rules แล้วทดสอบ flow เต็มอีกครั้งก่อนถือว่าสมบูรณ์**
+
 ## Design tokens ที่ใช้
 
 เหมือน prototype-v1 ทุกประการ (ไม่ได้เปลี่ยน design system) — ดู [[../DESIGN|DESIGN.md]]

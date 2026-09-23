@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — ขอแก้ไขคอนเทนต์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+main{max-width:720px;margin:0 auto;padding:var(--space-xl) var(--space-xl) var(--space-2xl);}
+h1{font-size:32px;font-weight:600;margin:0 0 var(--space-md);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-lg);}
+.step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
+label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);margin-top:var(--space-md);}
+label:first-child{margin-top:0;}
+input[type=text], textarea{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;}
+textarea{min-height:100px;}
+.current-value{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-md);font-size:16px;color:var(--color-bark);margin-bottom:var(--space-sm);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-primary:disabled{opacity:.6;cursor:default;}
+.field-error{color:#A13D2C;font-size:14px;margin-top:var(--space-xs);display:none;}
+.submit-error{color:#A13D2C;font-size:15px;margin-top:var(--space-sm);display:none;}
+.success-note{background:#E4F1E6;color:var(--color-moss);border-radius:var(--radius-sm);padding:var(--space-md);margin-top:var(--space-md);display:none;}
+.deny-note{background:#F7E0DA;color:#A13D2C;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+.pending-note{background:#F4E9D3;color:#8A6A22;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+.publish-bar{display:flex;justify-content:flex-end;align-items:center;gap:var(--space-md);margin-top:var(--space-xl);}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="community-register.html">Local Story Hub</a>
+  <nav class="site"><a href="community-dashboard.html">← กลับไปหน้าจัดการข้อมูล</a></nav>
+</header>
+
+<main>
+  <div id="account-pending-view" hidden>
+    <div class="pending-note">บัญชีนี้ยังอยู่ในสถานะรออนุมัติ — <a href="community-register.html">กลับไปหน้าเข้าสู่ระบบ</a></div>
+  </div>
+  <div id="account-deny-view" hidden>
+    <div class="deny-note">ต้องเข้าสู่ระบบด้วยบัญชีชุมชนที่ผ่านการอนุมัติแล้วก่อน — <a href="community-register.html">ไปหน้าเข้าสู่ระบบ</a></div>
+  </div>
+
+  <div id="deny-view" hidden>
+    <h1>ขอแก้ไขคอนเทนต์</h1>
+    <div class="deny-note" id="deny-text"></div>
+  </div>
+
+  <div id="page-view" hidden>
+    <h1>ขอแก้ไขคอนเทนต์: <span id="content-title-label"></span></h1>
+    <p class="hint">คำขอนี้จะต้องผ่านการอนุมัติจากอาจารย์ที่ปรึกษา/แอดมินก่อน คอนเทนต์ที่เผยแพร่อยู่จะยังไม่เปลี่ยนแปลงจนกว่าจะได้รับอนุมัติ (BL-023) — หลังส่งคำขอแล้วจะแก้ไข/ยกเลิกไม่ได้จนกว่าจะมีผลพิจารณา (ตัดสินใจ 2026-09-23)</p>
+
+    <div class="step">
+      <label>ชื่อคอนเทนต์ปัจจุบัน</label>
+      <div class="current-value" id="current-title"></div>
+      <label for="new-title">ชื่อคอนเทนต์ที่ขอแก้ไข</label>
+      <input type="text" id="new-title">
+
+      <label style="margin-top:var(--space-lg)">เนื้อหา/แคปชันปัจจุบัน</label>
+      <div class="current-value" id="current-body"></div>
+      <label for="new-body">เนื้อหา/แคปชันที่ขอแก้ไข</label>
+      <textarea id="new-body"></textarea>
+      <div class="field-error" id="err-nochange">กรุณาแก้ไขอย่างน้อย 1 ช่องก่อนส่งคำขอ</div>
+    </div>
+
+    <div class="publish-bar">
+      <span class="submit-error" id="submit-error"></span>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitEditRequest()">ส่งคำขอแก้ไข</button>
+    </div>
+    <div class="success-note" id="submit-success"></div>
+  </div>
+</main>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, getDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentProfile = null;
+let content = null;
+
+function getParam(name){
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+const contentId = getParam('contentId');
+
+function showDeny(text){
+  document.getElementById('deny-view').hidden = false;
+  document.getElementById('deny-text').textContent = text;
+}
+
+onAuthStateChanged(auth, async function(user){
+  document.getElementById('account-pending-view').hidden = true;
+  document.getElementById('account-deny-view').hidden = true;
+  document.getElementById('deny-view').hidden = true;
+  document.getElementById('page-view').hidden = true;
+
+  if(!user){
+    window.location.href = 'community-register.html';
+    return;
+  }
+
+  let profile = null;
+  try{
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if(snap.exists()) profile = Object.assign({ id: snap.id }, snap.data());
+  }catch(e){
+    console.error('โหลดข้อมูล user ไม่สำเร็จ', e);
+  }
+  currentProfile = profile;
+
+  if(!profile || profile.role !== 'community'){
+    document.getElementById('account-deny-view').hidden = false;
+    return;
+  }
+  if(profile.status !== 'อนุมัติแล้ว'){
+    document.getElementById('account-pending-view').hidden = false;
+    return;
+  }
+
+  if(!contentId){
+    showDeny('ไม่พบคอนเทนต์นี้');
+    return;
+  }
+
+  try{
+    const snap = await getDoc(doc(db, 'CommunityContent', contentId));
+    if(!snap.exists()){
+      showDeny('ไม่พบคอนเทนต์นี้');
+      return;
+    }
+    content = Object.assign({ id: snap.id }, snap.data());
+  }catch(e){
+    console.error('โหลดคอนเทนต์ไม่สำเร็จ', e);
+    showDeny('โหลดคอนเทนต์ไม่สำเร็จ: ' + e.message);
+    return;
+  }
+
+  if(content.communityId !== currentProfile.id){
+    showDeny('ขอแก้ไขได้เฉพาะคอนเทนต์ของชุมชนตนเองเท่านั้น (ตัดสินใจแล้ว 2026-09-22 — ไม่รองรับการขอแก้ไขข้ามชุมชน)');
+    return;
+  }
+  if(content.status !== 'เผยแพร่แล้ว'){
+    showDeny('ขอแก้ไขได้เฉพาะคอนเทนต์ที่เผยแพร่ (published) แล้วเท่านั้น');
+    return;
+  }
+
+  try{
+    const pendingQuery = query(
+      collection(db, 'ContentEditRequests'),
+      where('contentId', '==', contentId),
+      where('status', '==', 'รอพิจารณา')
+    );
+    const pendingSnap = await getDocs(pendingQuery);
+    if(!pendingSnap.empty){
+      showDeny('คอนเทนต์นี้มีคำขอแก้ไขที่รอพิจารณาอยู่แล้ว — ต้องรอผลพิจารณาก่อนส่งคำขอใหม่');
+      return;
+    }
+  }catch(e){
+    console.error('ตรวจสอบคำขอค้างไม่สำเร็จ', e);
+    showDeny('ตรวจสอบคำขอค้างไม่สำเร็จ: ' + e.message);
+    return;
+  }
+
+  document.getElementById('page-view').hidden = false;
+  document.getElementById('content-title-label').textContent = content.title;
+  document.getElementById('current-title').textContent = content.title;
+  document.getElementById('current-body').textContent = content.bodyTh;
+  document.getElementById('new-title').value = content.title;
+  document.getElementById('new-body').value = content.bodyTh;
+});
+
+window.submitEditRequest = async function(){
+  const newTitle = document.getElementById('new-title').value.trim();
+  const newBody = document.getElementById('new-body').value.trim();
+  const changed = (newTitle !== content.title) || (newBody !== content.bodyTh);
+  const errEl = document.getElementById('err-nochange');
+  const submitErrorEl = document.getElementById('submit-error');
+  submitErrorEl.style.display = 'none';
+  if(!changed){
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+
+  try{
+    await addDoc(collection(db, 'ContentEditRequests'), {
+      contentId: content.id,
+      contentTitle: content.title,
+      communityId: currentProfile.id,
+      communityName: currentProfile.name,
+      proposedChanges: { title: newTitle, bodyTh: newBody },
+      originalValues: { title: content.title, bodyTh: content.bodyTh },
+      status: 'รอพิจารณา',
+      rejectionReason: null,
+      approverId: null,
+      approverName: null,
+      createdAt: serverTimestamp(),
+    });
+
+    const successEl = document.getElementById('submit-success');
+    successEl.style.display = 'block';
+    successEl.textContent = 'ส่งคำขอแก้ไขแล้ว — สถานะ "รอพิจารณา" คอนเทนต์ที่เผยแพร่อยู่ยังไม่เปลี่ยนแปลงจนกว่าอาจารย์/แอดมินจะอนุมัติ';
+    setTimeout(function(){ window.location.href = 'community-dashboard.html'; }, 1500);
+  }catch(e){
+    console.error('ส่งคำขอแก้ไขไม่สำเร็จ', e);
+    submitErrorEl.textContent = 'ส่งคำขอไม่สำเร็จ: ' + e.message;
+    submitErrorEl.style.display = 'inline';
+    submitBtn.disabled = false;
+  }
+};
+</script>
+
+</body>
+</html>

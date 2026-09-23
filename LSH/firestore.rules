@@ -12,13 +12,44 @@ service cloud.firestore {
       return profile.role == 'student' && profile.status == 'อนุมัติแล้ว';
     }
 
+    function isApprovedCommunity() {
+      let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return profile.role == 'community' && profile.status == 'อนุมัติแล้ว';
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null
                   && (request.auth.uid == userId || getRole() == 'teacher');
       allow create: if request.auth != null
                     && request.auth.uid == userId
-                    && request.resource.data.role == 'student'
+                    && request.resource.data.role in ['student', 'community']
                     && request.resource.data.status == 'รออนุมัติ';
+      allow update: if request.auth != null
+                    && getRole() == 'teacher'
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'approverId', 'approverName', 'rejectionReason']);
+      allow delete: if false;
+    }
+
+    match /CommunityContent/{contentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && isApprovedCommunity()
+                    && request.resource.data.communityId == request.auth.uid
+                    && request.resource.data.status in ['ฉบับร่าง', 'เผยแพร่แล้ว'];
+      allow update: if request.auth != null
+                    && getRole() == 'teacher'
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['title', 'bodyTh', 'caption', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /ContentEditRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && isApprovedCommunity()
+                    && request.resource.data.communityId == request.auth.uid
+                    && request.resource.data.status == 'รอพิจารณา';
       allow update: if request.auth != null
                     && getRole() == 'teacher'
                     && request.resource.data.diff(resource.data).affectedKeys()

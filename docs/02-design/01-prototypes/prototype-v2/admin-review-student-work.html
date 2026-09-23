@@ -48,6 +48,12 @@ th{background:var(--color-sand);font-weight:600;}
 .status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;}
 .status.approved{background:#E4F1E6;color:var(--color-moss);}
 .status.rejected{background:#F7E0DA;color:#A13D2C;}
+.role-badge{display:inline-block;background:var(--color-sand);color:var(--color-bark);font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:middle;}
+.diff-row{display:flex;gap:var(--space-md);margin-bottom:var(--space-sm);flex-wrap:wrap;}
+.diff-col{flex:1;min-width:220px;}
+.diff-label{font-size:13px;font-weight:600;color:var(--color-bark);margin-bottom:2px;}
+.diff-old{background:var(--color-sand);border-radius:var(--radius-sm);padding:var(--space-sm) var(--space-md);font-size:15px;}
+.diff-new{background:#E4F1E6;border-radius:var(--radius-sm);padding:var(--space-sm) var(--space-md);font-size:15px;}
 label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs);}
 input[type=email], input[type=password]{width:100%;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-md);font-family:inherit;font-size:18px;color:var(--color-ink);background:#fff;}
 .step{background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);padding:var(--space-lg);margin-bottom:var(--space-lg);}
@@ -64,6 +70,7 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
   <nav class="site">
     <a href="published-works.html">ผลงานที่เผยแพร่แล้ว</a>
     <a href="student-publish.html" id="nav-student" hidden>มุมมองนิสิต</a>
+    <a href="community-dashboard.html" id="nav-community" hidden>มุมมองชุมชน</a>
     <span class="session" id="session-info" hidden></span>
     <button class="link-btn" id="logout-btn" onclick="doLogout()" hidden>ออกจากระบบ</button>
   </nav>
@@ -96,10 +103,14 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
 
     <div class="notify-banner" id="notify-banner" hidden></div>
 
-    <h2>บัญชีผู้ใช้ใหม่ที่รออนุมัติ</h2>
+    <h2>บัญชีผู้ใช้ใหม่ที่รออนุมัติ (นิสิต + ชุมชน)</h2>
     <div class="draft-note">DRAFT — เวอร์ชันนี้จำลองการแจ้งเตือน (ยังไม่ได้ส่งอีเมลจริงถึงอาจารย์) ด้วยแบนเนอร์ด้านบนแทน</div>
     <div id="pending-accounts-list"></div>
     <div class="empty-state" id="pending-accounts-empty" style="display:none;">ยังไม่มีบัญชีผู้ใช้ใหม่รอการอนุมัติในขณะนี้</div>
+
+    <h2>คำขอแก้ไขข้อมูลชุมชนที่รอพิจารณา</h2>
+    <div id="pending-edits-list"></div>
+    <div class="empty-state" id="pending-edits-empty" style="display:none;">ยังไม่มีคำขอแก้ไขข้อมูลชุมชนรอพิจารณาในขณะนี้</div>
 
     <h2>AI สรุปภาพรวมผลงานที่รอพิจารณา</h2>
     <p class="hint" style="margin:0 0 var(--space-md)">อ่านผลงานที่รอพิจารณาทั้งหมด สรุปภาพรวมให้อ่านง่ายก่อนตรวจทีละชิ้น แล้วบันทึกสรุปนี้ลง Firestore (collection <code>AiSummaries</code>) พร้อมจด log การทำงานไว้</p>
@@ -122,6 +133,15 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
       <tbody id="reviewed-body"></tbody>
     </table>
     <div class="empty-state" id="reviewed-empty" style="display:none;">ยังไม่มีประวัติการตรวจสอบ</div>
+
+    <h2>ประวัติคำขอแก้ไขข้อมูลชุมชนที่พิจารณาแล้ว</h2>
+    <table>
+      <thead>
+        <tr><th>คอนเทนต์</th><th>ชุมชน</th><th>สถานะ</th><th>เหตุผล (ถ้าไม่อนุมัติ)</th></tr>
+      </thead>
+      <tbody id="edits-reviewed-body"></tbody>
+    </table>
+    <div class="empty-state" id="edits-reviewed-empty" style="display:none;">ยังไม่มีประวัติคำขอแก้ไขที่พิจารณาแล้ว</div>
   </div>
 </main>
 
@@ -139,7 +159,9 @@ const auth = getAuth(app);
 let currentProfile = null;
 let unsubscribeSnapshot = null;
 let unsubscribeAccounts = null;
+let unsubscribeEdits = null;
 let latestPendingWorks = [];
+let latestPendingEdits = [];
 
 (function(){
   var hasRealKey = typeof window.OPENROUTER_CONFIG !== 'undefined'
@@ -174,11 +196,13 @@ onAuthStateChanged(auth, async function(user){
   document.getElementById('deny-view').hidden = true;
   document.getElementById('page-view').hidden = true;
   document.getElementById('nav-student').hidden = true;
+  document.getElementById('nav-community').hidden = true;
   document.getElementById('session-info').hidden = true;
   document.getElementById('logout-btn').hidden = true;
 
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   if(unsubscribeAccounts){ unsubscribeAccounts(); unsubscribeAccounts = null; }
+  if(unsubscribeEdits){ unsubscribeEdits(); unsubscribeEdits = null; }
 
   if(!user){
     currentProfile = null;
@@ -203,11 +227,15 @@ onAuthStateChanged(auth, async function(user){
   if(profile && profile.role === 'student'){
     document.getElementById('nav-student').hidden = false;
   }
+  if(profile && profile.role === 'community'){
+    document.getElementById('nav-community').hidden = false;
+  }
 
   if(profile && profile.role === 'teacher'){
     document.getElementById('page-view').hidden = false;
     startListening();
     startListeningAccounts();
+    startListeningEdits();
   }else{
     document.getElementById('deny-view').hidden = false;
   }
@@ -274,26 +302,37 @@ function renderReviewed(works){
   }).join('');
 }
 
+let latestPendingAccounts = [];
+
+function updateNotifyBanner(){
+  const banner = document.getElementById('notify-banner');
+  const total = latestPendingAccounts.length + latestPendingEdits.length;
+  if(total === 0){ banner.hidden = true; return; }
+  banner.hidden = false;
+  banner.textContent = '🔔 มีรายการรอพิจารณา ' + total + ' รายการ (บัญชีใหม่ ' + latestPendingAccounts.length + ', คำขอแก้ไขข้อมูลชุมชน ' + latestPendingEdits.length + ') — จำลองการแจ้งเตือน ยังไม่ได้ส่งอีเมลจริง';
+}
+
 function renderPendingAccounts(accounts){
   const container = document.getElementById('pending-accounts-list');
   const emptyEl = document.getElementById('pending-accounts-empty');
-  const banner = document.getElementById('notify-banner');
 
   if(accounts.length === 0){
     container.innerHTML = '';
     emptyEl.style.display = 'block';
-    banner.hidden = true;
     return;
   }
   emptyEl.style.display = 'none';
-  banner.hidden = false;
-  banner.textContent = '🔔 มีบัญชีนิสิตใหม่ ' + accounts.length + ' รายการรออนุมัติ (จำลองการแจ้งเตือน — ยังไม่ได้ส่งอีเมลจริง)';
 
   container.innerHTML = accounts.map(function(a){
+    const roleLabel = a.role === 'community' ? 'ชุมชน' : 'นิสิต';
+    const extraInfo = a.role === 'community'
+      ? '<div class="desc"><strong>ข้อมูลยืนยันตัวตน:</strong> ' + escapeHtml(a.contactInfo) + '</div>'
+      : '';
     return (
       '<div class="card">' +
-        '<h3>' + escapeHtml(a.name) + '</h3>' +
+        '<h3>' + escapeHtml(a.name) + '<span class="role-badge">' + roleLabel + '</span></h3>' +
         '<div class="meta">อีเมล: ' + escapeHtml(a.email) + '</div>' +
+        extraInfo +
         '<div class="actions">' +
           '<button class="btn btn-primary" onclick="approveAccount(\'' + a.id + '\')">อนุมัติ</button>' +
           '<button class="btn btn-danger" onclick="toggleRejectAccountForm(\'' + a.id + '\')">ไม่อนุมัติ</button>' +
@@ -312,17 +351,134 @@ function renderPendingAccounts(accounts){
 }
 
 function startListeningAccounts(){
-  const q = query(collection(db, 'users'), where('role', '==', 'student'), where('status', '==', 'รออนุมัติ'));
+  const q = query(collection(db, 'users'), where('status', '==', 'รออนุมัติ'));
   unsubscribeAccounts = onSnapshot(q, function(snapshot){
     const accounts = [];
     snapshot.forEach(function(docSnap){
       accounts.push(Object.assign({ id: docSnap.id }, docSnap.data()));
     });
+    latestPendingAccounts = accounts;
     renderPendingAccounts(accounts);
+    updateNotifyBanner();
   }, function(err){
     console.error('อ่านรายชื่อบัญชีรออนุมัติไม่สำเร็จ', err);
   });
 }
+
+function renderPendingEdits(edits){
+  const container = document.getElementById('pending-edits-list');
+  const emptyEl = document.getElementById('pending-edits-empty');
+  if(edits.length === 0){
+    container.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  container.innerHTML = edits.map(function(r){
+    return (
+      '<div class="card">' +
+        '<h3>' + escapeHtml(r.contentTitle) + '</h3>' +
+        '<div class="meta">ชุมชน: ' + escapeHtml(r.communityName) + '</div>' +
+        '<div class="diff-row">' +
+          '<div class="diff-col"><div class="diff-label">ชื่อคอนเทนต์ (เดิม)</div><div class="diff-old">' + escapeHtml(r.originalValues.title) + '</div></div>' +
+          '<div class="diff-col"><div class="diff-label">ชื่อคอนเทนต์ (ขอแก้เป็น)</div><div class="diff-new">' + escapeHtml(r.proposedChanges.title) + '</div></div>' +
+        '</div>' +
+        '<div class="diff-row">' +
+          '<div class="diff-col"><div class="diff-label">เนื้อหา (เดิม)</div><div class="diff-old">' + escapeHtml(r.originalValues.bodyTh) + '</div></div>' +
+          '<div class="diff-col"><div class="diff-label">เนื้อหา (ขอแก้เป็น)</div><div class="diff-new">' + escapeHtml(r.proposedChanges.bodyTh) + '</div></div>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-primary" onclick="approveEditRequest(\'' + r.id + '\')">อนุมัติ</button>' +
+          '<button class="btn btn-danger" onclick="toggleRejectEditForm(\'' + r.id + '\')">ไม่อนุมัติ</button>' +
+        '</div>' +
+        '<div class="reject-form" id="reject-edit-form-' + r.id + '">' +
+          '<label for="edit-reason-' + r.id + '">เหตุผลที่ไม่อนุมัติ (จะแจ้งกลับไปยังชุมชน)</label>' +
+          '<textarea id="edit-reason-' + r.id + '"></textarea>' +
+          '<div class="field-error" id="edit-reason-error-' + r.id + '">กรุณาระบุเหตุผลก่อนไม่อนุมัติ</div>' +
+          '<div class="actions" style="margin-top:8px;">' +
+            '<button class="btn btn-danger" onclick="rejectEditRequest(\'' + r.id + '\')">ยืนยันไม่อนุมัติ</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function renderEditsReviewed(edits){
+  const tbody = document.getElementById('edits-reviewed-body');
+  const emptyEl = document.getElementById('edits-reviewed-empty');
+  if(edits.length === 0){ tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = edits.map(function(r){
+    const cls = r.status === 'อนุมัติ' ? 'approved' : 'rejected';
+    return '<tr><td>' + escapeHtml(r.contentTitle) + '</td><td>' + escapeHtml(r.communityName) + '</td><td><span class="status ' + cls + '">' + escapeHtml(r.status) + '</span></td><td>' + (r.status === 'ไม่อนุมัติ' ? escapeHtml(r.rejectionReason) : '—') + '</td></tr>';
+  }).join('');
+}
+
+function startListeningEdits(){
+  unsubscribeEdits = onSnapshot(collection(db, 'ContentEditRequests'), function(snapshot){
+    const all = [];
+    snapshot.forEach(function(docSnap){ all.push(Object.assign({ id: docSnap.id }, docSnap.data())); });
+    const pending = all.filter(function(r){ return r.status === 'รอพิจารณา'; });
+    const reviewed = all.filter(function(r){ return r.status === 'อนุมัติ' || r.status === 'ไม่อนุมัติ'; });
+    latestPendingEdits = pending;
+    renderPendingEdits(pending);
+    renderEditsReviewed(reviewed);
+    updateNotifyBanner();
+  }, function(err){
+    console.error('อ่านคำขอแก้ไขข้อมูลชุมชนไม่สำเร็จ', err);
+  });
+}
+
+window.toggleRejectEditForm = function(id){
+  document.getElementById('reject-edit-form-' + id).classList.toggle('show');
+};
+
+window.approveEditRequest = async function(id){
+  if(!currentProfile || currentProfile.role !== 'teacher') return;
+  const target = latestPendingEdits.filter(function(r){ return r.id === id; })[0];
+  if(!target) return;
+  try{
+    await updateDoc(doc(db, 'ContentEditRequests', id), {
+      status: 'อนุมัติ',
+      approverId: currentProfile.id,
+      approverName: currentProfile.name,
+    });
+    await updateDoc(doc(db, 'CommunityContent', target.contentId), {
+      title: target.proposedChanges.title,
+      bodyTh: target.proposedChanges.bodyTh,
+      caption: target.proposedChanges.bodyTh,
+      updatedAt: serverTimestamp(),
+    });
+  }catch(e){
+    console.error('อนุมัติคำขอแก้ไขไม่สำเร็จ', e);
+    alert('อนุมัติคำขอแก้ไขไม่สำเร็จ: ' + e.message);
+  }
+};
+
+window.rejectEditRequest = async function(id){
+  if(!currentProfile || currentProfile.role !== 'teacher') return;
+  const reasonEl = document.getElementById('edit-reason-' + id);
+  const reason = reasonEl.value.trim();
+  const errorEl = document.getElementById('edit-reason-error-' + id);
+  if(!reason){
+    errorEl.style.display = 'block';
+    reasonEl.focus();
+    return;
+  }
+  errorEl.style.display = 'none';
+  try{
+    await updateDoc(doc(db, 'ContentEditRequests', id), {
+      status: 'ไม่อนุมัติ',
+      approverId: currentProfile.id,
+      approverName: currentProfile.name,
+      rejectionReason: reason,
+    });
+  }catch(e){
+    console.error('ไม่อนุมัติคำขอแก้ไขไม่สำเร็จ', e);
+    alert('ไม่อนุมัติคำขอแก้ไขไม่สำเร็จ: ' + e.message);
+  }
+};
 
 window.toggleRejectAccountForm = function(id){
   var el = document.getElementById('reject-account-form-' + id);

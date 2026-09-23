@@ -24,6 +24,9 @@ npm run seed   # รัน scripts/seed-firestore.js
 
 - **`users`** — field: `name`, `email`, `role`
   - **`status`, `approverId`, `approverName`, `rejectionReason`** — เพิ่ม 2026-09-12 (BL-019/BL-020) เฉพาะบัญชี `role: student` เท่านั้น — `status` มี 3 ค่า: `รออนุมัติ` / `อนุมัติแล้ว` / `ไม่อนุมัติ` บัญชีที่สมัครเองต้องรอ `อนุมัติแล้ว` ก่อนถึงจะส่งผลงานได้ (`LSHRequests.create` เช็คเงื่อนไขนี้ใน `firestore.rules` ด้วย) บัญชี `role: teacher` (u004) ไม่มี field เหล่านี้ (provision โดย admin ถือว่า approved ทันที)
+- **`role: community`** *(เพิ่ม 2026-09-23)* — บัญชีชุมชนใช้ `users` collection เดียวกับนิสิต (ไม่แยก collection) มี `status`/`approverId`/`approverName`/`rejectionReason` ชุดเดียวกับนิสิตทุกประการ บวก field เพิ่ม **`contactInfo`** (ข้อมูลยืนยันตัวตน — ชื่อผู้ติดต่อ+เบอร์โทร ตาม Business Rule BL-022)
+- **`CommunityContent`** *(เพิ่ม 2026-09-23)* — คอนเทนต์ของชุมชน: `title`, `bodyTh`, `caption`, `communityId`/`communityName` (denormalized), `status` (`ฉบับร่าง`/`เผยแพร่แล้ว`), `createdAt`, `updatedAt`
+- **`ContentEditRequests`** *(เพิ่ม 2026-09-23)* — คำขอแก้ไขคอนเทนต์ที่เผยแพร่แล้ว: `contentId`, `contentTitle`, `communityId`/`communityName`, `proposedChanges`/`originalValues` (`{title, bodyTh}`), `status` (`รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`), `rejectionReason`, `approverId`/`approverName`, `createdAt` — ชุมชนแก้ไข/ยกเลิกคำขอขณะ `รอพิจารณา` ไม่ได้ (ไม่มี `allow update` ให้ community ใน `firestore.rules` เลย)
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
 - **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
@@ -44,6 +47,8 @@ Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm i
 **Security Rules จริงอยู่ที่ `LSH/firestore.rules`** — เดิม deploy ด้วย `admin.securityRules().releaseFirestoreRulesetFromSource()` ผ่าน service account (ตอนนั้นยังไม่มี `firebase.json`) ตอนนี้มี `firebase.json` แล้ว (ดูหัวข้อ Firebase Hosting ด้านล่าง) จึงใช้ `firebase deploy --only firestore:rules` ได้ปกติเช่นกัน — ทั้งสองวิธี deploy ไปที่ ruleset เดียวกัน บังคับ: `read` บน `LSHRequests` เปิดเป็น **public (ไม่ต้อง login)** เฉพาะเอกสารที่ `status='อนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-021 — เอกสารอื่นยังต้อง login) `create` บน `LSHRequests` ต้อง login + เป็นนิสิตที่บัญชี `status='อนุมัติแล้ว'` เท่านั้น + `requesterId` ตรงกับ `uid` ตนเอง (กันสวมรอย), `update` ต้อง login + role=`teacher`, อ่าน `users/{uid}` ได้เฉพาะเจ้าของหรือ role=`teacher`, `create` บน `users/{uid}` ทำได้เฉพาะเจ้าของ (สมัครบัญชีเอง) และบังคับ `role='student'`+`status='รออนุมัติ'` เท่านั้น (เพิ่ม 2026-09-12 รองรับ BL-019/BL-020), `update` บน `users` จำกัดเฉพาะ role=`teacher` และแก้ได้แค่ field `status`/`approverId`/`approverName`/`rejectionReason` — **เปลี่ยนจากโหมดทดสอบเดิม (เปิด read/write ให้ทุกคนถึง 2026-10-04) เป็นบังคับสิทธิ์จริงแล้ว** ถ้าจะแก้ rules ต้องแก้ไฟล์นี้แล้ว deploy ซ้ำ (ดูตัวอย่างใน `05-log/index.md` วันที่ 2026-09-11 และ 2026-09-12)
 
 ดูรายละเอียดการบังคับใช้สิทธิ์ตามบทบาทที่ `docs/02-design/02-technical/ACL.md` และการ implement ที่ `docs/02-design/01-prototypes/prototype-v2/README.md`
+
+**⚠️ สถานะ `firestore.rules` ณ 2026-09-23**: แก้ไขไฟล์เพิ่ม rule ของ `CommunityContent`/`ContentEditRequests` และเปิด `users.create` ให้ role `community` แล้ว **แต่ยังไม่ได้ deploy ขึ้น project จริง** — หน้าจอฝั่งชุมชนใหม่ (`community-*.html`) จะเขียนข้อมูลจริงไม่สำเร็จ (permission-denied) จนกว่าจะรัน `firebase deploy --only firestore:rules`
 
 ## Firebase Hosting (เพิ่ม 2026-09-11)
 

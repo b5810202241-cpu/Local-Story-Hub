@@ -600,3 +600,19 @@ Open Question ย่อยที่ยังไม่ปิด (ไม่บล�
 - แก้ไข: ลบทั้ง 2 `.draft-note` div ออกจาก `community-create-content.html`, อัปเดต [[../02-design/01-prototypes/prototype-v3/README|prototype-v3/README]] § "จุดที่ยังเป็น DRAFT" เป็น "ไม่มี" พร้อมอธิบายที่มา และปรับตารางหน้าจอให้ตรงกัน
 - **ทดสอบผ่าน browser จริง** (`npx http-server -p 8747`, ตั้ง `lsh_v3_session` ผ่าน `page.evaluate` แล้ว navigate เข้า `community-create-content.html`): หน้าเรนเดอร์ปกติ, `document.querySelectorAll('.draft-note').length === 0` ยืนยันว่าลบครบ, ไม่มี JS error ใหม่ (มีแค่ 404 ของ resource ที่ไม่เกี่ยวข้อง เช่น favicon)
 - **สรุป**: หลังแก้ไขจุดนี้ `prototype-v1` และ `prototype-v3` ตรงกับการตัดสินใจล่าสุดทั้งหมดครบแล้ว ไม่มีจุดไม่สอดคล้องเหลืออยู่
+
+### 2026-09-23 — Implement ฝั่งชุมชนจริง เชื่อม Firebase (BL-006, BL-022, BL-023) — Part 1/5 ของแผน "สร้างระบบตาม spec.md ให้ครบ"
+
+ผู้ใช้ขอให้สร้างส่วนที่เหลือของระบบทั้งหมดตาม `spec.md` โดยแบ่งเป็น 5 ส่วน (ชุมชน → นักท่องเที่ยว → AI backend → notification → consent/log service) รอบนี้ทำเฉพาะ **ส่วนชุมชน**
+
+แปลง mockup `localStorage` เดิมใน [[../02-design/01-prototypes/prototype-v3/README|prototype-v3]] ให้เป็นระบบจริงที่เชื่อม Firebase Authentication + Firestore project `lsh-nammon` (ตาม pattern เดียวกับที่ [[../02-design/01-prototypes/prototype-v2/README|prototype-v2]] ทำไว้แล้วฝั่งนิสิต/อาจารย์):
+
+- สร้าง 4 หน้าใหม่ใน `prototype-v2/`: `community-register.html`, `community-dashboard.html`, `community-create-content.html`, `community-request-edit.html`
+- ขยาย `admin-review-student-work.html`: บัญชีรออนุมัติครอบคลุมทั้งนิสิต+ชุมชน, เพิ่มส่วนอนุมัติ/ไม่อนุมัติคำขอแก้ไขข้อมูลชุมชนพร้อม diff เดิม/ใหม่ (ตัดสินใจรวมเป็นหน้าเดียวกับที่มีอยู่แล้ว แทนที่จะแยกหน้า `admin-review-community.html` ใหม่ — อาจารย์คนเดียวดูแลทุกอย่างสมจริงกว่า)
+- Firestore collection ใหม่: `CommunityContent`, `ContentEditRequests` — `users` ขยายให้รองรับ `role: 'community'` (เพิ่ม field `contactInfo`) ในเอกสารเดียวกับนิสิต ไม่แยก collection (ตัดสินใจให้ตรงกับ conceptual `UserAccount` เดียวที่รวมทุก role) — เพิ่ม mapping เข้า [[../02-design/02-technical/architecture|architecture.md]] § Mapping กับ Firestore จริง
+- แก้ `LSH/firestore.rules`: เพิ่ม `isApprovedCommunity()`, เปิด `users.create` ให้ role `community`, เพิ่ม rule ของ 2 collection ใหม่ (least-privilege ตาม ACL.md — **ชุมชนไม่มีสิทธิ์ update/delete คำขอแก้ไข/คอนเทนต์ตนเองเลย** ตรงกับการตัดสินใจปิดคำถาม 2026-09-23 ก่อนหน้านี้ในวันเดียวกัน) — **ยังไม่ deploy** รอผู้ประสานงานรีวิวก่อน
+- ปุ่ม AI ทั้งหมดใน `community-create-content.html` ปิดใช้งานชั่วคราว (placeholder ชัดเจนว่าจะเชื่อมต่อรอบถัดไป) — เป็นสโคปของ Part 3 ที่ต้องรออัปเกรด Firebase เป็นแผน Blaze ก่อน
+
+**ทดสอบผ่าน browser จริงบางส่วน** (local http-server + Playwright): หน้า login/register เรนเดอร์ถูกต้อง, validate ฟอร์มทำงานถูกต้อง, หน้าที่ต้อง login ทั้ง 3 หน้า redirect กลับ `community-register.html` ถูกต้องเมื่อยังไม่ login, ไม่มี JS error บนทุกหน้าที่แก้/สร้างใหม่ — **ไม่สามารถทดสอบ flow เขียนข้อมูลจริงแบบ end-to-end ได้ในรอบนี้** เพราะ `firestore.rules` ที่แก้ยังไม่ได้ deploy (ไม่มีสิทธิ์ deploy เอง) และเครื่องนี้ไม่มี Java จึงรัน Firebase emulator ทดสอบแทนไม่ได้ — **ต้อง deploy rules แล้วทดสอบ flow เต็มอีกครั้ง** (สมัคร→อนุมัติ→สร้าง/แก้ไขคอนเทนต์→อนุมัติคำขอแก้ไข) ก่อนถือว่าสมบูรณ์
+
+อัปเดตสถานะ BL-006/BL-022/BL-023 ใน [[../01-requirements/03-task/product-backlog|product-backlog]] เป็น "เสร็จแล้ว" (พร้อมหมายเหตุข้อจำกัดข้างต้น), ทำเครื่องหมาย [[../02-design/01-prototypes/prototype-v3/README|prototype-v3]] ว่า superseded (ไม่ลบไฟล์)

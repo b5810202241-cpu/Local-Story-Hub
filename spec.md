@@ -2,7 +2,7 @@
 
 > เอกสารนี้เป็น **สรุปภาพรวม** ที่ประมวลจากเอกสารที่มีอยู่แล้วในโปรเจกต์ (ไม่มีไฟล์ชื่อ `SCOPE.md` ในโปรเจกต์นี้โดยตรง — เนื้อหา "ขอบเขต (Scope)" อยู่ในไฟล์ `docs/01-requirements/01-spec/local-story-hub.md` แทน) และจากซอร์สโค้ด prototype จริงใน `docs/02-design/01-prototypes/` รวมถึง `docs/02-design/02-technical/architecture.md`, `ACL.md`, และ `CLAUDE.md`
 >
-> วันที่สรุป: 2026-09-22 — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
+> วันที่สรุป: 2026-09-22 (อัปเดตส่วนชุมชน 2026-09-23) — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
 
 ---
 
@@ -18,6 +18,8 @@
 | ตรวจสอบ/อนุมัติผลงาน + อนุมัติบัญชีผู้ใช้ใหม่ | `admin-review-student-work.html` | อาจารย์ (`role: teacher`) | ใช้งานจริง (มีปุ่ม AI สรุปภาพรวมผลงานที่รอพิจารณา) |
 | ดู/ค้นหาผลงานที่เผยแพร่แล้ว | `published-works.html` | บุคคลทั่วไป (ไม่ต้อง login) | ใช้งานจริง — public read |
 | หน้ารวม | `index.html` | — | จุดเข้าใช้งาน |
+| สมัคร/เข้าสู่ระบบชุมชน + จัดการคอนเทนต์ + ขอแก้ไข | `community-register.html`, `community-dashboard.html`, `community-create-content.html`, `community-request-edit.html` | ชุมชน | **เพิ่ม 2026-09-23** — ใช้งานจริง (login จริงด้วย Firebase Auth, เชื่อม Firestore จริง collection `CommunityContent`/`ContentEditRequests`) — ปุ่ม AI ปิดใช้งานชั่วคราว, **ยังไม่ได้ deploy `firestore.rules` ที่แก้ไข** จึงยังไม่ผ่านการทดสอบ end-to-end จริงบน production |
+| อนุมัติบัญชีชุมชน + คำขอแก้ไขข้อมูลชุมชน | `admin-review-student-work.html` (ขยายจากเดิม) | อาจารย์ | **เพิ่ม 2026-09-23** — รวมอยู่ในหน้าเดียวกับการอนุมัติผลงานนิสิต/บัญชีนิสิต |
 
 ### 1.2 Prototype v1 — mockup เท่านั้น (จำลองข้อมูลด้วย `localStorage`, ไม่เชื่อมฐานข้อมูลจริง)
 
@@ -28,12 +30,12 @@
 | หน้าแรก + Consent | `tourist-home-consent.html` | นักท่องเที่ยว |
 | ผลการค้นหา | `tourist-search-results.html` | นักท่องเที่ยว |
 | รายละเอียดเรื่องราว/สถานที่ | `tourist-story-detail.html` | นักท่องเที่ยว |
-| แดชบอร์ดชุมชน | `community-dashboard.html` | ชุมชน |
-| สร้างคอนเทนต์ (พร้อมปุ่ม AI: ปรับภาพ/แคปชัน/แปล/SEO/แนะนำ) | `community-create-content.html` | ชุมชน |
 | ส่งผลงานขออนุมัติ | `student-publish.html` | นิสิต |
 | ตรวจสอบ/อนุมัติผลงาน | `admin-review-student-work.html` | อาจารย์ |
 
-**สรุป**: หน้าจอฝั่ง **นักท่องเที่ยว** และ **ชุมชน** ยังเป็นแค่ mockup ที่ยังไม่เชื่อมฐานข้อมูลจริง มีแค่ฝั่ง **นิสิต/อาจารย์/บุคคลทั่วไป** เท่านั้นที่ implement จริงจนถึงตอนนี้
+> **หมายเหตุ**: หน้าจอฝั่งชุมชนใน `prototype-v1` (`community-dashboard.html`, `community-create-content.html`) ถูกแทนที่ด้วยเวอร์ชันที่เชื่อม Firebase จริงใน `prototype-v2` แล้ว (ดูตารางด้านบน) — ดูรายละเอียดที่ [[../prototype-v3/README|prototype-v3]] (mockup ที่ถูก superseded)
+
+**สรุป**: หน้าจอฝั่ง **นักท่องเที่ยว** ยังเป็นแค่ mockup ที่ยังไม่เชื่อมฐานข้อมูลจริง (จะทำใน Part 2 ถัดไป) — ฝั่ง **นิสิต/อาจารย์/บุคคลทั่วไป/ชุมชน** implement จริงแล้วจนถึงตอนนี้ (2026-09-23)
 
 ---
 
@@ -56,7 +58,9 @@
 
 | Collection | คำอธิบาย |
 |---|---|
-| `users` | บัญชีผู้ใช้จริง (`name`, `email`, `role`, และเฉพาะนิสิต: `status`, `approverId`, `approverName`, `rejectionReason`) |
+| `users` | บัญชีผู้ใช้จริง (`name`, `email`, `role`) — นิสิต+ชุมชน (role `student`/`community`) มีเพิ่ม `status`, `approverId`, `approverName`, `rejectionReason`; เฉพาะชุมชนมีเพิ่ม `contactInfo` (ข้อมูลยืนยันตัวตน — เพิ่ม 2026-09-23) |
+| `CommunityContent` *(เพิ่ม 2026-09-23)* | คอนเทนต์ของชุมชน (`title`, `bodyTh`, `caption`, `communityId/Name`, `status`: `ฉบับร่าง`/`เผยแพร่แล้ว`, `createdAt`, `updatedAt`) |
+| `ContentEditRequests` *(เพิ่ม 2026-09-23)* | คำขอแก้ไขคอนเทนต์ที่เผยแพร่แล้ว (`contentId`, `proposedChanges`, `originalValues`, `status`: `รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`, `rejectionReason`, `approverId/Name`) |
 | `ContentTypes` | ประเภทผลงาน (VOD / album photo / Storytelling) — **ไม่มีที่มาจาก requirement ใดๆ เลย เป็นข้อมูลเฉพาะกิจ** |
 | `LSHRequests` | ผลงานที่นิสิตส่ง (`title`, `Content`, `status`, `requesterId/Name`, `approverId/Name`, `community`, `rejectionReason`, `aiAssisted`, `aiSuggestionText`, `createdAt`) — คือ `StudentWork` เชิงแนวคิด แต่คนละชื่อ field/ภาษา |
 | `AiSummaries` | ผลสรุปภาพรวมจาก AI ที่อาจารย์ใช้ดูก่อนตรวจงาน (เพิ่ม 2026-09-19) |
@@ -72,7 +76,7 @@
 
 | บทบาท | คำอธิบาย | สถานะการ implement |
 |---|---|---|
-| **ชุมชน** (`community`) | เจ้าของเรื่องราว/แหล่งท่องเที่ยว | มีแค่ mockup (prototype-v1), สิทธิ์การเข้าถึงยังเป็น Open Question |
+| **ชุมชน** (`community`) | เจ้าของเรื่องราว/แหล่งท่องเที่ยว | **ใช้งานจริง** (เพิ่ม 2026-09-23) — สมัครบัญชีเองได้ (self-registration) ต้องรออนุมัติจากอาจารย์ก่อนเหมือนนิสิต, สร้าง/เผยแพร่คอนเทนต์ได้ทันที, แก้ไขคอนเทนต์ที่เผยแพร่แล้วต้องขออนุมัติก่อน — ปุ่ม AI ยังปิดใช้งานชั่วคราว, ยังไม่ได้ deploy `firestore.rules` จึงยังไม่ผ่านการทดสอบ end-to-end จริง |
 | **นักท่องเที่ยว** (`tourist`) | ผู้สืบค้น/วางแผนท่องเที่ยว, เขียนรีวิว, บันทึกสถานที่โปรด | มีแค่ mockup (prototype-v1), ยังไม่มีระบบบัญชีจริง |
 | **นิสิตนิเทศศาสตร์** (`student`) | ส่งผลงานคอนเทนต์เพื่อขออนุมัติเผยแพร่ | **ใช้งานจริง** — สมัครบัญชีเองได้ (self-registration), ต้องรออนุมัติก่อนใช้งาน |
 | **อาจารย์** (`role: teacher` ใน Firestore จริง / `admin` ในเอกสารเชิงแนวคิด) | ตรวจสอบ/อนุมัติผลงานนิสิต, อนุมัติบัญชีนิสิตใหม่ | **ใช้งานจริง** — บัญชี provision โดย admin เท่านั้น ไม่มี self-registration |
@@ -87,8 +91,7 @@
 เอกสาร requirement ต้นฉบับ**ไม่ได้ระบุรายการ "Out of scope" ไว้อย่างชัดเจน** (ยังเป็น Open Question ที่ค้างอยู่) แต่จากการตรวจโค้ด/เอกสารจริง สรุปสิ่งที่ยังไม่ทำได้ดังนี้:
 
 ### 4.1 ฟีเจอร์ที่ยังไม่ implement จริง (มีแค่เอกสาร/mockup)
-- **AI ทั้งหมดฝั่งชุมชน** (FR-1.1–1.5): ปรับภาพ, คิดแคปชัน, แปลภาษา, แนะนำ SEO, แนะนำวิธีเล่าเรื่อง — มีปุ่มใน prototype-v1 เท่านั้น ไม่เชื่อม AI service จริง
-- **ระบบจัดการข้อมูลของชุมชน** (FR-1.6) และ **แดชบอร์ดชุมชน** — mockup เท่านั้น
+- **AI ทั้งหมดฝั่งชุมชน** (FR-1.1–1.5): ปรับภาพ, คิดแคปชัน, แปลภาษา, แนะนำ SEO, แนะนำวิธีเล่าเรื่อง — ปุ่มมีอยู่จริงใน `community-create-content.html` แต่ปิดใช้งาน (placeholder) ยังไม่เชื่อม AI service จริง เพราะต้องรออัปเกรด Firebase เป็นแผน Blaze ก่อนทำ Cloud Functions proxy (สโคป Part 3)
 - **การสืบค้น/วางแผนท่องเที่ยว, หมุดหมายเดินทาง** (FR-2.1–2.3) — mockup เท่านั้น
 - **เขียนรีวิว / บันทึกสถานที่โปรด** (FR-2.4–2.5) — mockup เท่านั้น ไม่มีระบบบัญชีนักท่องเที่ยวจริง
 - **Notification Service ส่งอีเมลจริง** — ปัจจุบันจำลองด้วยแบนเนอร์แจ้งเตือนในหน้าอาจารย์เท่านั้น ยังไม่มีบริการส่งอีเมลจริง

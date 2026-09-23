@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Story Hub — จัดการข้อมูลชุมชน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
+  --color-ink:#2E2A22; --color-clay:#B0673F; --color-moss:#6B7355; --color-ochre:#C99A44;
+  --color-indigo:#4C5B62;
+  --space-xs:4px; --space-sm:8px; --space-md:16px; --space-lg:24px; --space-xl:32px; --space-2xl:48px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);flex-wrap:wrap;gap:var(--space-sm);}
+.wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
+nav.site{display:flex;align-items:center;flex-wrap:wrap;}
+nav.site a{margin-left:var(--space-lg);text-decoration:none;color:var(--color-ink);font-size:16px;}
+nav.site .session{margin-left:var(--space-lg);font-size:15px;color:var(--color-bark);}
+nav.site button.link-btn{margin-left:var(--space-lg);background:none;border:none;color:var(--color-clay);font-family:inherit;font-size:15px;cursor:pointer;padding:0;}
+main{max-width:1000px;margin:0 auto;padding:var(--space-xl);}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:var(--space-md);margin-bottom:var(--space-md);}
+h1{font-size:32px;font-weight:600;margin:0;}
+h2{font-size:22px;font-weight:600;margin:var(--space-2xl) 0 var(--space-md);}
+p.hint{font-size:16px;color:var(--color-bark);margin:0 0 var(--space-md);}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 var(--space-lg);border-radius:var(--radius-md);font-size:16px;font-weight:600;cursor:pointer;border:1px solid transparent;text-decoration:none;}
+.btn-primary{background:var(--color-clay);color:var(--color-paper);}
+.btn-secondary{background:transparent;color:var(--color-ink);border-color:var(--color-stone);height:40px;padding:0 var(--space-md);font-size:14px;}
+input[type=text]{width:100%;max-width:320px;border:1px solid var(--color-stone);border-radius:var(--radius-sm);padding:var(--space-sm) var(--space-md);font-family:inherit;font-size:16px;height:44px;}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--color-stone);border-radius:var(--radius-md);overflow:hidden;}
+th{text-align:left;background:var(--color-sand);padding:var(--space-md);font-size:16px;font-weight:600;}
+td{padding:var(--space-md);border-top:1px solid var(--color-stone);font-size:16px;}
+.status{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:600;}
+.status.published{background:#E4F1E6;color:var(--color-moss);}
+.status.draft{background:var(--color-sand);color:var(--color-bark);}
+.status.pending{background:#F4E9D3;color:#8A6A22;}
+.empty-state{color:var(--color-bark);padding:var(--space-lg);text-align:center;}
+.shared-note{font-size:15px;color:var(--color-bark);margin-bottom:var(--space-md);}
+.deny-note{background:#F7E0DA;color:#A13D2C;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+.pending-note{background:#F4E9D3;color:#8A6A22;border-radius:var(--radius-sm);padding:var(--space-lg);font-size:16px;}
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="wordmark" href="community-register.html">Local Story Hub</a>
+  <nav class="site">
+    <a href="admin-review-student-work.html">มุมมองอาจารย์</a>
+    <span class="session" id="session-info" hidden></span>
+    <button class="link-btn" id="logout-btn" onclick="doLogout()" hidden>ออกจากระบบ</button>
+  </nav>
+</header>
+
+<div id="pending-view" hidden style="max-width:680px;margin:var(--space-xl) auto;padding:0 var(--space-xl);">
+  <div class="pending-note">บัญชีนี้ยังอยู่ในสถานะรออนุมัติ — <a href="community-register.html">กลับไปหน้าเข้าสู่ระบบ</a></div>
+</div>
+<div id="deny-view" hidden style="max-width:680px;margin:var(--space-xl) auto;padding:0 var(--space-xl);">
+  <div class="deny-note">ต้องเข้าสู่ระบบด้วยบัญชีชุมชนที่ผ่านการอนุมัติแล้วก่อน — <a href="community-register.html">ไปหน้าเข้าสู่ระบบ</a></div>
+</div>
+
+<main id="page-view" hidden>
+  <div class="page-head">
+    <h1>ข้อมูลของ<span id="community-name-title"></span></h1>
+    <a class="btn btn-primary" href="community-create-content.html">+ สร้างคอนเทนต์ใหม่</a>
+  </div>
+  <p class="hint">สร้าง/เผยแพร่คอนเทนต์ใหม่ทำได้เองทันที — แต่การแก้ไขคอนเทนต์ที่เผยแพร่แล้วต้องส่งคำขอให้อาจารย์/แอดมินอนุมัติก่อน (BL-023)</p>
+
+  <input type="text" id="search-own" placeholder="ค้นหาคอนเทนต์ของชุมชนคุณ..." oninput="renderOwn()">
+
+  <table style="margin-top:var(--space-md)">
+    <thead><tr><th>ชื่อคอนเทนต์</th><th>สถานะ</th><th>การกระทำ</th></tr></thead>
+    <tbody id="own-rows"></tbody>
+  </table>
+  <div class="empty-state" id="own-empty" style="display:none;">ยังไม่มีเรื่องราวจากชุมชนนี้ — ลองสร้างคอนเทนต์ใหม่ดูสิ</div>
+
+  <h2>คอนเทนต์จากชุมชนอื่น</h2>
+  <div class="shared-note">ข้อมูลของแต่ละชุมชนใช้ร่วมกันได้ (ไม่ isolate เต็มรูปแบบ) — ดูได้อย่างเดียว แก้ไขไม่ได้ (Business Rule ตัดสินใจ 2026-09-22)</div>
+  <input type="text" id="search-others" placeholder="ค้นหาคอนเทนต์ของชุมชนอื่น..." oninput="renderOthers()">
+  <table style="margin-top:var(--space-md)">
+    <thead><tr><th>ชื่อคอนเทนต์</th><th>ชุมชน</th></tr></thead>
+    <tbody id="others-rows"></tbody>
+  </table>
+  <div class="empty-state" id="others-empty" style="display:none;">ยังไม่มีคอนเทนต์จากชุมชนอื่นที่เผยแพร่แล้ว</div>
+</main>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp(window.LSH_FIREBASE_CONFIG);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentProfile = null;
+let ownContent = [];
+let othersContent = [];
+let pendingEditContentIds = [];
+let unsubOwn = null, unsubOthers = null, unsubEdits = null;
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+window.doLogout = async function(){
+  await signOut(auth);
+};
+
+function stopListening(){
+  if(unsubOwn){ unsubOwn(); unsubOwn = null; }
+  if(unsubOthers){ unsubOthers(); unsubOthers = null; }
+  if(unsubEdits){ unsubEdits(); unsubEdits = null; }
+}
+
+onAuthStateChanged(auth, async function(user){
+  document.getElementById('page-view').hidden = true;
+  document.getElementById('pending-view').hidden = true;
+  document.getElementById('deny-view').hidden = true;
+  document.getElementById('session-info').hidden = true;
+  document.getElementById('logout-btn').hidden = true;
+  stopListening();
+
+  if(!user){
+    window.location.href = 'community-register.html';
+    return;
+  }
+
+  let profile = null;
+  try{
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if(snap.exists()) profile = Object.assign({ id: snap.id }, snap.data());
+  }catch(e){
+    console.error('โหลดข้อมูล user ไม่สำเร็จ', e);
+  }
+  currentProfile = profile;
+
+  if(!profile || profile.role !== 'community'){
+    document.getElementById('deny-view').hidden = false;
+    return;
+  }
+  if(profile.status !== 'อนุมัติแล้ว'){
+    document.getElementById('pending-view').hidden = false;
+    return;
+  }
+
+  document.getElementById('session-info').textContent = profile.name;
+  document.getElementById('session-info').hidden = false;
+  document.getElementById('logout-btn').hidden = false;
+  document.getElementById('community-name-title').textContent = profile.name;
+  document.getElementById('page-view').hidden = false;
+
+  startListening();
+});
+
+function startListening(){
+  const ownQuery = query(collection(db, 'CommunityContent'), where('communityId', '==', currentProfile.id));
+  unsubOwn = onSnapshot(ownQuery, function(snapshot){
+    ownContent = [];
+    snapshot.forEach(function(d){ ownContent.push(Object.assign({ id: d.id }, d.data())); });
+    renderOwn();
+  }, function(err){ console.error('อ่านคอนเทนต์ของตนเองไม่สำเร็จ', err); });
+
+  const othersQuery = query(collection(db, 'CommunityContent'), where('status', '==', 'เผยแพร่แล้ว'));
+  unsubOthers = onSnapshot(othersQuery, function(snapshot){
+    othersContent = [];
+    snapshot.forEach(function(d){
+      var data = Object.assign({ id: d.id }, d.data());
+      if(data.communityId !== currentProfile.id) othersContent.push(data);
+    });
+    renderOthers();
+  }, function(err){ console.error('อ่านคอนเทนต์ของชุมชนอื่นไม่สำเร็จ', err); });
+
+  const editsQuery = query(collection(db, 'ContentEditRequests'), where('communityId', '==', currentProfile.id), where('status', '==', 'รอพิจารณา'));
+  unsubEdits = onSnapshot(editsQuery, function(snapshot){
+    pendingEditContentIds = [];
+    snapshot.forEach(function(d){ pendingEditContentIds.push(d.data().contentId); });
+    renderOwn();
+  }, function(err){ console.error('อ่านคำขอแก้ไขที่รอพิจารณาไม่สำเร็จ', err); });
+}
+
+window.renderOwn = function(){
+  const q = document.getElementById('search-own').value.trim().toLowerCase();
+  let all = ownContent.slice();
+  if(q) all = all.filter(function(c){ return (c.title || '').toLowerCase().indexOf(q) !== -1; });
+  const tbody = document.getElementById('own-rows');
+  const emptyEl = document.getElementById('own-empty');
+  if(all.length === 0){
+    tbody.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = all.map(function(c){
+    const statusClass = c.status === 'เผยแพร่แล้ว' ? 'published' : 'draft';
+    const hasPending = pendingEditContentIds.indexOf(c.id) !== -1;
+    const actionCell = c.status === 'เผยแพร่แล้ว'
+      ? (hasPending
+          ? '<span class="status pending">มีคำขอแก้ไขรอพิจารณา</span>'
+          : '<a class="btn btn-secondary" href="community-request-edit.html?contentId=' + c.id + '">ขอแก้ไข</a>')
+      : '—';
+    return '<tr><td>' + escapeHtml(c.title) + '</td><td><span class="status ' + statusClass + '">' + escapeHtml(c.status) + '</span></td><td>' + actionCell + '</td></tr>';
+  }).join('');
+};
+
+window.renderOthers = function(){
+  const q = document.getElementById('search-others').value.trim().toLowerCase();
+  let all = othersContent.slice();
+  if(q) all = all.filter(function(c){ return (c.title || '').toLowerCase().indexOf(q) !== -1; });
+  const tbody = document.getElementById('others-rows');
+  const emptyEl = document.getElementById('others-empty');
+  if(all.length === 0){
+    tbody.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = all.map(function(c){
+    return '<tr><td>' + escapeHtml(c.title) + '</td><td>' + escapeHtml(c.communityName) + '</td></tr>';
+  }).join('');
+};
+</script>
+
+</body>
+</html>

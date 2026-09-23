@@ -63,7 +63,7 @@
   - Given ตัวแทนชุมชนล็อกอินแล้ว When เข้าหน้าจัดการข้อมูล Then เห็นคอนเทนต์/ข้อมูลของชุมชนตนเองทั้งหมดในที่เดียว
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.6)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-dashboard.html`+`community-create-content.html`, เชื่อม Firestore จริง collection `CommunityContent`; ปุ่ม AI ยังปิดใช้งานชั่วคราวรอ Cloud Functions proxy; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
 - **หมายเหตุ**: **อัปเดต 2026-09-22** — ปิด Open Question แล้ว ขอบเขตครอบคลุมเฉพาะการจัดการ**คอนเทนต์** (เรื่องราว/สื่อ) ของชุมชนเท่านั้น ไม่รวมโปรไฟล์ชุมชน/แดชบอร์ดสรุปข้อมูล (ดู Business Rules ใน [[../01-spec/local-story-hub|local-story-hub]]) — คำขอแก้ไขคอนเทนต์นี้ต้องผ่านการอนุมัติจากอาจารย์ที่ปรึกษา/แอดมินก่อน (ดู BL-023)
 
 ## Epic: การใช้งานง่ายสำหรับชุมชน (Usability)
@@ -204,7 +204,7 @@
   - Given บัญชีชุมชนถูกปฏิเสธ (ไม่อนุมัติ) When พยายาม login Then ระบบไม่ให้เข้าใช้งาน และแจ้งเหตุผลที่ไม่อนุมัติ
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (ปัญหา "มิจฉาชีพแอบอ้าง" + Business Rule ใหม่ 2026-09-22)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-register.html` ใช้ Firebase Auth จริง + `users` collection role=`community`, อนุมัติ/ไม่อนุมัติที่ `admin-review-student-work.html`; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
 - **หมายเหตุ**: เพิ่ม 2026-09-22 — ตอบ requirement ที่เคยคลุมเครือเกินกว่าจะแตกเป็น backlog (ดูหัวข้อ "Requirement ที่ยังคลุมเครือ..." ฉบับเดิม) รูปแบบเดียวกับ BL-019/BL-020 ของนิสิต **อัปเดต 2026-09-22 (รอบ 2)**: ปิดคำถามเรื่องข้อมูลยืนยันตัวตนแล้ว — ใช้ข้อมูลพื้นฐาน (ชื่อผู้ติดต่อ+เบอร์โทร) ไม่ต้องแนบเอกสาร (ดู Business Rules ใน local-story-hub.md)
 
 ### BL-023: อาจารย์ที่ปรึกษา/แอดมินอนุมัติคำขอแก้ไขข้อมูลชุมชน
@@ -216,7 +216,7 @@
   - Given มีคำขอแก้ไขรอพิจารณา When อาจารย์ที่ปรึกษา/แอดมินไม่อนุมัติ Then ระบบไม่นำการแก้ไขไปใช้ และแจ้งเหตุผลกลับไปยังชุมชน
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (Business Rule ใหม่ 2026-09-22 — สิทธิ์การเข้าถึงข้อมูลของชุมชนแบบใช้ร่วมกัน)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว (implement จริง 2026-09-23 — `docs/02-design/01-prototypes/prototype-v2/community-request-edit.html` + ส่วนอนุมัติใน `admin-review-student-work.html`, เชื่อม Firestore จริง collection `ContentEditRequests`; ยังไม่ผ่านการทดสอบ end-to-end จริงเพราะ `firestore.rules` รอบนี้ยังไม่ deploy)
 - **หมายเหตุ**: เพิ่ม 2026-09-22 — ขอบเขตของ "ข้อมูล" ที่ขอแก้ไขได้อ้างอิง BL-006 (เฉพาะคอนเทนต์) **อัปเดต 2026-09-22 (รอบ 2)**: ปิดคำถามเรื่องแก้ไขข้ามชุมชนแล้ว — ทำได้เฉพาะคอนเทนต์ของชุมชนตนเองเท่านั้น ไม่รองรับการขอแก้ไขคอนเทนต์ของชุมชนอื่น (ดู Business Rules ใน local-story-hub.md) **อัปเดต 2026-09-23**: ปิดคำถามเพิ่มเติมที่พบใน ACL.md แล้ว — ชุมชน**แก้ไข/ยกเลิกคำขอแก้ไขที่ส่งไปแล้วไม่ได้ขณะสถานะ "รอพิจารณา"** ต้องรอผลอนุมัติ/ไม่อนุมัติก่อนเสมอ (ดู [[../../02-design/02-technical/ACL|ACL.md]])
 
 ## Epic: การปฏิบัติตามกฎหมาย IT และ PDPA

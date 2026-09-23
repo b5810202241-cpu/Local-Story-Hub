@@ -1,5 +1,7 @@
 # Prototype v3 — ฝั่งชุมชน (Community)
 
+> **⚠️ Superseded (2026-09-23)** — mockup `localStorage` เวอร์ชันนี้ถูกแทนที่ด้วยการ implement จริงที่เชื่อม Firebase Auth + Firestore แล้ว ที่ [[../prototype-v2/README|prototype-v2]] (`community-register.html`, `community-dashboard.html`, `community-create-content.html`, `community-request-edit.html` + ส่วนอนุมัติใน `admin-review-student-work.html`) — เก็บไฟล์นี้ไว้เป็นประวัติการออกแบบ mockup เท่านั้น ตามกฎ "ห้ามลบเอกสารโดยตรง" ของโปรเจกต์ **ไม่ต้อง implement เพิ่มในโฟลเดอร์นี้อีก**
+
 เวอร์ชันนี้เจาะจงเฉพาะฝั่ง **ชุมชน** ต่อยอดจาก Business Rules ที่ปิด Open Question เมื่อ 2026-09-22
 (แพลตฟอร์ม=Website, สิทธิ์การเข้าถึงข้อมูลชุมชนแบบใช้ร่วมกัน, ขอบเขตระบบจัดการข้อมูล=เฉพาะคอนเทนต์)
 และงาน `architecture-design`/`data-api-design`/ACL/`user-journey` ฝั่งชุมชนที่ทำไปก่อนหน้า — แยก
