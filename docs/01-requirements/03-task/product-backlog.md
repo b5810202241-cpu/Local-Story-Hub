@@ -76,7 +76,8 @@
   - Given ผู้ใช้เข้าใช้งานหน้าจัดการคอนเทนต์ When แสดงผล Then ตัวอักษรและปุ่มมีขนาดใหญ่พอมองเห็นชัด และขั้นตอนการใช้งานไม่ซับซ้อนเกินความจำเป็น
 - **Priority**: Must
 - **Source**: [[../01-spec/local-story-hub|local-story-hub]] (FR-1.7)
-- **Status**: ยังไม่เริ่ม
+- **Status**: เสร็จแล้ว
+- **หมายเหตุ**: **อัปเดต 2026-09-23** — ปรับปรุง CSS/markup ของ 4 หน้าจอชุมชน (community-dashboard.html, community-create-content.html, community-register.html, community-request-edit.html) เพื่อเพิ่มความสามารถในการอ่านสำหรับผู้สูงอายุ: ขนาดฟอนต์ body 18px, ปุ่ม primary 56px height, input 52px height, labels 18px, navigation 18px, เพิ่มช่องว่างรอบฟอร์ม elements และทำให้ UI elements ขนาดใหญ่พอสำหรับผู้ที่มีปัญหาการมองเห็น ทดสอบสำเร็จบนทั้ง 4 หน้า ใช้ design system ใน DESIGN.md ตามเดิม
 
 ## Epic: การสืบค้นและวางแผนท่องเที่ยว
 
