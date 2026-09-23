@@ -6,6 +6,7 @@
 <title>Local Story Hub — เผยแพร่ผลงานนิสิต</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
   --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
@@ -16,6 +17,7 @@
 }
 *{box-sizing:border-box;}
 body{margin:0;background:var(--color-paper);color:var(--color-ink);font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.7;}
+#location-map{height:240px;border-radius:var(--radius-sm);border:1px solid var(--color-stone);}
 header.site{display:flex;align-items:center;justify-content:space-between;padding:var(--space-md) var(--space-xl);border-bottom:1px solid var(--color-stone);}
 .wordmark{font-weight:700;font-size:22px;color:var(--color-ink);text-decoration:none;}
 nav.site{display:flex;align-items:center;}
@@ -154,6 +156,14 @@ textarea{min-height:80px;}
       </div>
     </div>
 
+    <div class="step">
+      <label>ตำแหน่งบนแผนที่ (ถ้าทราบ)</label>
+      <p class="hint" style="margin:0 0 var(--space-sm)">แตะ/คลิกบนแผนที่เพื่อปักหมุดตำแหน่งจริงของสถานที่ในผลงานนี้ (FR-2.3) — ไม่บังคับ ข้ามได้ถ้าไม่ทราบพิกัด</p>
+      <div id="location-map"></div>
+      <div class="info-note" id="location-picked-text" hidden style="margin-top:var(--space-sm)"></div>
+      <button type="button" class="btn-link" id="location-clear-btn" style="margin-top:var(--space-xs)" hidden onclick="clearLocation()">ล้างตำแหน่งที่เลือก</button>
+    </div>
+
     <div class="info-note">ℹ️ ผลงานนี้จะยังไม่เผยแพร่ให้บุคคลอื่นเห็น จนกว่าอาจารย์จะกดอนุมัติ — เวอร์ชันนี้บันทึกลง Firestore จริง (project `lsh-nammon`, collection `LSHRequests`) ตัวตนผู้ส่งมาจากบัญชีที่ login อยู่โดยตรง</div>
 
     <div class="publish-bar">
@@ -165,9 +175,10 @@ textarea{min-height:80px;}
 
 <script src="firebase-config.js"></script>
 <script src="ai-assist-config.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, query, where, serverTimestamp, GeoPoint } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const app = initializeApp(window.LSH_FIREBASE_CONFIG);
@@ -177,6 +188,50 @@ const auth = getAuth(app);
 let currentProfile = null; // { id, name, role, status }
 let justRegistered = false;
 let lastAiSuggestionText = null; // ข้อความล่าสุดที่ AI เสนอและนิสิตกด "ใช้ข้อความนี้" — แปะลง LSHRequests ตอนส่งจริง
+
+// ปักหมุดตำแหน่ง (BL-010, เพิ่ม 2026-09-23) — Leaflet + OpenStreetMap แทน Google Maps JS API
+// เพราะไม่ต้องขอ API key/ผูกบัตรเครดิต (เหตุผลเดียวกับที่เลือก Cloudflare Workers/R2 ก่อนหน้านี้)
+if(typeof L !== 'undefined'){
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+}
+let pickedLocation = null; // { lat, lng } | null — ไม่บังคับกรอก
+let locationMap = null;
+let locationMarker = null;
+
+function initLocationMapIfNeeded(){
+  if(locationMap || typeof L === 'undefined') return;
+  const mapEl = document.getElementById('location-map');
+  if(!mapEl) return;
+  locationMap = L.map(mapEl).setView([13.7563, 100.5018], 6); // จุดกึ่งกลางประเทศไทยโดยประมาณ
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(locationMap);
+  locationMap.on('click', function(e){ setPickedLocation(e.latlng.lat, e.latlng.lng); });
+  setTimeout(function(){ locationMap.invalidateSize(); }, 0); // container เพิ่งโผล่จาก hidden ต้องสั่งคำนวณขนาดใหม่
+}
+
+function setPickedLocation(lat, lng){
+  pickedLocation = { lat: lat, lng: lng };
+  if(locationMarker){ locationMarker.setLatLng([lat, lng]); }
+  else{ locationMarker = L.marker([lat, lng]).addTo(locationMap); }
+  const textEl = document.getElementById('location-picked-text');
+  textEl.hidden = false;
+  textEl.textContent = 'ตำแหน่งที่เลือก: ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+  document.getElementById('location-clear-btn').hidden = false;
+}
+
+window.clearLocation = function(){
+  pickedLocation = null;
+  if(locationMarker){ locationMap.removeLayer(locationMarker); locationMarker = null; }
+  document.getElementById('location-picked-text').hidden = true;
+  document.getElementById('location-clear-btn').hidden = true;
+};
 
 function show(id){ document.getElementById(id).hidden = false; }
 function hide(id){ document.getElementById(id).hidden = true; }
@@ -302,6 +357,7 @@ onAuthStateChanged(auth, async function(user){
     show('form-view');
     loadCommunityOptions();
     loadMySubmissions();
+    initLocationMapIfNeeded();
   }else{
     show('deny-view');
   }
@@ -428,6 +484,7 @@ window.publishWork = async function(){
       title: title,
       Content: desc,
       community: community,
+      location: pickedLocation ? new GeoPoint(pickedLocation.lat, pickedLocation.lng) : null,
       status: 'รอพิจารณา',
       requesterId: currentProfile.id,
       requesterName: currentProfile.name,

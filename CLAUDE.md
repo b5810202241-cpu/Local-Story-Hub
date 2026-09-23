@@ -25,7 +25,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`users`** — field: `name`, `email`, `role`
   - **`status`, `approverId`, `approverName`, `rejectionReason`** — เพิ่ม 2026-09-12 (BL-019/BL-020) เฉพาะบัญชี `role: student` เท่านั้น — `status` มี 3 ค่า: `รออนุมัติ` / `อนุมัติแล้ว` / `ไม่อนุมัติ` บัญชีที่สมัครเองต้องรอ `อนุมัติแล้ว` ก่อนถึงจะส่งผลงานได้ (`LSHRequests.create` เช็คเงื่อนไขนี้ใน `firestore.rules` ด้วย) บัญชี `role: teacher` (u004) ไม่มี field เหล่านี้ (provision โดย admin ถือว่า approved ทันที)
 - **`role: community`** *(เพิ่ม 2026-09-23)* — บัญชีชุมชนใช้ `users` collection เดียวกับนิสิต (ไม่แยก collection) มี `status`/`approverId`/`approverName`/`rejectionReason` ชุดเดียวกับนิสิตทุกประการ บวก field เพิ่ม **`contactInfo`** (ข้อมูลยืนยันตัวตน — ชื่อผู้ติดต่อ+เบอร์โทร ตาม Business Rule BL-022)
-- **`CommunityContent`** *(เพิ่ม 2026-09-23)* — คอนเทนต์ของชุมชน: `title`, `bodyTh`, `caption`, `imageUrl` *(เพิ่ม 2026-09-23 รอบสอง — BL-001 prerequisite, ดูหัวข้อ "Community Image Upload" ด้านล่าง; `null` ได้ถ้ายังไม่อัปโหลดภาพ)*, `communityId`/`communityName` (denormalized), `status` (`เผยแพร่แล้ว` เท่านั้น — สร้างแล้วเผยแพร่ทันที ไม่มีสถานะฉบับร่าง เพราะไม่มี path ให้ community แก้ไข/เผยแพร่ฉบับร่างของตนเองใน `firestore.rules`), `createdAt`, `updatedAt`
+- **`CommunityContent`** *(เพิ่ม 2026-09-23)* — คอนเทนต์ของชุมชน: `title`, `bodyTh`, `caption`, `imageUrl` *(เพิ่ม 2026-09-23 รอบสอง — BL-001 prerequisite, ดูหัวข้อ "Community Image Upload" ด้านล่าง; `null` ได้ถ้ายังไม่อัปโหลดภาพ)*, `location` *(เพิ่ม 2026-09-23 รอบสาม — BL-010, ดูหัวข้อ "ตำแหน่งบนแผนที่" ด้านล่าง; Firestore `GeoPoint`, `null` ได้ถ้าไม่ทราบพิกัด)*, `communityId`/`communityName` (denormalized), `status` (`เผยแพร่แล้ว` เท่านั้น — สร้างแล้วเผยแพร่ทันที ไม่มีสถานะฉบับร่าง เพราะไม่มี path ให้ community แก้ไข/เผยแพร่ฉบับร่างของตนเองใน `firestore.rules`), `createdAt`, `updatedAt`
 - **`ContentEditRequests`** *(เพิ่ม 2026-09-23)* — คำขอแก้ไขคอนเทนต์ที่เผยแพร่แล้ว: `contentId`, `contentTitle`, `communityId`/`communityName`, `proposedChanges`/`originalValues` (`{title, bodyTh}`), `status` (`รอพิจารณา`/`อนุมัติ`/`ไม่อนุมัติ`), `rejectionReason`, `approverId`/`approverName`, `createdAt` — ชุมชนแก้ไข/ยกเลิกคำขอขณะ `รอพิจารณา` ไม่ได้ (ไม่มี `allow update` ให้ community ใน `firestore.rules` เลย)
 - **`touristAccounts`** *(เพิ่ม 2026-09-22/23)* — บัญชีนักท่องเที่ยว: `displayName`, `email`, `role: 'tourist'`, `createdAt` — **แยก collection จาก `users` โดยเจตนา** (ไม่ใช่ `role: community` ที่ใช้ `users` ร่วมกับนิสิต) เพราะนักท่องเที่ยว**ไม่มีสถานะ pending/approved เลย** สมัครเสร็จใช้งานได้ทันที — `uid` เดียวกันอาจมีทั้ง `users` doc (ถ้าเป็นนิสิต/ชุมชนด้วย) และ `touristAccounts` doc พร้อมกันได้ คนละ collection
 - **`Reviews`** *(เพิ่ม 2026-09-23)* — รีวิวของนักท่องเที่ยว: `contentId`, `contentType` (`student`/`community` — ระบุว่าเนื้อหามาจาก `LSHRequests` หรือ `CommunityContent`), `contentTitle`, `touristId`/`touristName`, `text`, `createdAt` — อ่านได้แบบ public ไม่ต้อง login, เขียนต้อง login เท่านั้น (Decision Log 2026-08-28), immutable (ไม่มี update/delete)
@@ -34,7 +34,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`AiAssistLogs`** — log ทุกครั้งที่เรียกใช้ AI: `action`, `requesterId`, `success`, `resultText`, `errorMessage`, `model`, `createdAt` *(เพิ่ม 2026-09-23)* — เดิมเขียนได้เฉพาะนิสิต/อาจารย์ ตอนนี้เปิดให้ทุก role ที่ login แล้ว (ชุมชน/นักท่องเที่ยวด้วย) เพราะปุ่ม AI ขยายไปทั้งสองฝั่งแล้ว (ดูหัวข้อ "AI Backend Proxy" ด้านล่าง) — เขียนจาก Cloudflare Worker ผ่าน Firestore REST API โดยใช้ ID token ของผู้เรียกเอง ไม่ใช่ client เขียนตรงอีกต่อไป
 - **`AccessLogs`** *(เพิ่ม 2026-09-23, BL-014)* — บันทึกการเข้าใช้งานตามพ.ร.บ. คอมพิวเตอร์: `timestamp`, `ip_address`, `user_agent`, `user_account_id` (null ได้ — ผู้เข้าชมไม่ login), `action`, บวก `expires_at` (= `timestamp` + 90 วัน, ไว้ให้ Firestore TTL policy อ่านเท่านั้น ไม่ใช่ field ตาม Business Rule) — เขียนจาก Cloudflare Worker (`/log-access`) ด้วย **service account** (bypass `firestore.rules` เพราะต้อง log ได้แม้ผู้เข้าชมไม่มี ID token เลย) อ่านได้เฉพาะ role=`teacher` (Data Controller) ดูหัวข้อ "Access Log" ด้านล่าง
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
-- **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
+- **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`, `location` *(เพิ่ม 2026-09-23 — BL-010, ดูหัวข้อ "ตำแหน่งบนแผนที่" ด้านล่าง; Firestore `GeoPoint`, `null` ได้ถ้าไม่ทราบพิกัด)*
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
   - **`community`, `rejectionReason`** — field เสริมที่ `docs/02-design/01-prototypes/prototype-v2/` เพิ่มเข้ามา (2026-09-11) มีเฉพาะเอกสารที่สร้างผ่านฟอร์มเวอร์ชันนั้นเท่านั้น — เอกสาร req001-005 ที่ seed ไว้เดิมไม่มี field นี้
 
@@ -135,6 +135,40 @@ field `imageUrl` ของเอกสาร `CommunityContent` (ดูหัว
 Backend Proxy ด้านบน บวกขั้นตอนสร้าง R2 bucket) **ปุ่ม "✨ ให้ AI ปรับภาพให้สวย" (image-to-image
 enhancement) ยังไม่ implement** — เป็นงานคนละสโคปจากงานอัปโหลดรอบนี้ ต้องเลือกโมเดล AI ปรับภาพก่อน
 ถึงจะทำต่อได้ (ดู BL-001 ใน product-backlog.md)
+
+## ตำแหน่งบนแผนที่ — BL-010 (เพิ่ม 2026-09-23 รอบสาม)
+
+เดิม BL-010 ทำได้แค่ workaround (ลิงก์ Google Maps ค้นหาด้วย**ชื่อชุมชน** ไม่ใช่ตำแหน่งจริง) เพราะมี
+3 คำถามที่กระทบ schema/scope ต้องถามอาจารย์ที่ปรึกษาก่อนตามกฎ CLAUDE.md — ผู้ใช้คุยกับอาจารย์ที่
+ปรึกษามาแล้วและให้คำตอบทั้ง 3 ข้อ (2026-09-23):
+
+1. **รูปแบบ field พิกัด**: Firestore `GeoPoint` เดียว field ชื่อ `location` (ไม่แยก `lat`/`lng` เป็น 2 field)
+2. **ใครกรอกพิกัด**: นิสิต/ชุมชนกรอกเองตอนสร้าง/เผยแพร่เนื้อหา ผ่าน UI ปักหมุดในฟอร์ม (ไม่ใช่ geocode อัตโนมัติ)
+3. **ขอบเขตของ "หมุดหมายเดินทางที่ชัดเจน"**: แค่ปักหมุดตำแหน่งเดียว ไม่ต้องมีเส้นทาง/นำทาง
+
+**Implement แล้วตามคำตอบทั้ง 3 ข้อ**:
+
+- **UI ปักหมุด** (ไม่บังคับกรอก): เพิ่มใน `student-publish.html` และ `community-create-content.html`
+  ใช้ **Leaflet + OpenStreetMap tiles** แทน Google Maps JavaScript API เพราะไม่ต้องขอ API key/ผูกบัตร
+  เครดิต (เหตุผลเดียวกับที่เลือก Cloudflare Workers/R2 ก่อนหน้านี้ — ผู้ใช้ยืนยันตัวเลือกนี้เองหลังถูกถาม
+  พร้อมทางเลือกอื่น) โหลดผ่าน CDN (`unpkg.com/leaflet@1.9.4`) ไม่ต้อง build step — คลิก/แตะบนแผนที่เพื่อ
+  ปักหมุด บันทึกเป็น `new GeoPoint(lat, lng)` ลง field `location` ตอนส่ง/เผยแพร่
+- **แสดงผล**: `tourist-story-detail.html` แสดง embedded Leaflet map พร้อมหมุดจริงเมื่อมี `location`
+  (แทน placeholder เดิม) และเปลี่ยนลิงก์ "ดูตำแหน่งบน Google Maps" ให้ใช้พิกัดจริง
+  (`google.com/maps?q=lat,lng`) แทนการค้นหาด้วยชื่อชุมชน — ถ้าไม่มี `location` (เนื้อหาเก่าก่อน
+  2026-09-23 หรือผู้สร้างข้ามการปักหมุด) **ยังคง fallback เป็น workaround เดิม** (ค้นหาด้วยชื่อชุมชน)
+  ไว้เหมือนเดิม ไม่ regression — `tourist-search-results.html` และ `published-works.html` อัปเกรด
+  แค่ลิงก์ (ใช้พิกัดจริงถ้ามี) ไม่ได้เพิ่ม embedded map ต่อการ์ด (จำกัดสโคป กันโหลดแผนที่หลายสิบอันพร้อมกัน)
+- ไม่ต้องแก้ `firestore.rules` — `create` ของทั้ง `LSHRequests`/`CommunityContent` ไม่ได้จำกัด field
+  ที่อนุญาตอยู่แล้ว (ต่างจาก `update` ที่จำกัด — ดู `LSH/firestore.rules`) field `location` ที่มีอยู่
+  จึงไม่ถูกแก้ไขภายหลังผ่าน edit-request flow (BL-023) เหมือนกับ `imageUrl` (ตั้งครั้งเดียวตอนสร้าง)
+
+**สถานะ ณ 2026-09-23**: ทดสอบ end-to-end จริงผ่าน local server + Playwright แล้ว (login จริงด้วย
+`u001@example.com`, ปักหมุดจริง, ส่งจริงลง `LSHRequests`, อาจารย์อนุมัติจริง, ยืนยันว่า
+`tourist-story-detail.html`/`tourist-search-results.html`/`published-works.html` อ่านและแสดงพิกัด
+ที่ปักไว้ถูกต้องครบทุกหน้า) — deploy ได้ทันทีไม่มีขั้นตอนที่ผู้ใช้ต้องทำเพิ่ม (ต่างจาก AI proxy/R2 —
+Leaflet ไม่ต้องมี secret หรือ deploy แยก) BL-010 ปิดสถานะเป็น "เสร็จแล้ว" ตาม Acceptance Criteria
+(ปักหมุดตำแหน่งเดียว ไม่รวมเส้นทาง/นำทาง ตามขอบเขตที่อาจารย์ยืนยัน)
 
 ## Access Log — BL-014 (เพิ่ม 2026-09-23)
 

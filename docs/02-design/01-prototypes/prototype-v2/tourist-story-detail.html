@@ -6,6 +6,7 @@
 <title>Local Story Hub — รายละเอียดเรื่องราว</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
   --color-paper:#F3EEE4; --color-sand:#E7DFCF; --color-stone:#C9BFAC; --color-bark:#8A7F6C;
@@ -101,7 +102,8 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
 
     <div class="map-box">
       <h2>หมุดหมายเดินทาง</h2>
-      <p class="map-note">ระบบยังไม่มีข้อมูลพิกัดที่แม่นยำของแต่ละเรื่องราว (BL-010 ยังไม่ได้เก็บ field ตำแหน่งในสคีมา) จึงยังไม่สามารถปักหมุด/วางเส้นทางในแอปได้โดยตรง — ใช้ปุ่มด้านล่างเพื่อค้นหาชื่อชุมชนนี้บน Google Maps แทนไปพลางก่อน</p>
+      <div id="location-map-display" hidden style="height:220px;border-radius:8px;margin-bottom:var(--space-sm);"></div>
+      <p class="map-note" id="map-fallback-note">ยังไม่มีข้อมูลพิกัดที่แม่นยำของเรื่องราวนี้ — ใช้ปุ่มด้านล่างเพื่อค้นหาชื่อชุมชนนี้บน Google Maps แทนไปพลางก่อน</p>
       <a class="maps-link-btn" id="maps-link" target="_blank" rel="noopener">🗺️ ดูตำแหน่งบน Google Maps</a>
     </div>
 
@@ -127,6 +129,7 @@ textarea{width:100%;min-height:96px;border:1px solid var(--color-stone);border-r
 
 <script src="firebase-config.js"></script>
 <script src="ai-assist-config.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -138,6 +141,17 @@ import {
 const app = initializeApp(window.LSH_FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// ดูตำแหน่งบนแผนที่ (BL-010, เพิ่ม 2026-09-23) — Leaflet + OpenStreetMap แทน Google Maps JS API
+// เพราะไม่ต้องขอ API key/ผูกบัตรเครดิต (เหตุผลเดียวกับที่เลือก Cloudflare Workers/R2 ก่อนหน้านี้)
+if(typeof L !== 'undefined'){
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+}
 
 function escapeHtml(str){
   const div = document.createElement('div');
@@ -168,7 +182,7 @@ async function loadContent(){
         return false;
       }
       const data = snap.data();
-      content = { title: data.title, body: data.Content, communityName: data.community || 'ไม่ระบุชุมชน', typeLabel: 'ผลงานนิสิต' };
+      content = { title: data.title, body: data.Content, communityName: data.community || 'ไม่ระบุชุมชน', typeLabel: 'ผลงานนิสิต', location: data.location || null };
     }else{
       const snap = await getDoc(doc(db, 'CommunityContent', contentId));
       if(!snap.exists() || snap.data().status !== 'เผยแพร่แล้ว'){
@@ -176,7 +190,7 @@ async function loadContent(){
         return false;
       }
       const data = snap.data();
-      content = { title: data.title, body: data.bodyTh || data.caption, communityName: data.communityName, typeLabel: 'คอนเทนต์ชุมชน', imageUrl: data.imageUrl || null };
+      content = { title: data.title, body: data.bodyTh || data.caption, communityName: data.communityName, typeLabel: 'คอนเทนต์ชุมชน', imageUrl: data.imageUrl || null, location: data.location || null };
     }
   }catch(e){
     console.error('โหลดเรื่องราวไม่สำเร็จ', e);
@@ -211,7 +225,29 @@ function renderContent(){
   document.getElementById('content-type-tag').textContent = content.typeLabel;
   document.getElementById('content-community').textContent = content.communityName;
   document.getElementById('content-body').textContent = content.body || '';
-  document.getElementById('maps-link').href = 'https://www.google.com/maps/search/' + encodeURIComponent(content.communityName);
+
+  const mapsLinkEl = document.getElementById('maps-link');
+  const mapDisplayEl = document.getElementById('location-map-display');
+  const fallbackNoteEl = document.getElementById('map-fallback-note');
+  if(content.location){
+    const lat = content.location.latitude;
+    const lng = content.location.longitude;
+    mapsLinkEl.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+    fallbackNoteEl.hidden = true;
+    if(typeof L !== 'undefined'){
+      mapDisplayEl.hidden = false;
+      const pinMap = L.map(mapDisplayEl).setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(pinMap);
+      L.marker([lat, lng]).addTo(pinMap);
+      setTimeout(function(){ pinMap.invalidateSize(); }, 0); // container เพิ่งโผล่จาก hidden ต้องสั่งคำนวณขนาดใหม่
+    }
+  }else{
+    // ไม่มีพิกัดจริง — คง workaround เดิม (ค้นหาชื่อชุมชนบน Google Maps) ไว้เป็น fallback
+    mapsLinkEl.href = 'https://www.google.com/maps/search/' + encodeURIComponent(content.communityName);
+  }
 }
 
 // เซสชันนักท่องเที่ยว — real Firebase Auth + touristAccounts (แทน localStorage เดิมของ prototype-v1)

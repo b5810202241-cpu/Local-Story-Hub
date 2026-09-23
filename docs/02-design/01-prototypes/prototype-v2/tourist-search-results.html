@@ -183,6 +183,7 @@ async function loadResults(){
       allItems.push({
         id: d.id, type: 'student', title: data.title,
         communityName: data.community || 'ไม่ระบุชุมชน',
+        location: data.location || null,
         summary: (data.Content || '').slice(0, 80),
         summaryLang: 'th', summaryEn: null, translateState: 'idle', translateError: null,
       });
@@ -192,6 +193,7 @@ async function loadResults(){
       allItems.push({
         id: d.id, type: 'community', title: data.title,
         communityName: data.communityName,
+        location: data.location || null,
         summary: (data.bodyTh || data.caption || '').slice(0, 80),
         summaryLang: 'th', summaryEn: null, translateState: 'idle', translateError: null,
       });
@@ -242,7 +244,10 @@ function renderResults(items){
   }
   container.innerHTML = items.map(function(it){
     const typeLabel = it.type === 'student' ? 'ผลงานนิสิต' : 'คอนเทนต์ชุมชน';
-    const mapsUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(it.communityName);
+    // มีพิกัดจริง (BL-010) ใช้ลิงก์ตำแหน่งแม่นยำ ไม่มีก็ fallback ไปค้นหาชื่อชุมชนเหมือนเดิม
+    const mapsUrl = it.location
+      ? 'https://www.google.com/maps?q=' + it.location.latitude + ',' + it.location.longitude
+      : 'https://www.google.com/maps/search/' + encodeURIComponent(it.communityName);
     return '<div class="card">' +
       '<div class="thumb">ภาพ' + escapeHtml(it.title) + '</div>' +
       '<div class="body">' +

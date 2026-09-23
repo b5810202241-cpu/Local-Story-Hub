@@ -95,8 +95,12 @@ function render(){
   emptyEl.style.display = 'none';
 
   container.innerHTML = filtered.map(function(w){
-    const mapsLink = w.community
-      ? '<a class="maps-link" href="https://www.google.com/maps/search/' + encodeURIComponent(w.community) + '" target="_blank" rel="noopener">🗺️ ดูตำแหน่งบน Google Maps</a>'
+    // มีพิกัดจริง (BL-010) ใช้ลิงก์ตำแหน่งแม่นยำ ไม่มีก็ fallback ไปค้นหาชื่อชุมชนเหมือนเดิม
+    const mapsUrl = w.location
+      ? 'https://www.google.com/maps?q=' + w.location.latitude + ',' + w.location.longitude
+      : (w.community ? 'https://www.google.com/maps/search/' + encodeURIComponent(w.community) : null);
+    const mapsLink = mapsUrl
+      ? '<a class="maps-link" href="' + mapsUrl + '" target="_blank" rel="noopener">🗺️ ดูตำแหน่งบน Google Maps</a>'
       : '';
     return (
       '<div class="card">' +

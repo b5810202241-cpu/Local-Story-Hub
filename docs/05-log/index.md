@@ -14,6 +14,36 @@
 
 ## บันทึก
 
+### 2026-09-23 — ปิด BL-010 (วางแผนเส้นทาง) หลังคุยกับอาจารย์ที่ปรึกษา — เลือก Leaflet + OpenStreetMap
+
+ผู้ใช้คุยกับอาจารย์ที่ปรึกษาเกี่ยวกับ 3 คำถามที่ค้างมาตั้งแต่ก่อนหน้านี้ (ดูรายละเอียดคำถามที่
+[[../01-requirements/03-task/product-backlog|BL-010]]) แล้วให้คำตอบมา:
+
+1. **รูปแบบ field พิกัด** → Firestore `GeoPoint` เดียว field ชื่อ `location` (ไม่แยก `lat`/`lng`)
+2. **ใครกรอกพิกัด** → นิสิต/ชุมชนกรอกเอง ผ่าน UI ปักหมุดในฟอร์มตอนสร้าง/เผยแพร่เนื้อหา
+3. **ขอบเขตหมุดหมาย** → แค่ปักหมุดตำแหน่งเดียว ไม่ต้องมีเส้นทาง/นำทาง
+
+ก่อน implement ถามผู้ใช้ต่ออีก 1 จุดที่เป็นการตัดสินใจเชิงเทคนิค (ไลบรารีแผนที่สำหรับ UI ปักหมุด) —
+เสนอ 3 ทางเลือก (Leaflet+OSM / Google Maps JS API / กรอกตัวเลข lat-lng เอง) ผู้ใช้เลือก **Leaflet +
+OpenStreetMap** เพราะไม่ต้องขอ API key/ผูกบัตรเครดิต สอดคล้องกับการตัดสินใจเดิมที่เลือก Cloudflare
+Workers/R2 แทน Firebase Storage/Cloud Functions ด้วยเหตุผลเดียวกัน
+
+Implement แล้ว: UI ปักหมุด (ไม่บังคับกรอก) ใน `student-publish.html` และ `community-create-content.html`,
+field `location` ใหม่ใน `LSHRequests`/`CommunityContent`, แสดง embedded pin map + ลิงก์ Google Maps
+พิกัดจริงที่ `tourist-story-detail.html` (แทน placeholder เดิม), อัปเกรดลิงก์ Google Maps ให้ใช้พิกัด
+จริงเมื่อมีที่ `tourist-search-results.html`/`published-works.html` (ไม่ได้เพิ่ม embedded map ต่อการ์ด
+— จำกัดสโคปกันโหลดแผนที่หลายสิบอันพร้อมกัน) เนื้อหาเก่าที่ไม่มีพิกัดยัง fallback เป็น workaround เดิม
+(ค้นหาชื่อชุมชน) ไม่ regression — ไม่ต้องแก้ `firestore.rules` เพราะ `create` ของทั้งสอง collection
+ไม่ได้จำกัด field ที่อนุญาตอยู่แล้ว
+
+ทดสอบ end-to-end จริงผ่าน local server + Playwright ครบ flow: login จริงด้วย `u001@example.com` →
+คลิกปักหมุดบนแผนที่ → ส่งขออนุมัติ (เขียน `GeoPoint` ลง Firestore จริง) → login อาจารย์ (`u004@example.com`)
+อนุมัติ → ยืนยันว่า `tourist-story-detail.html` แสดง embedded map + ลิงก์พิกัดถูกต้อง และ
+`tourist-search-results.html`/`published-works.html` ก็ใช้ลิงก์พิกัดจริงเช่นกัน (พบปัญหา cache ของ
+local http-server ระหว่างทดสอบ ทำให้เห็นผลลัพธ์เก่าชั่วคราว — แก้ด้วยการ hard-reload ยืนยันว่าเป็นแค่
+cache ไม่ใช่บั๊กจริง) — ไม่มีขั้นตอนที่ผู้ใช้ต้อง deploy เพิ่ม (Leaflet โหลดผ่าน CDN ไม่ต้องมี secret)
+BL-010 ปิดสถานะเป็น "เสร็จแล้ว" — ดูรายละเอียดเต็มที่ CLAUDE.md § "ตำแหน่งบนแผนที่"
+
 ### 2026-09-23 — Implement ระบบอัปโหลดภาพจริงสำหรับ BL-001 (prerequisite) — เลือก Cloudflare R2
 
 ก่อนเริ่มโค้ด ถามผู้ใช้ก่อนว่าจะเก็บไฟล์ภาพที่อัปโหลดจริงด้วยวิธีไหน เพราะเจอจุดตัดสินใจเชิง
