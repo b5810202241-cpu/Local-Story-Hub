@@ -763,3 +763,78 @@ deploy` → เอา URL ที่ได้ไปตั้งใน `ai-assist-
 
 **Part 3/5 เสร็จสมบูรณ์ในส่วนที่ทำได้โดยไม่ต้อง deploy จริง** — เหลือ 2 อย่างที่ผู้ประสานงาน/ผู้ใช้ต้อง
 ทำต่อ: (1) ผู้ประสานงาน deploy `firestore.rules` ที่แก้ไว้ (2) ผู้ใช้ deploy Cloudflare Worker เอง
+
+### 2026-09-23 — Access Log 90 วัน (BL-014) — Part 5/5 (ส่วนสุดท้าย) ของแผน "สร้างระบบตาม spec.md ให้ครบ"
+
+รอบนี้ทำเฉพาะ **Access Log** (Part 4 = notification service ถูกข้ามไปแล้วตามที่ผู้ใช้ตกลง) — ต่อ
+Worker เดียวกับ Part 3 (`cf-worker/`) แทนที่จะสร้าง Worker แยก เพราะแก้ปัญหาเดียวกัน (ต้องมี server
+ที่เห็น IP จริง/verify token ได้)
+
+**เพิ่ม endpoint `POST /log-access`** ใน `cf-worker/src/index.js` — ต่างจาก endpoint `/ai/*` เดิม
+ตรงที่**ไม่บังคับต้องมี Firebase ID token** (ต้อง log ได้แม้ผู้เข้าชมไม่เคย login เลย ตามข้อบังคับ
+พ.ร.บ. คอมพิวเตอร์ที่ครอบคลุมผู้ใช้งานทุกคน) อ่าน `CF-Connecting-IP`/`User-Agent` จาก request header
+เอง (client ปลอมไม่ได้), verify ID token ถ้าแนบมา (ไม่บังคับ) เพื่อแนบ `user_account_id` ถ้ามี
+
+**การตัดสินใจสำคัญที่สุดของรอบนี้ — วิธี enforce สิทธิ์เขียน `AccessLogs`**: เนื่องจากผู้เรียกอาจไม่มี
+ID token เลย (anonymous) จึงใช้ ID token ของผู้เรียกเขียนแบบ endpoint อื่นไม่ได้ ตัดสินใจใช้
+**Google service account ผ่าน OAuth2 JWT-bearer flow** (เซ็น JWT ด้วย Web Crypto `RSASSA-PKCS1-v1_5`
+เอง ไม่มี library ช่วย เพราะ Node.js `google-auth-library` ใช้บน Cloudflare Workers ไม่ได้ — แลกเป็น
+access token ที่ `oauth2.googleapis.com/token` แล้วเขียน Firestore REST API ด้วย token นั้น) วิธีนี้
+**บายพาส `firestore.rules` ไปเลย** เหมือนที่ `firebase-admin`/`LSH/scripts/seed-firestore.js` ใช้อยู่
+แล้ว จึงปิด `AccessLogs.create` เป็น `if false` สำหรับ client ปกติทุกคน (กันไม่ให้เขียนตรงได้นอกจาก
+Worker นี้เท่านั้น) เปิด `read` เฉพาะ role=`teacher` (Data Controller ตาม Business Rule ที่ปิดแล้ว)
+— ต้องมี secret ใหม่ `FIREBASE_SERVICE_ACCOUNT_JSON` (แนะนำสร้างใหม่จำกัดสิทธิ์แค่ "Cloud Datastore
+User" ตาม least privilege ไม่ใช้ตัวเดิมที่ seed script ใช้ซึ่งอาจมีสิทธิ์กว้างกว่า)
+
+**Retention 90 วันด้วย Firestore TTL policy** (ไม่ใช่ Cloud Functions/scheduled job) — พบระหว่างทำว่า
+TTL ของ Firestore ลบตาม "ค่าที่เก็บใน field ตรงๆ" (ต้องเป็นเวลาหมดอายุจริง ไม่ใช่ระยะห่าง) จึงเพิ่ม
+field แยก `expires_at` (= `timestamp` + 90 วัน) ไว้ให้ TTL policy อ่านโดยเฉพาะ แทนที่จะเอา `timestamp`
+(เวลาที่เข้าใช้งานจริงตาม Business Rule ที่ใช้แสดงผลด้วย) ไปทำ TTL ตรงๆ ซึ่งจะผิดความหมาย — ปรับ
+[[../02-design/02-technical/detailed-design|detailed-design.md]] § Sequence #7 จาก "retention job แบบ
+loop ตรวจสอบเป็นรอบ" (ออกแบบไว้ก่อนรู้ตัวเลือก stack) เป็น Firestore TTL policy ให้ตรงกับ implementation จริง
+
+**เพิ่ม `access-log.js`** — โมดูลเล็กๆ ที่ทุกหน้าใน `prototype-v2/` (ครบทั้ง 12 หน้า) เรียกตอนโหลด
+(`fetch(..., {keepalive:true})` ไม่รอผล ไม่บล็อก UI) ยิง action ที่ไม่มีก็ยัง log ได้ (ไม่ throw) —
+**ตัดสินใจว่าไม่ผูกกับ consent banner**: access log ตามพ.ร.บ. คอมพิวเตอร์เป็นข้อบังคับกฎหมายที่ทำกับ
+ทุกคนเสมอ (FR-1 ของสเปคไม่มีเงื่อนไขผูกกับ Consent) ต่างจาก Google Analytics/IP tracking เพื่อการตลาด
+ที่ต้องขอ Consent ก่อน (FR-2/3) จึงยิงทันทีไม่รอ banner ตอบก่อน — บันทึกการตีความนี้ไว้ให้ชัดเจนเผื่อ
+มีคนสงสัยภายหลังว่าทำไมไม่เช็ค consent ก่อน log
+
+**เพิ่มหน้าดู Access Log ให้อาจารย์** ใน `admin-review-student-work.html` (ไม่แยกหน้าใหม่ — ใช้
+pattern เดียวกับ Part 1 ที่รวมการอนุมัติทุกอย่างไว้จุดเดียว) แสดง 50 รายการล่าสุด (เวลา/action/uid/IP)
+เรียงตาม `timestamp` ล่าสุดก่อน ไม่ทำ pagination เพราะเป็นแค่มุมมองตรวจสอบเบื้องต้น ไม่ใช่เครื่องมือ
+audit เต็มรูปแบบ
+
+**ทดสอบผ่าน local `wrangler dev` จริง**:
+- ยิง `/log-access` โดยไม่มี token / token ปลอม / ไม่มี `action` — ตอบ `{ok:true}` เร็ว (~5ms) ทุกกรณี
+  ตามที่ตั้งใจ (ไม่เคยปฏิเสธ request นี้เลยไม่ว่ากรณีใด) ตรวจ log ฝั่ง server ยืนยันว่า background write
+  ถูกเรียกจริงและ error แบบ "ยังไม่ได้ตั้งค่า FIREBASE_SERVICE_ACCOUNT_JSON" ถูก catch ไว้ไม่หลุดไปหา client
+- **สร้าง service account ปลอมขึ้นมาทดสอบเฉพาะกิจ** (RSA keypair จริงด้วย `openssl`, ไม่ใช่ของจริงที่
+  ผูกกับ Google Cloud project ใดๆ) ใส่ใน `.dev.vars` ชั่วคราวแล้วลบทิ้งหลังทดสอบเสร็จ — ยิง request ซ้ำ
+  ได้ error `"Invalid grant: account not found"` จาก `oauth2.googleapis.com` ตรงๆ ซึ่ง**ยืนยันว่า JWT
+  ที่เซ็นเองด้วย Web Crypto ถูกต้องสมบูรณ์ทุกขั้นตอน** (encode/sign/ส่งไปหา Google สำเร็จ) มีแค่บัญชีที่
+  ไม่มีอยู่จริงเท่านั้นที่ทำให้ไม่ผ่าน — เป็นการทดสอบที่ใกล้เคียง end-to-end ที่สุดเท่าที่ทำได้โดยไม่มี
+  บัญชี Google Cloud จริง
+- ทดสอบผ่าน headless Chromium (Playwright ตรง เหมือน Part 2/3 เพราะ MCP ยังไม่กลับมา) ครบทั้ง 12 หน้า
+  ของ `prototype-v2/` หลังเพิ่ม `access-log.js`/`ai-assist-config.js` เข้าไป — **ไม่มี JS error เลยสักหน้า**
+- login อาจารย์จริงแล้วเช็คส่วน "Access Log" หน้าใหม่ — ขึ้น empty-state ที่ถูกต้อง (permission-denied
+  ตามคาด เพราะ `firestore.rules` ที่แก้ยังไม่ได้ deploy ในรอบนี้) ไม่มี JS error หลุดออกมา
+
+**อัปเดตเอกสาร**: [[../02-design/02-technical/architecture|architecture.md]] § Mapping (เพิ่ม
+`AccessLogs`), [[../01-requirements/03-task/product-backlog|product-backlog]] (BL-014 → เสร็จแล้ว),
+`cf-worker/README.md` (endpoint ใหม่, service account setup, TTL policy setup), `CLAUDE.md` (หัวข้อ
+"Access Log" ใหม่ + อัปเดต collection list), `spec.md`
+
+**สิ่งที่ผู้ใช้ต้องทำเองก่อนใช้งานจริงได้** (เหมือน Part 3 — ต้องใช้บัญชี Cloudflare/Firebase Console
+ของผู้ใช้เอง): `wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON` (ต่อจาก `OPENROUTER_API_KEY` เดิม
+ถ้ายังไม่ deploy Worker จาก Part 3) → `wrangler deploy` → ตั้งค่า Firestore TTL policy ผ่าน Firebase
+Console บน field `expires_at` ของ collection `AccessLogs` (ต้องมีเอกสารอย่างน้อย 1 ชิ้นก่อน Console
+ถึงจะเห็น collection — เข้าเว็บสักครั้งหลัง deploy) — ดูขั้นตอนเต็มที่ `cf-worker/README.md`
+
+**เหลือให้ผู้ประสานงานทำต่อ**: deploy `firestore.rules` ที่แก้ไว้ (เพิ่ม rule `AccessLogs`) — ยังไม่ได้
+deploy ในรอบนี้ (fork ตามกฎเดิมของ Part 1-3 คือแก้ไฟล์ไว้ให้ผู้ประสานงานรีวิว+deploy เอง)
+
+**Part 5/5 เสร็จสมบูรณ์ในส่วนที่ทำได้โดยไม่ต้อง deploy จริง — ครบทั้ง 5 ส่วนของแผน "สร้างระบบตาม
+spec.md ให้ครบ" แล้ว** (ชุมชน, นักท่องเที่ยว, AI backend, [ข้าม notification], Access Log) เหลือ
+ขั้นตอน deploy จริงที่ต้องทำโดยผู้ประสานงาน (`firestore.rules`) และผู้ใช้ (`wrangler` ทั้งหมด, ตั้งค่า
+TTL policy) ตามที่ระบุไว้ในแต่ละ Part

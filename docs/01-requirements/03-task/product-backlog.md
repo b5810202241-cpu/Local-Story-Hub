@@ -234,8 +234,8 @@
   - Given ผู้ใช้งานเข้าใช้งานเว็บไซต์/แอป When ระบบบันทึก log การเข้าใช้งาน Then log นั้นถูกเก็บรักษาไว้อย่างน้อย 90 วันก่อนจะถูกลบหรือหมุนออกได้
 - **Priority**: Must
 - **Source**: [[../01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]] (FR-1)
-- **Status**: ยังไม่เริ่ม
-- **หมายเหตุ**: ประเภทของ log ที่ต้องเก็บ (IP, User-Agent, timestamp ฯลฯ) และผู้มีสิทธิ์เข้าถึงยังเป็น Open Question ในสเปคต้นทาง
+- **Status**: เสร็จแล้ว *(อัปเดต 2026-09-23)*
+- **หมายเหตุ**: ปิด Open Question เรื่อง field/สิทธิ์เข้าถึงแล้วตั้งแต่ 2026-09-22 (ดู Business Rules ใน spec ต้นทาง) — implement จริงแล้วผ่าน Cloudflare Worker (`cf-worker/src/index.js` § `/log-access`) เขียนด้วยสิทธิ์ service account (bypass firestore.rules เพราะต้อง log ได้แม้ไม่ login), เก็บ 90 วันด้วย **Firestore TTL policy** (ไม่ใช่ scheduled function — ใช้ได้บนแผนฟรี Spark) อ่านได้เฉพาะ role=teacher (Data Controller) มีหน้าดูสั้นๆ ให้อาจารย์ที่ `admin-review-student-work.html` § Access Log — **ยังไม่ได้ deploy Worker จริงและยังไม่ได้ตั้งค่า TTL policy ผ่าน Firebase Console** (ผู้ใช้ต้องทำเอง ดู `cf-worker/README.md`)
 
 ### BL-015: แสดง Consent Notice ก่อนเก็บข้อมูลผ่าน Tracking Tools
 - **Epic**: การปฏิบัติตามกฎหมาย IT และ PDPA

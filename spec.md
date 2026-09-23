@@ -2,7 +2,7 @@
 
 > เอกสารนี้เป็น **สรุปภาพรวม** ที่ประมวลจากเอกสารที่มีอยู่แล้วในโปรเจกต์ (ไม่มีไฟล์ชื่อ `SCOPE.md` ในโปรเจกต์นี้โดยตรง — เนื้อหา "ขอบเขต (Scope)" อยู่ในไฟล์ `docs/01-requirements/01-spec/local-story-hub.md` แทน) และจากซอร์สโค้ด prototype จริงใน `docs/02-design/01-prototypes/` รวมถึง `docs/02-design/02-technical/architecture.md`, `ACL.md`, และ `CLAUDE.md`
 >
-> วันที่สรุป: 2026-09-22 (อัปเดตส่วนชุมชน + แก้ไขหัวข้อ Open Questions ที่ล้าหลัง + อัปเดตส่วนนักท่องเที่ยว + อัปเดต AI backend proxy 2026-09-23) — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
+> วันที่สรุป: 2026-09-22 (อัปเดตส่วนชุมชน + แก้ไขหัวข้อ Open Questions ที่ล้าหลัง + อัปเดตส่วนนักท่องเที่ยว + อัปเดต AI backend proxy + อัปเดต Access Log/BL-014 2026-09-23) — ตัวเอกสารต้นทางบางไฟล์อาจอัปเดตหลังจากนี้ ให้ใช้ไฟล์ต้นทางเป็น source of truth เสมอ
 
 ---
 
@@ -63,6 +63,7 @@
 | `LSHRequests` | ผลงานที่นิสิตส่ง (`title`, `Content`, `status`, `requesterId/Name`, `approverId/Name`, `community`, `rejectionReason`, `aiAssisted`, `aiSuggestionText`, `createdAt`) — คือ `StudentWork` เชิงแนวคิด แต่คนละชื่อ field/ภาษา |
 | `AiSummaries` | ผลสรุปภาพรวมจาก AI ที่อาจารย์ใช้ดูก่อนตรวจงาน (เพิ่ม 2026-09-19) |
 | `AiAssistLogs` | log ทุกครั้งที่มีการเรียกใช้ AI ช่วยงาน — **อัปเดต 2026-09-23**: เดิมเขียนได้เฉพาะนิสิต/อาจารย์ ตอนนี้เปิดให้ role ที่ login แล้วทุกแบบ (ชุมชน/นักท่องเที่ยวด้วย) เพราะปุ่ม AI ขยายไปทั้งสองฝั่งแล้ว — เขียนจาก Cloudflare Worker ผ่าน Firestore REST API แทนที่ client เขียนเองโดยตรง |
+| `AccessLogs` *(เพิ่ม 2026-09-23, BL-014)* | Access Log ตามพ.ร.บ. คอมพิวเตอร์ (`timestamp`, `ip_address`, `user_agent`, `user_account_id` — null ได้, `action`, `expires_at` สำหรับ TTL policy) — เขียนจาก Cloudflare Worker ด้วย **service account** (bypass `firestore.rules`) เพราะต้อง log ได้แม้ไม่ login เลย อ่านได้เฉพาะ role=`teacher` เก็บ 90 วันด้วย Firestore TTL policy |
 
 ⚠️ **ไม่ตรงกัน 1:1** — เช่น role อาจารย์จริงคือ `teacher` (ไม่ใช่ `admin` แบบ conceptual), field ชื่อคนละภาษา/คนละ convention (denormalized vs reference) ดูตาราง mapping เต็มได้ที่ `architecture.md` § "Mapping กับข้อมูลจริงใน Firestore"
 
@@ -92,10 +93,10 @@
 - **AI ปรับภาพให้สวย** (FR-1.1, BL-001) — ยังไม่ implement เพราะไม่มีระบบอัปโหลดภาพจริงเลย (คนละสโคปจาก AI backend proxy)
 - **วางแผนเส้นทาง/หมุดหมายเดินทางแบบมีพิกัดจริง** (FR-2.3, BL-010) — ยังไม่มี field ตำแหน่งในสคีมา `LSHRequests`/`CommunityContent` เลย ตอนนี้ลิงก์ไป Google Maps ค้นหาด้วยชื่อชุมชนแทนไปพลางก่อน
 - **Notification Service ส่งอีเมลจริง** — ปัจจุบันจำลองด้วยแบนเนอร์แจ้งเตือนในหน้าอาจารย์เท่านั้น ยังไม่มีบริการส่งอีเมลจริง (ตัดสินใจข้ามไปก่อนตามที่ผู้ใช้ยืนยัน)
-- **Access Log เก็บ 90 วันแบบอัตโนมัติ** (BL-014) — ยังไม่ implement เป็นโค้ดจริง มีแค่ระบุไว้ใน spec/architecture (แผนคือใช้ Firestore TTL policy — ไม่ต้องพึ่ง Cloud Functions/Blaze — สโคป Part 5)
 
 ### 4.2 สิ่งที่ทำแบบจำกัด/ชั่วคราวเท่านั้น
 - **AI backend proxy (Cloudflare Worker) สร้างเสร็จแล้วแต่ยังไม่ deploy จริง** (2026-09-23) — ปุ่ม AI ที่เหลือทั้งหมด (คิดแคปชัน/แนะนำวิธีเล่าเรื่อง/SEO/แปลภาษา/ช่วยร่างคำอธิบายผลงานนิสิต/สรุปภาพรวมงานของอาจารย์) เรียกผ่าน `cf-worker/` แล้ว ไม่เรียก OpenRouter ตรงจาก browser อีกต่อไป (key อยู่เป็น Cloudflare secret เท่านั้น) — **แต่ผู้ใช้ต้อง `wrangler login` + `wrangler secret put` + `wrangler deploy` เองก่อน** (ดู `cf-worker/README.md`) ก่อนหน้านั้นทุกปุ่มจะแสดง "AI backend ยังไม่พร้อมใช้งาน" เสมอ
+- **Access Log เก็บ 90 วันแบบอัตโนมัติ (BL-014) เขียนโค้ดเสร็จแล้วแต่ยังไม่ deploy จริง** (2026-09-23) — ทุกหน้ายิง log ผ่าน `cf-worker/` endpoint `/log-access` แล้ว (ด้วยสิทธิ์ service account เพื่อ log ได้แม้ไม่ login) เก็บ 90 วันด้วย Firestore TTL policy (ไม่ใช่ Cloud Functions) — **ต้อง deploy Worker + ตั้งค่า secret `FIREBASE_SERVICE_ACCOUNT_JSON` + ตั้งค่า TTL policy ผ่าน Firebase Console เอง** (ดู `cf-worker/README.md`) ก่อนหน้านั้น log จะไม่ถูกบันทึกจริง (เขียนล้มเหลวเงียบๆ ไม่กระทบผู้ใช้)
 - **ระบบ login เป็นบัญชีสาธิต (demo)** — 4 บัญชีทดสอบ (u001-u004) ใช้รหัสผ่านเดียวกันทุกบัญชี **ยังไม่ได้ลบทิ้งก่อนขึ้นระบบจริง**
 - **บัญชีอาจารย์ยัง provision โดย admin เท่านั้น** ไม่มีระบบสมัคร/อนุมัติบัญชีอาจารย์แบบเดียวกับนิสิต
 

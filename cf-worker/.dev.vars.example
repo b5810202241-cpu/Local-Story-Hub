@@ -1,3 +1,12 @@
 # Copy this file to ".dev.vars" (gitignored, never commit) for local `wrangler dev` testing.
 # Get a real key at https://openrouter.ai/keys
 OPENROUTER_API_KEY=sk-or-v1-YOUR_REAL_KEY_HERE
+
+# Service account for the /log-access endpoint (BL-014 — Access Log). Download a NEW key
+# (Firebase Console → Project Settings → Service Accounts → Generate new private key — same
+# place LSH/serviceAccountKey.json came from) and paste the ENTIRE JSON file contents as ONE
+# line here. This account only needs the "Cloud Datastore User" IAM role (least privilege —
+# do not reuse a broader-permission key). This bypasses firestore.rules entirely (privileged
+# server access, same mechanism firebase-admin uses), which is why AccessLogs.create is
+# `allow create: if false` for normal clients — only this Worker can write to it.
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"lsh-nammon","private_key":"-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n","client_email":"YOUR_SERVICE_ACCOUNT@lsh-nammon.iam.gserviceaccount.com"}

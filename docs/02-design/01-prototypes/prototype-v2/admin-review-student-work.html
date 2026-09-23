@@ -142,6 +142,16 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
       <tbody id="edits-reviewed-body"></tbody>
     </table>
     <div class="empty-state" id="edits-reviewed-empty" style="display:none;">ยังไม่มีประวัติคำขอแก้ไขที่พิจารณาแล้ว</div>
+
+    <h2>Access Log (BL-014)</h2>
+    <p class="hint" style="margin:0 0 var(--space-md)">บันทึกการเข้าใช้งานระบบตามพ.ร.บ. คอมพิวเตอร์ — เข้าถึงได้เฉพาะ Data Controller (อาจารย์ที่ปรึกษาโครงการ) เท่านั้น (ดู <code>firestore.rules</code>) เก็บไว้อย่างน้อย 90 วันแล้วลบอัตโนมัติด้วย Firestore TTL policy — แสดง 50 รายการล่าสุด</p>
+    <table>
+      <thead>
+        <tr><th>เวลา</th><th>Action</th><th>ผู้ใช้ (uid)</th><th>IP Address</th></tr>
+      </thead>
+      <tbody id="access-log-body"></tbody>
+    </table>
+    <div class="empty-state" id="access-log-empty" style="display:none;">ยังไม่มี Access Log (Worker ยังไม่ได้ deploy หรือยังไม่มีคนเข้าเว็บหลัง deploy)</div>
   </div>
 </main>
 
@@ -149,7 +159,7 @@ input[type=email], input[type=password]{width:100%;border:1px solid var(--color-
 <script src="ai-assist-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const app = initializeApp(window.LSH_FIREBASE_CONFIG);
@@ -160,6 +170,7 @@ let currentProfile = null;
 let unsubscribeSnapshot = null;
 let unsubscribeAccounts = null;
 let unsubscribeEdits = null;
+let unsubscribeAccessLog = null;
 let latestPendingWorks = [];
 let latestPendingEdits = [];
 
@@ -233,6 +244,7 @@ onAuthStateChanged(auth, async function(user){
   if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   if(unsubscribeAccounts){ unsubscribeAccounts(); unsubscribeAccounts = null; }
   if(unsubscribeEdits){ unsubscribeEdits(); unsubscribeEdits = null; }
+  if(unsubscribeAccessLog){ unsubscribeAccessLog(); unsubscribeAccessLog = null; }
 
   if(!user){
     currentProfile = null;
@@ -266,6 +278,7 @@ onAuthStateChanged(auth, async function(user){
     startListening();
     startListeningAccounts();
     startListeningEdits();
+    startListeningAccessLog();
   }else{
     document.getElementById('deny-view').hidden = false;
   }
@@ -443,6 +456,35 @@ function renderEditsReviewed(edits){
     const cls = r.status === 'อนุมัติ' ? 'approved' : 'rejected';
     return '<tr><td>' + escapeHtml(r.contentTitle) + '</td><td>' + escapeHtml(r.communityName) + '</td><td><span class="status ' + cls + '">' + escapeHtml(r.status) + '</span></td><td>' + (r.status === 'ไม่อนุมัติ' ? escapeHtml(r.rejectionReason) : '—') + '</td></tr>';
   }).join('');
+}
+
+function formatLogTimestamp(ts){
+  if(!ts || typeof ts.toDate !== 'function') return '—';
+  return ts.toDate().toLocaleString('th-TH');
+}
+
+function renderAccessLog(logs){
+  const tbody = document.getElementById('access-log-body');
+  const emptyEl = document.getElementById('access-log-empty');
+  if(logs.length === 0){ tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  tbody.innerHTML = logs.map(function(l){
+    return '<tr><td>' + formatLogTimestamp(l.timestamp) + '</td><td>' + escapeHtml(l.action) + '</td><td>' + escapeHtml(l.user_account_id || 'ไม่ login') + '</td><td>' + escapeHtml(l.ip_address) + '</td></tr>';
+  }).join('');
+}
+
+// BL-014 — เข้าถึงได้เฉพาะ role=teacher (Data Controller) เท่านั้น ตรงกับ firestore.rules
+// (AccessLogs.read: if getRole() == 'teacher') — แสดง 50 รายการล่าสุด ไม่ต้องแบ่งหน้าเพราะเป็นแค่
+// มุมมองตรวจสอบเบื้องต้น ไม่ใช่เครื่องมือ audit เต็มรูปแบบ
+function startListeningAccessLog(){
+  const q = query(collection(db, 'AccessLogs'), orderBy('timestamp', 'desc'), limit(50));
+  unsubscribeAccessLog = onSnapshot(q, function(snapshot){
+    const logs = [];
+    snapshot.forEach(function(docSnap){ logs.push(docSnap.data()); });
+    renderAccessLog(logs);
+  }, function(err){
+    console.error('อ่าน Access Log ไม่สำเร็จ', err);
+  });
 }
 
 function startListeningEdits(){
@@ -676,6 +718,7 @@ window.aiSummarizePending = async function(){
   }
 };
 </script>
+<script type="module" src="access-log.js"></script>
 
 </body>
 </html>

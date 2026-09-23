@@ -149,30 +149,32 @@ sequenceDiagram
 
 **อ้างอิง**: student-content-journey step 1–5 · FR-3.1, BL-018 · API: "อัปโหลดผลงาน + ส่งขออนุมัติ", "ดูรายการผลงานรออนุมัติ", "อนุมัติผลงาน", "ไม่อนุมัติผลงาน" ([[architecture|architecture]]) · จำนวนครั้งที่ส่งใหม่ได้ปิด Open Question แล้ว 2026-09-22 (ไม่จำกัดครั้ง) · **ปิดคำถามเพิ่มเติม 2026-09-23**: ไม่มี operation ให้นิสิตแก้ไข/ลบผลงานขณะสถานะ pending_approval โดยเจตนา (ต้องรอผลอนุมัติ/ไม่อนุมัติก่อนเสมอ) และไม่มี operation ให้อาจารย์แก้ไขเนื้อหาแทนนิสิต (ทำได้แค่อนุมัติ/ไม่อนุมัติ) — ดู [[ACL|ACL]]
 
-### 7. บันทึก Access Log อัตโนมัติ + นโยบายเก็บรักษา 90 วัน (เพิ่ม 2026-09-22)
+### 7. บันทึก Access Log อัตโนมัติ + นโยบายเก็บรักษา 90 วัน (เพิ่ม 2026-09-22, implement จริง + ปรับ retention job → Firestore TTL 2026-09-23)
 
 > เพิ่มเพื่อปิดช่องว่างที่พบใน [[../../03-testing/01-test-plan/test-plan|test-plan]] § "Backlog ที่ยังไม่มี Test Case" — เดิม Sequence #2 มีแค่ note บรรทัดเดียวว่าทุกคำขอถูกบันทึกลง AccessLog โดยไม่เคยออกแบบ retention/การลบเมื่อเกิน 90 วันเลยในเอกสารใดของโปรเจกต์
 
 ```mermaid
 sequenceDiagram
   participant Client
-  participant API
-  participant ConsentLog as Consent & Log Service
-  participant DB as Database
+  participant Worker as Cloudflare Worker (cf-worker)
+  participant DB as Firestore (AccessLogs)
 
-  Client->>API: คำขอใดๆ ก็ตาม (ทุก request ที่เข้ามาในระบบ)
-  API->>ConsentLog: ส่งข้อมูลคำขอ (timestamp, ip_address, user_account_id ถ้ามี, action)
-  ConsentLog->>DB: บันทึก AccessLog
-  API-->>Client: ดำเนินการตามคำขอตามปกติ (ไม่รอผลการบันทึก log — fire-and-forget เหมือน pattern ที่ AiAssistLogs ใช้จริงใน prototype-v2)
+  Client->>Worker: POST /log-access ทุกครั้งที่โหลดหน้า (ไม่ว่า login หรือไม่)
+  Worker->>Worker: อ่าน IP จริง (CF-Connecting-IP)/User-Agent จาก request เอง<br/>verify ID token ถ้าแนบมา (ไม่บังคับ)
+  Worker->>DB: บันทึก AccessLog ด้วยสิทธิ์ service account (bypass firestore.rules)<br/>ทับ timestamp/ip_address/user_agent/user_account_id/action + expires_at
+  Worker-->>Client: { ok: true } ทันที (ไม่รอผลเขียนจริง — fire-and-forget ผ่าน ctx.waitUntil() เหมือน AiAssistLogs)
 
-  loop รอบตรวจสอบตามระยะเวลาที่กำหนด (ความถี่จริงเป็นเรื่อง technical stack — เช่น รายวัน)
-    ConsentLog->>DB: ค้นหา AccessLog ที่มี timestamp เก่ากว่า 90 วัน
-    DB-->>ConsentLog: รายการที่เกินกำหนดเก็บรักษาขั้นต่ำ
-    ConsentLog->>DB: ลบ หรือ หมุนเวียน (archive) ออกจากระบบใช้งานจริง
-  end
+  Note over DB: Firestore TTL policy (ตั้งค่าครั้งเดียวผ่าน Console บน field `expires_at`)<br/>ลบเอกสารอัตโนมัติเมื่อพ้นกำหนด — ไม่ต้องเขียน retention job/scheduled function เอง
 ```
 
-**อ้างอิง**: BL-014 ([[../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]]) · API: "บันทึก access log" ([[architecture|architecture]]) · เป็นพฤติกรรม backend ล้วน ไม่มี step ใน User Journey ใดโดยตรง (เกิดกับทุกคำขอโดยอัตโนมัติ ไม่ใช่การกระทำที่ผู้ใช้ริเริ่มเอง) — field ที่ต้องเก็บและผู้มีสิทธิ์เข้าถึงปิด Open Question แล้ว 2026-09-22 (ครบ `user_agent`, เข้าถึงได้เฉพาะ Data Controller — ดู architecture.md § AccessLog) ส่วนความถี่ของ retention job ยังเป็นรายละเอียด technical stack ที่ยังไม่ต้องตัดสินใจตอนนี้
+**เปลี่ยนจากแผนเดิม**: ตอนออกแบบครั้งแรก (2026-09-22) ยังไม่รู้ตัวเลือก technical stack เลยวาด loop
+"retention job" ตรวจ/ลบเป็นรอบๆ ไว้แบบ generic — พอถึงตอน implement จริง (2026-09-23, Part 5) พบว่า
+Firestore มีฟีเจอร์ TTL (Time-to-Live) ในตัวที่ทำงานแบบเดียวกันได้เลยโดยไม่ต้องเขียน scheduled
+function เอง (และใช้ได้บนแผนฟรี Spark ไม่ต้องอัปเกรด Blaze) จึงตัดขั้นตอน "loop ตรวจสอบตามระยะเวลา"
+ออกทั้งหมด แทนที่ด้วย TTL policy ของ Firestore เอง — รายละเอียดวิธีตั้งค่าอยู่ที่
+`cf-worker/README.md` § "ตั้งค่า Firestore TTL policy"
+
+**อ้างอิง**: BL-014 ([[../../01-requirements/01-spec/20260822-01-it-log-pdpa-consent|20260822-01-it-log-pdpa-consent]]) · API: "บันทึก access log" ([[architecture|architecture]]) · เป็นพฤติกรรม backend ล้วน ไม่มี step ใน User Journey ใดโดยตรง (เกิดกับทุกคำขอโดยอัตโนมัติ ไม่ใช่การกระทำที่ผู้ใช้ริเริ่มเอง) — field ที่ต้องเก็บและผู้มีสิทธิ์เข้าถึงปิด Open Question แล้ว 2026-09-22 (ครบ `user_agent`, เข้าถึงได้เฉพาะ Data Controller — ดู architecture.md § AccessLog) — implement จริงแล้ว 2026-09-23 ที่ `cf-worker/src/index.js` (`/log-access`) + หน้าดู log สั้นๆ ให้อาจารย์ที่ `admin-review-student-work.html` § Access Log
 
 ### 8. สมัคร/อนุมัติบัญชีชุมชนใหม่ (BL-022)
 

@@ -86,6 +86,123 @@ async function getFirestoreUserRole(idToken, projectId, uid) {
   return roleField ? (roleField.stringValue || null) : null;
 }
 
+// ---- Privileged Firestore access via a Google service account (BL-014 — /log-access only) ----
+//
+// Every other endpoint here writes Firestore using the CALLER's own Firebase ID token, so
+// firestore.rules still governs what gets written (least privilege). Access Log entries break
+// that pattern: they must be recorded even for anonymous/guest page views that carry no ID
+// token at all. Instead of loosening firestore.rules to allow open writes (which anyone could
+// then hit directly, not just this Worker), AccessLogs.create is `if false` for normal clients,
+// and only this privileged path — a service account exchanged for an OAuth2 access token via
+// the JWT-bearer flow — can write it. This bypasses firestore.rules entirely, the same way
+// `firebase-admin` already does for `LSH/scripts/seed-firestore.js`. The service account key
+// must be scoped to the "Cloud Datastore User" IAM role only (least privilege), stored as the
+// Worker secret FIREBASE_SERVICE_ACCOUNT_JSON — never in git, never sent to the browser.
+
+let saTokenCache = null; // { token, expiresAt }
+
+function pemToPkcs8ArrayBuffer(pem) {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s+/g, '');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function base64UrlEncode(input) {
+  let bin;
+  if (typeof input === 'string') {
+    bin = btoa(unescape(encodeURIComponent(input)));
+  } else {
+    const bytes = new Uint8Array(input);
+    bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    bin = btoa(bin);
+  }
+  return bin.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function getServiceAccountAccessToken(env) {
+  if (saTokenCache && saTokenCache.expiresAt > Date.now() + 60000) return saTokenCache.token;
+  if (!env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    throw new Error('ยังไม่ได้ตั้งค่า FIREBASE_SERVICE_ACCOUNT_JSON (ดู cf-worker/README.md)');
+  }
+
+  let sa;
+  try {
+    sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  } catch (e) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON ไม่ใช่ JSON ที่ถูกต้อง');
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const claims = {
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/datastore',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: nowSec,
+    exp: nowSec + 3600,
+  };
+  const unsigned = base64UrlEncode(JSON.stringify(header)) + '.' + base64UrlEncode(JSON.stringify(claims));
+
+  const key = await crypto.subtle.importKey(
+    'pkcs8', pemToPkcs8ArrayBuffer(sa.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']
+  );
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  const assertion = unsigned + '.' + base64UrlEncode(signature);
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + assertion,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error('ขอ access token จาก Google ไม่สำเร็จ: ' + (data.error_description || data.error || res.status));
+  }
+
+  saTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000 };
+  return data.access_token;
+}
+
+const RETENTION_DAYS = 90;
+
+// เขียน Firestore ตรงตาม field ที่ Business Rule กำหนดไว้ (20260822-01-it-log-pdpa-consent.md):
+// timestamp, ip_address, user_agent, user_account_id (null ได้), action — บวก `expires_at` ที่ไม่ใช่
+// field ตาม Business Rule แต่เป็น field โครงสร้างพื้นฐานล้วนๆ สำหรับ Firestore TTL policy โดยเฉพาะ:
+// TTL ของ Firestore ลบตาม "เวลาที่ระบุใน field นั้นตรงๆ" (ต้องเป็นเวลาหมดอายุจริง ไม่ใช่ระยะห่าง)
+// จึงแยกจาก `timestamp` (เวลาที่เกิดการเข้าใช้งานจริง ใช้แสดงผลในหน้า Access Log ของอาจารย์) ไว้คนละ
+// field เพื่อไม่ให้ความหมายของ `timestamp` ปนกับกลไกลบอัตโนมัติ — ดูขั้นตอนตั้งค่า TTL policy จริงที่
+// cf-worker/README.md
+async function writeAccessLog(env, { ip, userAgent, action, uid }) {
+  const accessToken = await getServiceAccountAccessToken(env);
+  const url = 'https://firestore.googleapis.com/v1/projects/' + env.FIREBASE_PROJECT_ID
+    + '/databases/(default)/documents/AccessLogs';
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const fields = {
+    timestamp: { timestampValue: now.toISOString() },
+    ip_address: { stringValue: ip || 'unknown' },
+    user_agent: { stringValue: (userAgent || 'unknown').slice(0, 500) },
+    action: { stringValue: (action || 'unknown').toString().slice(0, 200) },
+    user_account_id: uid ? { stringValue: uid } : { nullValue: null },
+    expires_at: { timestampValue: expiresAt.toISOString() },
+  };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error('เขียน AccessLogs ไม่สำเร็จ (HTTP ' + res.status + '): ' + text.slice(0, 300));
+  }
+}
+
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGINS || 'https://lsh-nammon.web.app')
     .split(',').map((s) => s.trim());
@@ -245,6 +362,39 @@ export default {
     if (request.method !== 'POST') return json({ ok: false, error: 'method not allowed' }, 405, cors);
 
     const url = new URL(request.url);
+
+    // BL-014 — Access Log: fired on every page load, logged-in or not, so it lives outside the
+    // /ai/ ID-token-required routing below. Client never sends ip/user_account_id itself (both
+    // are forgeable) — the Worker reads the real IP off Cloudflare's own header and verifies any
+    // token that IS present before trusting a uid.
+    if (url.pathname === '/log-access') {
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const userAgent = request.headers.get('User-Agent') || 'unknown';
+
+      let payload = {};
+      try { payload = await request.json(); } catch (e) { /* action optional — still log the hit */ }
+
+      const authHeader = request.headers.get('Authorization') || '';
+      const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      let uid = null;
+      if (idToken) {
+        try {
+          uid = (await verifyFirebaseIdToken(idToken, env.FIREBASE_PROJECT_ID)).uid;
+        } catch (e) {
+          uid = null; // โทเคนหมดอายุ/ไม่ถูกต้อง — ยัง log ต่อแบบ anonymous แทนที่จะปฏิเสธทั้ง request
+        }
+      }
+
+      // ตอบกลับให้เร็วที่สุดโดยไม่รอผลเขียนจริง (เหมือน pattern ของ AiAssistLogs) — ใช้
+      // ctx.waitUntil() เสมอ ไม่งั้น Cloudflare Workers จะฆ่า promise นี้ทิ้งทันทีที่ตอบกลับไปแล้ว
+      ctx.waitUntil(
+        writeAccessLog(env, { ip, userAgent, action: payload.action, uid }).catch((e) => {
+          console.error('writeAccessLog failed', e);
+        })
+      );
+      return json({ ok: true }, 200, cors);
+    }
+
     const action = url.pathname.replace(/^\/ai\//, '');
     const spec = ACTIONS[action];
     if (!spec) return json({ ok: false, error: 'ไม่รู้จัก action นี้: ' + action }, 404, cors);

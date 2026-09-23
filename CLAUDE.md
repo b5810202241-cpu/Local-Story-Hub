@@ -32,6 +32,7 @@ npm run seed   # รัน scripts/seed-firestore.js
 - **`Bookmarks`** *(เพิ่ม 2026-09-23)* — สถานที่โปรด: doc id = `{touristId}_{contentType}_{contentId}` (deterministic เพื่อ toggle ได้โดยไม่ต้อง query), field: `touristId`, `contentId`, `contentType`, `contentTitle`, `createdAt` — อ่าน/ลบได้เฉพาะเจ้าของเท่านั้น
 - **`ConsentRecords`** *(เพิ่ม 2026-09-22/23)* — หลักฐานการยินยอม PDPA: `user_account_id` (null ได้ถ้ายังไม่ login), `analytics_consent`/`marketing_consent` (เท่ากันเสมอ — single-toggle consent), `timestamp` — เขียนได้แม้ไม่ login (Consent เกิดขึ้นได้ก่อน login), ไม่มี operation อ่านคืน (`allow read: if false`)
 - **`AiAssistLogs`** — log ทุกครั้งที่เรียกใช้ AI: `action`, `requesterId`, `success`, `resultText`, `errorMessage`, `model`, `createdAt` *(เพิ่ม 2026-09-23)* — เดิมเขียนได้เฉพาะนิสิต/อาจารย์ ตอนนี้เปิดให้ทุก role ที่ login แล้ว (ชุมชน/นักท่องเที่ยวด้วย) เพราะปุ่ม AI ขยายไปทั้งสองฝั่งแล้ว (ดูหัวข้อ "AI Backend Proxy" ด้านล่าง) — เขียนจาก Cloudflare Worker ผ่าน Firestore REST API โดยใช้ ID token ของผู้เรียกเอง ไม่ใช่ client เขียนตรงอีกต่อไป
+- **`AccessLogs`** *(เพิ่ม 2026-09-23, BL-014)* — บันทึกการเข้าใช้งานตามพ.ร.บ. คอมพิวเตอร์: `timestamp`, `ip_address`, `user_agent`, `user_account_id` (null ได้ — ผู้เข้าชมไม่ login), `action`, บวก `expires_at` (= `timestamp` + 90 วัน, ไว้ให้ Firestore TTL policy อ่านเท่านั้น ไม่ใช่ field ตาม Business Rule) — เขียนจาก Cloudflare Worker (`/log-access`) ด้วย **service account** (bypass `firestore.rules` เพราะต้อง log ได้แม้ผู้เข้าชมไม่มี ID token เลย) อ่านได้เฉพาะ role=`teacher` (Data Controller) ดูหัวข้อ "Access Log" ด้านล่าง
 - **`ContentTypes`** — field: `name` (ตัวอย่าง: VOD, album photo, Storytelling)
 - **`LSHRequests`** — field: `title`, `Content`, `status`, `requesterId`, `requesterName`, `approverId`, `approverName`, `LSHTypeId`, `LSHTypeName`, `createdAt`
   - **`status` มี 3 ค่าเท่านั้น**: `รอพิจารณา` (pending) / `อนุมัติ` (approved) / `ไม่อนุมัติ` (rejected)
@@ -104,6 +105,37 @@ npx wrangler deploy
 หลัง deploy จะได้ URL รูปแบบ `https://lsh-ai-proxy.<subdomain>.workers.dev` — เอาไปตั้งใน
 `docs/02-design/01-prototypes/prototype-v2/ai-assist-config.js` (แทนที่ placeholder) แล้ว
 `firebase deploy --only hosting` ใหม่อีกครั้ง
+
+## Access Log — BL-014 (เพิ่ม 2026-09-23)
+
+Worker เดียวกับ AI Backend Proxy ด้านบน (`cf-worker/`) รับผิดชอบ endpoint เพิ่ม `POST /log-access`
+ด้วย — ทุกหน้าใน `prototype-v2/` ยิง request นี้แบบ fire-and-forget ตอนโหลดหน้า (ผ่าน
+`access-log.js`, `fetch(..., {keepalive:true})`) ไม่ว่าผู้เข้าชมจะ login หรือไม่ก็ตาม (พ.ร.บ.
+คอมพิวเตอร์บังคับเก็บ log ของทุกคน ไม่ใช่แค่คนที่ login)
+
+**ต่างจาก endpoint `/ai/*`**: `/log-access` **ไม่บังคับต้องมี Firebase ID token** (แนบมาได้แต่ไม่
+บังคับ) และ**เขียน Firestore ด้วยสิทธิ์ service account แทน ID token ของผู้เรียก** — เพราะผู้เข้าชม
+อาจไม่มี token เลย การจะให้ log สำเร็จได้ต้องมีสิทธิ์ที่ไม่ผูกกับ auth ของผู้ใช้ปลายทาง วิธีนี้
+**บายพาส `firestore.rules` ไปเลย** เหมือนที่ `firebase-admin`/`LSH/scripts/seed-firestore.js` ใช้
+อยู่แล้ว — `firestore.rules` จึงปิด `AccessLogs.create` ไว้ที่ `if false` สำหรับ client ปกติ (กันไม่
+ให้ใครเขียนตรงได้นอกจาก Worker นี้), เปิด `read` เฉพาะ role=`teacher` (Data Controller ตาม Business
+Rule ที่ปิดแล้วใน `20260822-01-it-log-pdpa-consent.md`) — ดูหน้าดู log สั้นๆ ให้อาจารย์ที่
+`admin-review-student-work.html` § "Access Log"
+
+**เก็บ 90 วันด้วย Firestore TTL policy** (ไม่ใช่ scheduled function) — ใช้ได้บนแผนฟรี Spark โดยตรง
+ไม่ต้องอัปเกรด Blaze เขียน field แยก `expires_at` (= `timestamp` + 90 วัน) ไว้ให้ TTL policy อ่าน
+โดยเฉพาะ (ไม่ปนกับ `timestamp` ที่เป็นเวลาเข้าใช้งานจริงตาม Business Rule) — รายละเอียดวิธีตั้งค่า
+เต็มอยู่ที่ `cf-worker/README.md` § "ตั้งค่า Firestore TTL policy"
+
+**ต้องมี secret เพิ่ม 1 ตัวสำหรับ endpoint นี้โดยเฉพาะ**: `FIREBASE_SERVICE_ACCOUNT_JSON` (คนละตัว
+กับ `LSH/serviceAccountKey.json` เดิม — แนะนำสร้างใหม่จำกัดสิทธิ์แค่ "Cloud Datastore User") ดู
+ขั้นตอนเต็มที่ `cf-worker/README.md`
+
+**สถานะ ณ 2026-09-23**: โค้ด Worker + ฝั่ง client (`access-log.js`, หน้าดู log ของอาจารย์) เสร็จหมด
+แล้ว ทดสอบ routing/auth-optional/JWT-signing ผ่าน local `wrangler dev` ครบ (verify ด้วย service
+account จริงที่สร้างขึ้นมาทดสอบเฉพาะกิจ ยืนยันว่า flow เซ็น JWT + แลก access token ถูกต้อง — error
+ที่ได้คือ "account not found" จาก Google ตามคาด เพราะ service account นั้นไม่มีอยู่จริง) **แต่ยังไม่ได้
+deploy Worker จริงและยังไม่ได้ตั้งค่า TTL policy** — ผู้ใช้ต้องทำเองตามขั้นตอนใน `cf-worker/README.md`
 
 ## Requirement intake → Spec → Product Backlog workflow
 
