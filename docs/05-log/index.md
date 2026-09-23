@@ -14,6 +14,10 @@
 
 ## บันทึก
 
+### 2026-09-23 — Retest BL-013 dropdown ชุมชนจริงด้วยบัญชีนิสิตจริง (ปิดสนิท)
+
+ต่อจากรอบก่อนหน้าที่ deploy `firestore.rules` ขึ้น production แล้วแต่ยังไม่มี credential ทดสอบ — รอบนี้ login จริงด้วยบัญชี `u001@example.com` (student, สถานะอนุมัติแล้ว) ผ่าน `student-publish.html` บน production แล้ว reload หน้าใหม่ทั้งหมด (ไม่ใช่แค่ cache เดิม) ยืนยันว่า dropdown "เลือกชุมชนที่เกี่ยวข้อง" ดึงรายชื่อชุมชนจริงจาก `users` (`role: 'community'`, `status: 'อนุมัติแล้ว'`) ได้ปกติ ไม่พบ `Missing or insufficient permissions.` หรือ console error ใดๆ — ปิด [[../01-requirements/03-task/product-backlog|BL-013]] เป็น "เสร็จแล้ว" เต็มรูปแบบ
+
 ### 2026-09-23 — ผลทดสอบ TC-001 ถึง TC-008 (นักท่องเที่ยว)
 
 QA agent ทดสอบผ่านเบราว์เซอร์จริง (Playwright MCP) กับเว็บ production (`https://lsh-nammon.web.app/`) เฉพาะขอบเขต TC-001–TC-008 (หมวดนักท่องเที่ยว) ใน [[../03-testing/01-test-plan/test-plan|test-plan]] — ผลลัพธ์: **ผ่าน 6, บล็อก 2, ไม่พบ TC ที่ไม่ผ่านโดยตรง** (TC-003 บล็อกเพราะ consent banner ตอบได้ครั้งเดียวต่อเบราว์เซอร์ ไม่มีเครื่องมือเคลียร์ storage ให้ใช้โดยไม่ผิดกฎ QA, TC-005 บล็อกตามข้อจำกัดที่ทราบอยู่แล้วคือ Cloudflare Worker ยังไม่ deploy)
