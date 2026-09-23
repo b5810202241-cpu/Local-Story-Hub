@@ -616,3 +616,22 @@ Open Question ย่อยที่ยังไม่ปิด (ไม่บล�
 **ทดสอบผ่าน browser จริงบางส่วน** (local http-server + Playwright): หน้า login/register เรนเดอร์ถูกต้อง, validate ฟอร์มทำงานถูกต้อง, หน้าที่ต้อง login ทั้ง 3 หน้า redirect กลับ `community-register.html` ถูกต้องเมื่อยังไม่ login, ไม่มี JS error บนทุกหน้าที่แก้/สร้างใหม่ — **ไม่สามารถทดสอบ flow เขียนข้อมูลจริงแบบ end-to-end ได้ในรอบนี้** เพราะ `firestore.rules` ที่แก้ยังไม่ได้ deploy (ไม่มีสิทธิ์ deploy เอง) และเครื่องนี้ไม่มี Java จึงรัน Firebase emulator ทดสอบแทนไม่ได้ — **ต้อง deploy rules แล้วทดสอบ flow เต็มอีกครั้ง** (สมัคร→อนุมัติ→สร้าง/แก้ไขคอนเทนต์→อนุมัติคำขอแก้ไข) ก่อนถือว่าสมบูรณ์
 
 อัปเดตสถานะ BL-006/BL-022/BL-023 ใน [[../01-requirements/03-task/product-backlog|product-backlog]] เป็น "เสร็จแล้ว" (พร้อมหมายเหตุข้อจำกัดข้างต้น), ทำเครื่องหมาย [[../02-design/01-prototypes/prototype-v3/README|prototype-v3]] ว่า superseded (ไม่ลบไฟล์)
+
+### 2026-09-23 — รีวิว + deploy + ทดสอบ end-to-end ระบบชุมชน (ต่อจาก Part 1 ด้านบน)
+
+ผู้ประสานงานรีวิวโค้ดที่ agent สร้างไว้ก่อน deploy จริง — พบช่องโหว่ 1 จุด: `community-create-content.html` มีปุ่ม "บันทึกฉบับร่าง" (status `ฉบับร่าง`) แต่ `firestore.rules` ไม่มี `allow update` ให้ชุมชนแก้ไข/เผยแพร่คอนเทนต์ตนเองเลย (มีแต่ `allow update` ของอาจารย์) — คอนเทนต์ที่บันทึกเป็นฉบับร่างจะติดค้างถาวร แก้ไข/เผยแพร่ไม่ได้อีกเลย เพราะหน้า `community-request-edit.html` ก็รับเฉพาะคอนเทนต์ที่ `status == 'เผยแพร่แล้ว'` เท่านั้น
+
+**แก้ไข**: ตัดปุ่ม "บันทึกฉบับร่าง" ออกจาก `community-create-content.html` เหลือแค่ "เผยแพร่คอนเทนต์" ปุ่มเดียว (ตรงกับ hint ที่มีอยู่แล้วในหน้า dashboard ว่า "สร้าง/เผยแพร่คอนเทนต์ใหม่ทำได้เองทันที") และล็อก `firestore.rules` ให้ `CommunityContent.create` รับเฉพาะ `status == 'เผยแพร่แล้ว'` เท่านั้น (ตัดตัวเลือก `ฉบับร่าง` ออกเป็น defense-in-depth)
+
+**Deploy**: `firebase deploy --only firestore:rules` ขึ้น production แล้ว (ยืนยันกับผู้ใช้ก่อน)
+
+**ทดสอบ end-to-end ผ่าน browser จริง** (local http-server ชี้ `prototype-v2` + Playwright, ต่อ Firestore/Auth จริงของ `lsh-nammon`) — สร้างบัญชีชุมชนทดสอบ `qa-community-20260923@example.com`:
+1. สมัครบัญชีชุมชนใหม่ → เห็นหน้า "รอการอนุมัติ" ถูกต้อง
+2. login อาจารย์ (u004) → เห็นบัญชีชุมชนใหม่ในรายการรออนุมัติ พร้อมข้อมูลยืนยันตัวตน → กดอนุมัติสำเร็จ ไม่มี error
+3. login ชุมชนที่อนุมัติแล้ว → สร้าง/เผยแพร่คอนเทนต์ใหม่สำเร็จ (เขียน Firestore จริง ไม่มี permission-denied)
+4. กด "ขอแก้ไข" คอนเทนต์ตนเอง → ส่งคำขอสำเร็จ → dashboard เปลี่ยนเป็น "มีคำขอแก้ไขรอพิจารณา" ถูกต้อง (ปุ่มขอแก้ไขหายไป ป้องกันส่งคำขอซ้ำ)
+5. login อาจารย์ → เห็นคำขอแก้ไขพร้อม diff เดิม/ใหม่ถูกต้องครบทั้งชื่อและเนื้อหา → กดอนุมัติสำเร็จ (เขียนทั้ง `ContentEditRequests.status` และ `CommunityContent` จริง ไม่มี error) → ขึ้นในตาราง "ประวัติคำขอแก้ไขที่พิจารณาแล้ว" ถูกต้อง
+
+ไม่พบ JS error หรือ permission-denied ตลอด flow (มีแค่ 404 ของ favicon ที่ไม่เกี่ยวข้อง) — **ระบบชุมชนใช้งานได้จริงครบสมบูรณ์แล้ว** เก็บบัญชี/คอนเทนต์ทดสอบไว้ใน Firestore ตามธรรมเนียมเดิมของโปรเจกต์ (ไม่ลบข้อมูลทดสอบทิ้ง)
+
+Deploy hosting ขึ้น `lsh-nammon.web.app` แล้ว, push ขึ้น `origin/main` แล้ว — **Part 1/5 เสร็จสมบูรณ์**

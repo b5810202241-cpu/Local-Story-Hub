@@ -36,7 +36,7 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && isApprovedCommunity()
                     && request.resource.data.communityId == request.auth.uid
-                    && request.resource.data.status in ['ฉบับร่าง', 'เผยแพร่แล้ว'];
+                    && request.resource.data.status == 'เผยแพร่แล้ว';
       allow update: if request.auth != null
                     && getRole() == 'teacher'
                     && request.resource.data.diff(resource.data).affectedKeys()

@@ -92,7 +92,6 @@ label{display:block;font-size:16px;font-weight:600;margin-bottom:var(--space-xs)
 
   <div class="publish-bar">
     <span class="submit-error" id="submit-error">บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง</span>
-    <button class="btn btn-secondary" id="draft-btn" onclick="saveContent('ฉบับร่าง')">บันทึกฉบับร่าง</button>
     <button class="btn btn-primary" id="publish-btn" onclick="saveContent('เผยแพร่แล้ว')">เผยแพร่คอนเทนต์</button>
   </div>
 </main>
@@ -160,9 +159,7 @@ window.saveContent = async function(status){
   errEl.style.display = 'none';
 
   const caption = document.getElementById('caption').value.trim();
-  const draftBtn = document.getElementById('draft-btn');
   const publishBtn = document.getElementById('publish-btn');
-  draftBtn.disabled = true;
   publishBtn.disabled = true;
 
   try{
@@ -181,7 +178,6 @@ window.saveContent = async function(status){
     console.error('บันทึกลง Firestore ไม่สำเร็จ', e);
     submitErrorEl.textContent = 'บันทึกไม่สำเร็จ: ' + e.message;
     submitErrorEl.style.display = 'inline';
-    draftBtn.disabled = false;
     publishBtn.disabled = false;
   }
 };

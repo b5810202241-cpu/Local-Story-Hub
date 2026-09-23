@@ -48,7 +48,7 @@ Firebase CLI ติดตั้งแบบ global ไว้แล้ว (`npm i
 
 ดูรายละเอียดการบังคับใช้สิทธิ์ตามบทบาทที่ `docs/02-design/02-technical/ACL.md` และการ implement ที่ `docs/02-design/01-prototypes/prototype-v2/README.md`
 
-**⚠️ สถานะ `firestore.rules` ณ 2026-09-23**: แก้ไขไฟล์เพิ่ม rule ของ `CommunityContent`/`ContentEditRequests` และเปิด `users.create` ให้ role `community` แล้ว **แต่ยังไม่ได้ deploy ขึ้น project จริง** — หน้าจอฝั่งชุมชนใหม่ (`community-*.html`) จะเขียนข้อมูลจริงไม่สำเร็จ (permission-denied) จนกว่าจะรัน `firebase deploy --only firestore:rules`
+**สถานะ `firestore.rules` ณ 2026-09-23**: เพิ่ม rule ของ `CommunityContent`/`ContentEditRequests` และเปิด `users.create` ให้ role `community` แล้ว **deploy ขึ้น production จริงแล้ว** (`firebase deploy --only firestore:rules`) และทดสอบผ่าน browser จริงครบ flow (สมัครชุมชน → อาจารย์อนุมัติ → ชุมชนสร้าง/เผยแพร่คอนเทนต์ → ขอแก้ไข → อาจารย์อนุมัติคำขอแก้ไข) ไม่พบ permission-denied — ดู `docs/05-log/index.md` วันที่ 2026-09-23 (ระบบชุมชน)
 
 ## Firebase Hosting (เพิ่ม 2026-09-11)
 
